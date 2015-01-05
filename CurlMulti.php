@@ -328,6 +328,7 @@ class CurlMulti {
 				$this->info ['all'] ['downloadSpeed'] = round ( $this->info ['all'] ['downloadSize'] / $this->info ['all'] ['timeSpentDownload'], 2 );
 			}
 			// running
+			$this->info ['running'] = array();
 			foreach ( $this->taskRunning as $k => $v ) {
 				$this->info ['running'] [$k] = curl_getinfo ( $v [self::TASK_CH] );
 			}
