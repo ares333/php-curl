@@ -8,8 +8,14 @@ class MyCurl {
 	protected $curl;
 	private $urlFullPath;
 	private $urlFullSite;
-	function __construct() {
-		$this->curl = new CurlMulti ();
+	
+	/**
+	 * CurlMulti对象
+	 *
+	 * @param unknown $curlmulti        	
+	 */
+	function __construct($curlmulti) {
+		$this->curl = $curlmulti;
 		// 设置最大并发数
 		$this->curl->maxThread = 10;
 		// 默认错误回调
@@ -28,18 +34,17 @@ class MyCurl {
 	 * 每个目录最多4096个文件(可以保持很好的IO性能),4096^2=16777216,4096^3=68719476736
 	 *
 	 * @param string $name        	
-	 * @param number $level        	
+	 * @param number $level       	
 	 * @return string 文件相对路径
 	 */
 	function hashPath($name, $level = 2) {
 		$file = md5 ( $name );
-		if ($level == 0) {
-		} elseif ($level == 1) {
+		if ($level == 1) {
 			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3 );
 		} elseif ($level == 2) {
 			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3, 6 ) . '/' . substr ( $file, 6 );
 		} else {
-			throw new ErrorException ( 'level is invalid, level=' . $level );
+			throw new Exception ( 'level is invalid, level=' . $level );
 		}
 		return $file;
 	}
@@ -69,7 +74,7 @@ class MyCurl {
 			} elseif ($mode == 'ng') {
 				$pos2 = strpos ( $str, $end, $pos1 );
 			} else {
-				throw new ErrorException ( 'mode is invalid, mode=' . $mode );
+				throw new Exception ( 'mode is invalid, mode=' . $mode );
 			}
 		} else {
 			$pos2 = strlen ( $str );
@@ -98,7 +103,6 @@ class MyCurl {
 	 *
 	 * @param array $info
 	 *        	array('all'=>array(),'running'=>array())
-	 * @throws \ErrorException
 	 */
 	function cbCurlInfo($info) {
 		$all = $info ['all'];
@@ -151,14 +155,14 @@ class MyCurl {
 				'mb_convert_encoding' 
 		);
 		if (! in_array ( $mode, $valid )) {
-			throw new ErrorException ( 'invalid mode, mode=' . $mode );
+			throw new Exception ( 'invalid mode, mode=' . $mode );
 		}
 		if (function_exists ( 'iconv' ) && ($mode == 'auto' || $mode == 'iconv')) {
 			$func = 'iconv';
 		} elseif (function_exists ( 'mb_convert_encoding' ) && ($mode == 'auto' || $mode == 'mb_convert_encoding')) {
 			$func = 'mb_convert_encoding';
 		} else {
-			throw new ErrorException ( 'charsetTrans failed, no function' );
+			throw new Exception ( 'charsetTrans failed, no function' );
 		}
 		$html = call_user_func ( $func, $in, $out . '//IGNORE', $html );
 		return preg_replace ( '/(<meta[^>]*?charset=(["\']?))[a-z\d_\-]*(\2[^>]*?>)/is', "\\1$out\\3", $html, 1 );

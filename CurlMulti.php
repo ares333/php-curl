@@ -118,7 +118,7 @@ class CurlMulti {
 	public function __construct() {
 		$this->isConstructCalled = true;
 		if (version_compare ( PHP_VERSION, '5.1.0' ) < 0) {
-			throw new ErrorException ( 'PHP 5.1.0+ is needed' );
+			throw new Exception ( 'PHP 5.1.0+ is needed' );
 		}
 	}
 	
@@ -131,49 +131,50 @@ class CurlMulti {
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
 	 *        	curl fail callback,for callback first param array('error'=>array(0=>code,1=>msg),'info'=>array),second param $item[args];
-	 * @throws ErrorException
+	 * @throws Exception
 	 * @return \frame\lib\CurlMulti
 	 */
 	public function add(array $item, $process = null, $fail = null) {
 		// check
 		if (! is_array ( $item )) {
-			throw new ErrorException ( 'item must be array, item is ' . gettype ( $item ), 0, E_USER_WARNING );
-		}
-		$item ['url'] = trim ( $item ['url'] );
-		if (empty ( $item ['url'] )) {
-			throw new ErrorException ( "url can't be empty, url=$item[url]", 0, E_USER_WARNING );
+			user_error ( 'item must be array, item is ' . gettype ( $item ), E_USER_WARNING );
 		} else {
-			// replace space with + to avoid some curl problems
-			$item ['url'] = str_replace ( ' ', '+', $item ['url'] );
-			// fix
-			if (empty ( $item ['file'] ))
-				$item ['file'] = null;
-			if (empty ( $item ['opt'] ))
-				$item ['opt'] = array ();
-			if (empty ( $item ['args'] ))
-				$item ['args'] = array ();
-			if (empty ( $item ['ctl'] ))
-				$item ['ctl'] = array ();
-			if (empty ( $process )) {
-				$process = null;
+			$item ['url'] = trim ( $item ['url'] );
+			if (empty ( $item ['url'] )) {
+				user_error ( "url can't be empty, url=$item[url]", E_USER_WARNING );
+			} else {
+				// replace space with + to avoid some curl problems
+				$item ['url'] = str_replace ( ' ', '+', $item ['url'] );
+				// fix
+				if (empty ( $item ['file'] ))
+					$item ['file'] = null;
+				if (empty ( $item ['opt'] ))
+					$item ['opt'] = array ();
+				if (empty ( $item ['args'] ))
+					$item ['args'] = array ();
+				if (empty ( $item ['ctl'] ))
+					$item ['ctl'] = array ();
+				if (empty ( $process )) {
+					$process = null;
+				}
+				if (empty ( $fail )) {
+					$fail = null;
+				}
+				$task = array ();
+				$task [self::TASK_ITEM_URL] = $item ['url'];
+				$task [self::TASK_ITEM_FILE] = $item ['file'];
+				$task [self::TASK_ITEM_ARGS] = array (
+						$item ['args'] 
+				);
+				$task [self::TASK_ITEM_OPT] = $item ['opt'];
+				$task [self::TASK_ITEM_CTL] = $item ['ctl'];
+				$task [self::TASK_PROCESS] = $process;
+				$task [self::TASK_FAIL] = $fail;
+				$task [self::TASK_TRYED] = 0;
+				$task [self::TASK_CH] = null;
+				$this->taskPool [] = $task;
+				$this->info ['all'] ['taskNum'] ++;
 			}
-			if (empty ( $fail )) {
-				$fail = null;
-			}
-			$task = array ();
-			$task [self::TASK_ITEM_URL] = $item ['url'];
-			$task [self::TASK_ITEM_FILE] = $item ['file'];
-			$task [self::TASK_ITEM_ARGS] = array (
-					$item ['args'] 
-			);
-			$task [self::TASK_ITEM_OPT] = $item ['opt'];
-			$task [self::TASK_ITEM_CTL] = $item ['ctl'];
-			$task [self::TASK_PROCESS] = $process;
-			$task [self::TASK_FAIL] = $fail;
-			$task [self::TASK_TRYED] = 0;
-			$task [self::TASK_CH] = null;
-			$this->taskPool [] = $task;
-			$this->info ['all'] ['taskNum'] ++;
 		}
 		return $this;
 	}
@@ -183,10 +184,10 @@ class CurlMulti {
 	 */
 	public function start() {
 		if ($this->isRunning) {
-			throw new ErrorException ( __CLASS__ . ' is running !', 0, E_USER_ERROR );
+			throw new Exception ( __CLASS__ . ' is running !' );
 		}
 		if (false === $this->isConstructCalled) {
-			throw new ErrorException ( __CLASS__ . ' __construct is not called', 0, E_USER_ERROR );
+			throw new Exception ( __CLASS__ . ' __construct is not called' );
 		}
 		$this->mh = curl_multi_init ();
 		$this->info ['all'] ['startTime'] = time ();
@@ -213,7 +214,7 @@ class CurlMulti {
 				$this->info ['all'] ['downloadSize'] += $info ['size_download'];
 				$task = $this->taskRunning [( int ) $ch];
 				if (empty ( $task )) {
-					throw new ErrorException ( "can't get running task", 0, E_USER_ERROR );
+					throw new Exception ( "can't get running task" );
 				}
 				$callFail = false;
 				if ($curlInfo ['result'] == CURLE_OK) {
@@ -269,7 +270,7 @@ class CurlMulti {
 						$this->taskFail [] = $task;
 						$this->info ['all'] ['taskNum'] ++;
 					}
-					if(isset( $this->userError )){
+					if (isset ( $this->userError )) {
 						unset ( $this->userError );
 					}
 				}
@@ -328,7 +329,7 @@ class CurlMulti {
 				$this->info ['all'] ['downloadSpeed'] = round ( $this->info ['all'] ['downloadSize'] / $this->info ['all'] ['timeSpentDownload'], 2 );
 			}
 			// running
-			$this->info ['running'] = array();
+			$this->info ['running'] = array ();
 			foreach ( $this->taskRunning as $k => $v ) {
 				$this->info ['running'] [$k] = curl_getinfo ( $v [self::TASK_CH] );
 			}
@@ -451,7 +452,7 @@ class CurlMulti {
 								$this->info ['all'] ['taskRunningNumType'] [$task [self::TASK_ITEM_CTL] ['type']] ++;
 							}
 						} else {
-							throw new ErrorException ( '$ch is not resource,curl_init failed.', 0, E_USER_WARNING );
+							throw new Exception ( '$ch is not resource,curl_init failed.' );
 						}
 					} else {
 						// rotate task to pool
@@ -480,7 +481,7 @@ class CurlMulti {
 	 */
 	private function cache($url, $content = null) {
 		if (! isset ( $this->cache ['dir'] ))
-			throw new ErrorException ( 'Cache dir is not defined', 0, E_USER_ERROR );
+			throw new Exception ( 'Cache dir is not defined' );
 		$key = md5 ( $url );
 		$dir = $this->cache ['dir'];
 		if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] != 0) {
@@ -491,7 +492,7 @@ class CurlMulti {
 				$dir .= DIRECTORY_SEPARATOR . substr ( $key, 0, 3 ) . DIRECTORY_SEPARATOR . substr ( $key, 3, 3 );
 				$file = $dir . DIRECTORY_SEPARATOR . substr ( $key, 6 );
 			} else {
-				throw new ErrorException ( 'cache dirLevel is invalid, dirLevel=' . $this->cache ['dirLevel'], 0, E_USER_ERROR );
+				throw new Exception ( 'cache dirLevel is invalid, dirLevel=' . $this->cache ['dirLevel'] );
 			}
 		} else {
 			$file = $dir . DIRECTORY_SEPARATOR . $key;
@@ -508,23 +509,24 @@ class CurlMulti {
 			$r = false;
 			// check main cache directory
 			if (! is_dir ( $this->cache ['dir'] )) {
-				throw new ErrorException ( "Cache dir doesn't exists", 0, E_USER_ERROR );
+				throw new Exception ( "Cache dir doesn't exists" );
 			} else {
 				// level 1 subdir
 				if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] > 1) {
 					$dir1 = dirname ( $dir );
 					if (! is_dir ( $dir1 ) && ! mkdir ( $dir1 )) {
-						throw new ErrorException ( 'Create dir failed, dir=' . $dir1, 0, E_USER_WARNING );
+						throw new Exception ( 'Create dir failed, dir=' . $dir1 );
 					}
 				}
 				if (! is_dir ( $dir ) && ! mkdir ( $dir )) {
-					throw new ErrorException ( 'Create dir failed, dir=' . $dir, 0, E_USER_WARNING );
+					throw new Exception ( 'Create dir failed, dir=' . $dir );
 				}
 				$content = serialize ( $content );
-				if (file_put_contents ( $file, $content, LOCK_EX ))
+				if (file_put_contents ( $file, $content, LOCK_EX )) {
 					$r = true;
-				else
-					throw new ErrorException ( 'Write cache file failed', 0, E_USER_WARNING );
+				} else {
+					throw new Exception ( 'Write cache file failed' );
+				}
 			}
 			return $r;
 		}
