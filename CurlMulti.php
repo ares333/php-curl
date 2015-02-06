@@ -41,7 +41,9 @@ class CurlMulti {
 	public $opt = array ();
 	// cache options,dirLevel values is less than 3
 	public $cache = array (
-			'on' => false,
+			'enable' => false,
+			'enableDownload' => false,
+			'compress' => false,
 			'dir' => null,
 			'expire' => 86400,
 			'dirLevel' => 1 
@@ -115,7 +117,7 @@ class CurlMulti {
 			),
 			'running' => array () 
 	);
-	public function __construct() {
+	function __construct() {
 		$this->isConstructCalled = true;
 		if (version_compare ( PHP_VERSION, '5.1.0' ) < 0) {
 			throw new Exception ( 'PHP 5.1.0+ is needed' );
@@ -134,7 +136,7 @@ class CurlMulti {
 	 * @throws Exception
 	 * @return \frame\lib\CurlMulti
 	 */
-	public function add(array $item, $process = null, $fail = null) {
+	function add(array $item, $process = null, $fail = null) {
 		// check
 		if (! is_array ( $item )) {
 			user_error ( 'item must be array, item is ' . gettype ( $item ), E_USER_WARNING );
@@ -213,27 +215,23 @@ class CurlMulti {
 				$info = curl_getinfo ( $ch );
 				$this->info ['all'] ['downloadSize'] += $info ['size_download'];
 				$task = $this->taskRunning [( int ) $ch];
-				if (empty ( $task )) {
-					throw new Exception ( "can't get running task" );
+				if (isset ( $task [self::TASK_FP] )) {
+					fclose ( $task [self::TASK_FP] );
 				}
-				$callFail = false;
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$param = array ();
 					$param ['info'] = $info;
-					if (! isset ( $task [self::TASK_ITEM_FILE] ))
+					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
+					}
 					array_unshift ( $task [self::TASK_ITEM_ARGS], $param );
 					// write cache
-					if ($this->cache ['on'] and ! isset ( $task [self::TASK_ITEM_FILE] )) {
-						$this->cache ( $task [self::TASK_ITEM_URL], $param );
+					if ($this->cache ['enable']) {
+						$this->cache ( $task, $param );
 					}
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
 				curl_close ( $ch );
-				if (isset ( $task [self::TASK_FP] )) {
-					fclose ( $task [self::TASK_FP] );
-				}
-				// if is a download task, call user function here can ensure file downloaded completely.
 				if ($curlInfo ['result'] == CURLE_OK) {
 					if (isset ( $task [self::TASK_PROCESS] )) {
 						call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
@@ -241,6 +239,7 @@ class CurlMulti {
 					array_shift ( $task [self::TASK_ITEM_ARGS] );
 				}
 				// error handle
+				$callFail = false;
 				if ($curlInfo ['result'] !== CURLE_OK || isset ( $this->userError )) {
 					if ($task [self::TASK_TRYED] >= $this->maxTry) {
 						// user error
@@ -394,9 +393,13 @@ class CurlMulti {
 			$noAdd = false;
 			$cache = null;
 			if (! empty ( $task )) {
-				if ($this->cache ['on'] == true && ! isset ( $task [self::TASK_ITEM_FILE] ) && (! isset ( $task [self::TASK_ITEM_CTL] ['useCache'] ) || true === $task [self::TASK_ITEM_CTL] ['useCache'])) {
-					$cache = $this->cache ( $task [self::TASK_ITEM_URL] );
+				if ($this->cache ['enable'] == true && (! isset ( $task [self::TASK_ITEM_CTL] ['useCache'] ) || true === $task [self::TASK_ITEM_CTL] ['useCache'])) {
+					$cache = $this->cache ( $task, null );
 					if (null !== $cache) {
+						if (isset ( $task [self::TASK_ITEM_FILE] )) {
+							file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
+							unset ( $cache ['content'] );
+						}
 						array_unshift ( $task [self::TASK_ITEM_ARGS], $cache );
 						$this->info ['all'] ['finishNum'] ++;
 						$this->info ['all'] ['cacheNum'] ++;
@@ -476,33 +479,39 @@ class CurlMulti {
 	 *
 	 * @param string $url        	
 	 * @param mixed $content
-	 *        	null : get cache
-	 * @return return read:content or false, write: true or false
+	 *        	array('info','content')
+	 * @return return array|null|boolean
 	 */
-	private function cache($url, $content = null) {
+	private function cache($task, $content = null) {
 		if (! isset ( $this->cache ['dir'] ))
 			throw new Exception ( 'Cache dir is not defined' );
+		$url = $task [self::TASK_ITEM_URL];
 		$key = md5 ( $url );
-		$dir = $this->cache ['dir'];
+		$isDownload = isset ( $task [self::TASK_ITEM_FILE] );
+		$file = rtrim ( $this->cache ['dir'], '/' ) . '/';
 		if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] != 0) {
 			if ($this->cache ['dirLevel'] == 1) {
-				$dir .= DIRECTORY_SEPARATOR . substr ( $key, 0, 3 );
-				$file = $dir . DIRECTORY_SEPARATOR . substr ( $key, 3 );
+				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3 );
 			} elseif ($this->cache ['dirLevel'] == 2) {
-				$dir .= DIRECTORY_SEPARATOR . substr ( $key, 0, 3 ) . DIRECTORY_SEPARATOR . substr ( $key, 3, 3 );
-				$file = $dir . DIRECTORY_SEPARATOR . substr ( $key, 6 );
+				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3, 3 ) . '/' . substr ( $key, 6 );
 			} else {
 				throw new Exception ( 'cache dirLevel is invalid, dirLevel=' . $this->cache ['dirLevel'] );
 			}
 		} else {
-			$file = $dir . DIRECTORY_SEPARATOR . $key;
+			$file .= $key;
 		}
+		$r = null;
 		if (! isset ( $content )) {
 			if (file_exists ( $file )) {
-				if ((time () - filemtime ( $file )) < $this->cache ['expire']) {
-					return unserialize ( file_get_contents ( $file ) );
-				} else {
-					unlink ( $file );
+				if (time () - filemtime ( $file ) < $this->cache ['expire']) {
+					$r = file_get_contents ( $file );
+					if ($this->cache ['compress']) {
+						$r = gzuncompress ( $r );
+					}
+					$r = unserialize ( $r );
+					if ($isDownload) {
+						$r ['content'] = base64_decode ( $r ['content'] );
+					}
 				}
 			}
 		} else {
@@ -511,6 +520,7 @@ class CurlMulti {
 			if (! is_dir ( $this->cache ['dir'] )) {
 				throw new Exception ( "Cache dir doesn't exists" );
 			} else {
+				$dir = dirname ( $file );
 				// level 1 subdir
 				if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] > 1) {
 					$dir1 = dirname ( $dir );
@@ -521,15 +531,21 @@ class CurlMulti {
 				if (! is_dir ( $dir ) && ! mkdir ( $dir )) {
 					throw new Exception ( 'Create dir failed, dir=' . $dir );
 				}
+				if ($isDownload) {
+					$content ['content'] = base64_encode ( file_get_contents ( $task [self::TASK_ITEM_FILE] ) );
+				}
 				$content = serialize ( $content );
+				if ($this->cache ['compress']) {
+					$content = gzcompress ( $content );
+				}
 				if (file_put_contents ( $file, $content, LOCK_EX )) {
 					$r = true;
 				} else {
 					throw new Exception ( 'Write cache file failed' );
 				}
 			}
-			return $r;
 		}
+		return $r;
 	}
 	
 	/**
@@ -537,7 +553,7 @@ class CurlMulti {
 	 *
 	 * @param unknown $msg        	
 	 */
-	public function error($msg) {
+	function error($msg) {
 		$this->userError = array (
 				CURLE_OK,
 				$msg 
@@ -550,7 +566,7 @@ class CurlMulti {
 	 * @param string $url        	
 	 * @return resource
 	 */
-	private function curlInit($url) {
+	function curlInit($url) {
 		$ch = curl_init ();
 		$opt = array ();
 		$opt [CURLOPT_URL] = $url;

@@ -1,43 +1,41 @@
 <?php
 /**
- * CurlMulti的封装，更易于使用
+ * CurlMulti wrapper, more easy to use 
  * @author admin@curlmulti.com
  *
  */
 class MyCurl {
-	protected $curl;
-	private $urlFullPath;
-	private $urlFullSite;
-	
+	private $curl;
 	/**
-	 * CurlMulti对象
 	 *
 	 * @param unknown $curlmulti        	
 	 */
 	function __construct($curlmulti) {
 		$this->curl = $curlmulti;
-		// 设置最大并发数
-		$this->curl->maxThread = 10;
-		// 默认错误回调
-		$this->curl->cbFail = array (
-				$this,
-				'cbCurlFail' 
-		);
-		// 默认信息回调
-		$this->curl->cbInfo = array (
-				$this,
-				'cbCurlInfo' 
-		);
+		// default fail callback
+		if (! isset ( $this->curl->cbFail )) {
+			$this->curl->cbFail = array (
+					$this,
+					'cbCurlFail' 
+			);
+		}
+		// default info callback
+		if (! isset ( $this->curl->cbInfo )) {
+			$this->curl->cbInfo = array (
+					$this,
+					'cbCurlInfo' 
+			);
+		}
 	}
 	
 	/**
-	 * 每个目录最多4096个文件(可以保持很好的IO性能),4096^2=16777216,4096^3=68719476736
+	 * 16^3=4096,4096^2=16777216,4096^3=68719476736
 	 *
 	 * @param string $name        	
-	 * @param number $level       	
-	 * @return string 文件相对路径
+	 * @param number $level        	
+	 * @return string relative path
 	 */
-	function hashPath($name, $level = 2) {
+	function hashpath($name, $level = 2) {
 		$file = md5 ( $name );
 		if ($level == 1) {
 			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3 );
@@ -50,19 +48,17 @@ class MyCurl {
 	}
 	
 	/**
-	 * 返回开始和结束字符串之间的字符串
+	 * content between start and end
 	 *
 	 * @param string $str        	
-	 * @param string $start
-	 *        	开始字符串
-	 * @param string $end
-	 *        	结束字符串
+	 * @param string $start        	
+	 * @param string $end        	
 	 * @param String $mode
-	 *        	g 贪婪模式
-	 *        	ng 非贪婪模式
+	 *        	g greed
+	 *        	ng non-greed
 	 * @return string boolean
 	 */
-	function subStr($str, $start, $end, $mode = 'g') {
+	function substr($str, $start, $end, $mode = 'g') {
 		if (isset ( $start )) {
 			$pos1 = strpos ( $str, $start );
 		} else {
@@ -87,19 +83,19 @@ class MyCurl {
 	}
 	
 	/**
-	 * 默认CurlMulti错误回调
+	 * default CurlMulti fail callback
 	 *
 	 * @param array $error        	
 	 * @param mixed $args
-	 *        	用户添加任务时的参数
+	 *        	args in CurlMulti::add()
 	 */
 	function cbCurlFail($error, $args) {
 		$err = $error ['error'];
-		echo "\ncurl error, $err[0] : $err[1]\n";
+		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'] . "\n";
 	}
 	
 	/**
-	 * 默认CurlMulti的信息回调
+	 * default CurlMulti info callback
 	 *
 	 * @param array $info
 	 *        	array('all'=>array(),'running'=>array())
@@ -124,21 +120,21 @@ class MyCurl {
 	}
 	
 	/**
-	 * 处理http头不是200的请求
+	 * none http 200 go CurlMulti::maxTry loop
 	 *
 	 * @param array $info        	
-	 * @return boolean 是否有错
+	 * @return boolean
 	 */
-	function httpError($info) {
+	function hasHttpError($info) {
 		if ($info ['http_code'] != 200) {
-			$this->curl->error ( 'http error, code=' . $info ['http_code'] . ', url=' . $info ['url'] );
+			$this->curl->error ( 'http error ' . $info ['http_code'] );
 			return true;
 		}
 		return false;
 	}
 	
 	/**
-	 * html转码
+	 * html encoding transform
 	 *
 	 * @param string $html        	
 	 * @param string $in        	
@@ -148,7 +144,7 @@ class MyCurl {
 	 *        	auto|iconv|mb_convert_encoding
 	 * @return string
 	 */
-	function charsetTrans($html, $in, $out = 'UTF-8', $mode = 'auto') {
+	function encoding($html, $in, $out = 'UTF-8', $mode = 'auto') {
 		$valid = array (
 				'auto',
 				'iconv',
@@ -169,42 +165,7 @@ class MyCurl {
 	}
 	
 	/**
-	 * 把html中的所有相对地址换成绝对地址
-	 *
-	 * @param string $html        	
-	 * @param string $url        	
-	 * @return string string
-	 */
-	function urlFull($html, $url) {
-		$parseUrl = parse_url ( $url );
-		$this->urlFullPath = str_replace ( '\\', '/', dirname ( $parseUrl ['path'] ) );
-		$this->urlFullSite = $parseUrl ['scheme'] . '://' . $parseUrl ['host'];
-		return preg_replace_callback ( '/(\s+(src|href)=("|\')?)(?!http:\/\/)([^\\3]+?)\\3/i', array (
-				$this,
-				'_cbUrlFull' 
-		), $html );
-	}
-	
-	/**
-	 * urlFull的正则回调
-	 *
-	 * @param unknown $match        	
-	 * @param unknown $uri        	
-	 * @return string
-	 */
-	final function _cbUrlFull($match) {
-		if ((0 === stripos ( $match [4], 'javascript:' )) || (0 === stripos ( $match [4], '#' ))) {
-			return $match [0];
-		}
-		if (0 !== strpos ( $match [4], '/' )) {
-			$match [4] = $this->urlFullPath . '/' . $match [4];
-		}
-		$match [4] = ltrim ( $match [4], '/' );
-		return $match [1] . $this->urlFullSite . '/' . $match [4] . $match [3];
-	}
-	
-	/**
-	 * 返回CurlMulti对象
+	 * get CurlMulti instance
 	 *
 	 * @return CurlMulti
 	 */
