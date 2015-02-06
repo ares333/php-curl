@@ -6,26 +6,27 @@
  */
 class MyCurl {
 	private $curl;
+	function __construct() {
+		$this->curl = new CurlMulti ();
+		// default fail callback
+		$this->curl->cbFail = array (
+				$this,
+				'cbCurlFail' 
+		);
+		// default info callback
+		$this->curl->cbInfo = array (
+				$this,
+				'cbCurlInfo' 
+		);
+	}
+	
 	/**
-	 *
+	 * replace curlmulti use yours
+	 * 
 	 * @param unknown $curlmulti        	
 	 */
-	function __construct($curlmulti) {
+	function setCurl($curlmulti) {
 		$this->curl = $curlmulti;
-		// default fail callback
-		if (! isset ( $this->curl->cbFail )) {
-			$this->curl->cbFail = array (
-					$this,
-					'cbCurlFail' 
-			);
-		}
-		// default info callback
-		if (! isset ( $this->curl->cbInfo )) {
-			$this->curl->cbInfo = array (
-					$this,
-					'cbCurlInfo' 
-			);
-		}
 	}
 	
 	/**

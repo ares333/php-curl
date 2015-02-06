@@ -24,8 +24,8 @@ class MyCurl_Clone extends MyCurl {
 	 * @param unknown $url        	
 	 * @param unknown $dir        	
 	 */
-	function __construct($curlmulti, $url, $dir) {
-		parent::__construct ( $curlmulti );
+	function __construct($url, $dir) {
+		parent::__construct ();
 		$this->url = $url;
 		$this->dir = $dir;
 		if (! $this->isUrl ( $url )) {

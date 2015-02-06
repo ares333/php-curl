@@ -128,7 +128,7 @@ class CurlMulti {
 	 * add a task to taskPool
 	 *
 	 * @param array $item
-	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','useCache'=>true))]]]])
+	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','cache'=>array('enable'=>bool,'expire'=>0)))]]]])
 	 * @param mixed $process
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
@@ -226,7 +226,7 @@ class CurlMulti {
 					}
 					array_unshift ( $task [self::TASK_ITEM_ARGS], $param );
 					// write cache
-					if ($this->cache ['enable']) {
+					if ((isset ( $task [self::TASK_ITEM_CTL] ['cache'] ) && isset ( $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] ) && true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
 						$this->cache ( $task, $param );
 					}
 				}
@@ -393,8 +393,8 @@ class CurlMulti {
 			$noAdd = false;
 			$cache = null;
 			if (! empty ( $task )) {
-				if ($this->cache ['enable'] == true && (! isset ( $task [self::TASK_ITEM_CTL] ['useCache'] ) || true === $task [self::TASK_ITEM_CTL] ['useCache'])) {
-					$cache = $this->cache ( $task, null );
+				if ((isset ( $task [self::TASK_ITEM_CTL] ['cache'] ) && isset ( $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] ) && true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
+					$cache = $this->cache ( $task );
 					if (null !== $cache) {
 						if (isset ( $task [self::TASK_ITEM_FILE] )) {
 							file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
@@ -503,7 +503,12 @@ class CurlMulti {
 		$r = null;
 		if (! isset ( $content )) {
 			if (file_exists ( $file )) {
-				if (time () - filemtime ( $file ) < $this->cache ['expire']) {
+				if (isset ( $task [self::TASK_ITEM_CTL] ['cache'] ) && isset ( $task [self::TASK_ITEM_CTL] ['cache'] ['expire'] )) {
+					$expire = $task [self::TASK_ITEM_CTL] ['cache'] ['expire'];
+				} else {
+					$expire = $this->cache ['expire'];
+				}
+				if (time () - filemtime ( $file ) < $expire) {
 					$r = file_get_contents ( $file );
 					if ($this->cache ['compress']) {
 						$r = gzuncompress ( $r );
