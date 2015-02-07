@@ -59,30 +59,25 @@ class MyCurl_Clone extends MyCurl {
 	 *
 	 */
 	function cbProcess($r, $args) {
-		if (isset ( $r ['content'] )) {
-			if (! $this->hasHttpError ( $r ['info'] )) {
-				$urlDir = $r ['info'] ['url'];
-				// none / end url will be redirected to / ended url
-				if ('/' != substr ( $urlDir, - 1 )) {
-					$urlDir = dirname ( $urlDir ) . '/';
-				}
-				
+		if (! $this->hasHttpError ( $r ['info'] )) {
+			if (isset ( $r ['content'] )) {
+				$urlCurrent = $r ['info'] ['url'];
 				$pq = phpQuery::newDocumentHTML ( $r ['content'] );
 				$urlDownload = array ();
 				// css
 				$list = $pq ['link[type$=css]'];
 				foreach ( $list as $v ) {
 					$v = pq ( $v );
-					$url = $this->getUrl ( $v->attr ( 'href' ), $urlDir );
-					$v->attr ( 'href', $this->getUri ( $url, $urlDir ) );
+					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
+					$v->attr ( 'href', $this->url2uri ( $url, $urlCurrent ) );
 					$urlDownload [] = $url;
 				}
 				// script
 				$script = $pq ['script[type$=script]'];
 				foreach ( $script as $v ) {
 					$v = pq ( $v );
-					$url = $this->getUrl ( $v->attr ( 'src' ), $urlDir );
-					$v->attr ( 'src', $this->getUri ( $url, $urlDir ) );
+					$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
+					$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
 					$urlDownload [] = $url;
 				}
 				// pic
@@ -90,14 +85,14 @@ class MyCurl_Clone extends MyCurl {
 				if ($this->downloadPic) {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
-						$url = $this->getUrl ( $v->attr ( 'src' ), $urlDir );
-						$v->attr ( 'src', $this->getUri ( $url, $urlDir ) );
+						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
+						$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
 						$urlDownload [] = $url;
 					}
 				} else {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
-						$v->attr ( 'src', $this->getUrl ( $v->attr ( 'src' ), $urlDir ) );
+						$v->attr ( 'src', $this->uri2url ( $v->attr ( 'src' ), $urlCurrent ) );
 					}
 				}
 				// html
@@ -105,9 +100,9 @@ class MyCurl_Clone extends MyCurl {
 				$urlHtml = array ();
 				foreach ( $a as $v ) {
 					$v = pq ( $v );
-					$url = $this->getUrl ( $v->attr ( 'href' ), $urlDir );
-					if (0 === strpos ( $url, $urlDir )) {
-						$v->attr ( 'href', $this->getUri ( $url, $urlDir ) );
+					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
+					if (0 === strpos ( $url, $this->urlDir ( $urlCurrent ) )) {
+						$v->attr ( 'href', $this->url2uri ( $url, $urlCurrent ) );
 						$urlHtml [] = $url;
 					}
 				}
@@ -151,89 +146,10 @@ class MyCurl_Clone extends MyCurl {
 			}
 		}
 	}
-	/**
-	 *
-	 * @param unknown $str        	
-	 * @return boolean
-	 */
-	private function isUrl($str) {
-		return in_array ( substr ( $str, 0, 7 ), array (
-				'http://',
-				'https:/' 
-		) );
-	}
-	/**
-	 * get full url
-	 *
-	 * @param unknown $str        	
-	 * @param unknown $urlDir        	
-	 * @return string
-	 */
-	private function getUrl($str, $urlDir) {
-		if ($this->isUrl ( $str )) {
-			return $str;
-		}
-		if (0 === strpos ( $str, '/' )) {
-			$len = strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
-			return substr ( $urlDir, 0, 0 - $len ) . $str;
-		} else {
-			return $urlDir . $str;
-		}
-	}
-	
-	/**
-	 * get relative uri
-	 *
-	 * @param unknown $url        	
-	 * @param unknown $urlDir        	
-	 * @return mixed
-	 */
-	private function getUri($url, $urlDir) {
-		$parse1 = parse_url ( $url );
-		$parse2 = parse_url ( $urlDir );
-		if (! array_key_exists ( 'port', $parse1 )) {
-			$parse1 ['port'] = null;
-		}
-		if (! array_key_exists ( 'port', $parse2 )) {
-			$parse2 ['port'] = null;
-		}
-		$eq = true;
-		foreach ( array (
-				'scheme',
-				'host',
-				'port' 
-		) as $v ) {
-			if ($parse1 [$v] != $parse2 [$v]) {
-				$eq = false;
-				break;
-			}
-		}
-		$path = null;
-		if ($eq) {
-			$len = strlen ( $urlDir ) - strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
-			$path1 = substr ( $url, $len + 1 );
-			$path2 = substr ( $urlDir, $len + 1 );
-			$arr1 = explode ( '/', rtrim ( $path1, '/' ) );
-			$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
-			foreach ( $arr1 as $k => $v ) {
-				if (array_key_exists ( $k, $arr2 ) && $v == $arr2 [$k]) {
-					unset ( $arr1 [$k], $arr2 [$k] );
-				} else {
-					break;
-				}
-			}
-			$count1 = count ( $arr1 );
-			$count2 = count ( $arr2 );
-			if ($count1 > $count2) {
-				$path = implode ( '/', $arr1 );
-			} else {
-				$path = '';
-				foreach ( $arr2 as $v ) {
-					$path .= '../';
-				}
-				$path .= implode ( '/', $arr1 );
-			}
-		} else {
+	function url2uri($url, $urlCurrent) {
+		$path = parent::url2uri ( $url, $urlCurrent );
+		if (! isset ( $path )) {
+			$urlDir = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
 			$path2 = ltrim ( parse_url ( $urlDir, PHP_URL_PATH ), '/' );
 			$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
@@ -243,7 +159,6 @@ class MyCurl_Clone extends MyCurl {
 			}
 			$path .= $path1;
 		}
-		return $path;
 	}
 	
 	/**

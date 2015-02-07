@@ -225,16 +225,16 @@ class CurlMulti {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 					}
 					array_unshift ( $task [self::TASK_ITEM_ARGS], $param );
-					// write cache
-					if ((isset ( $task [self::TASK_ITEM_CTL] ['cache'] ) && isset ( $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] ) && true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
-						$this->cache ( $task, $param );
-					}
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
 				curl_close ( $ch );
 				if ($curlInfo ['result'] == CURLE_OK) {
 					if (isset ( $task [self::TASK_PROCESS] )) {
 						call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
+					}
+					// write cache
+					if (! isset ( $this->userError ) && ((isset ( $task [self::TASK_ITEM_CTL] ['cache'] ) && isset ( $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] ) && true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable'])) {
+						$this->cache ( $task, $param );
 					}
 					array_shift ( $task [self::TASK_ITEM_ARGS] );
 				}

@@ -22,7 +22,7 @@ class MyCurl {
 	
 	/**
 	 * replace curlmulti use yours
-	 * 
+	 *
 	 * @param unknown $curlmulti        	
 	 */
 	function setCurl($curlmulti) {
@@ -163,6 +163,124 @@ class MyCurl {
 		}
 		$html = call_user_func ( $func, $in, $out . '//IGNORE', $html );
 		return preg_replace ( '/(<meta[^>]*?charset=(["\']?))[a-z\d_\-]*(\2[^>]*?>)/is', "\\1$out\\3", $html, 1 );
+	}
+	
+	/**
+	 * is a full url
+	 *
+	 * @param unknown $str        	
+	 * @return boolean
+	 */
+	function isUrl($str) {
+		return in_array ( substr ( $str, 0, 7 ), array (
+				'http://',
+				'https:/' 
+		) );
+	}
+	
+	/**
+	 * urlCurrent show be redirected final url
+	 *
+	 * @param unknown $uri
+	 *        	uri in the html
+	 * @param unknown $urlCurrent
+	 *        	redirected final url of the html page
+	 * @return string
+	 */
+	function uri2url($uri, $urlCurrent) {
+		if ($this->isUrl ( $uri )) {
+			return $uri;
+		}
+		if (! $this->isUrl ( $urlCurrent )) {
+			throw new Exception ( 'url is invalid, url=' . $urlCurrent );
+		}
+		$urlDir = $this->urlDir ( $urlCurrent );
+		if (0 === strpos ( $uri, '/' )) {
+			$len = strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
+			return substr ( $urlDir, 0, 0 - $len ) . $uri;
+		} else {
+			return $urlDir . $uri;
+		}
+	}
+	
+	/**
+	 * get relative uri of the current page
+	 *
+	 * @param unknown $url        	
+	 * @param unknown $urlCurrent
+	 *        	redirected final url of the html page
+	 * @return string
+	 */
+	function url2uri($url, $urlCurrent) {
+		if (! $this->isUrl ( $url )) {
+			throw new Exception ( 'url is invalid, url=' . $url );
+		}
+		$urlDir = $this->urlDir ( $urlCurrent );
+		$parse1 = parse_url ( $url );
+		$parse2 = parse_url ( $urlDir );
+		if (! array_key_exists ( 'port', $parse1 )) {
+			$parse1 ['port'] = null;
+		}
+		if (! array_key_exists ( 'port', $parse2 )) {
+			$parse2 ['port'] = null;
+		}
+		$eq = true;
+		foreach ( array (
+				'scheme',
+				'host',
+				'port' 
+		) as $v ) {
+			if ($parse1 [$v] != $parse2 [$v]) {
+				$eq = false;
+				break;
+			}
+		}
+		$path = null;
+		if ($eq) {
+			$len = strlen ( $urlDir ) - strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
+			$path1 = substr ( $url, $len + 1 );
+			$path2 = substr ( $urlDir, $len + 1 );
+			$arr1 = explode ( '/', rtrim ( $path1, '/' ) );
+			$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
+			foreach ( $arr1 as $k => $v ) {
+				if (array_key_exists ( $k, $arr2 ) && $v == $arr2 [$k]) {
+					unset ( $arr1 [$k], $arr2 [$k] );
+				} else {
+					break;
+				}
+			}
+			$count1 = count ( $arr1 );
+			$count2 = count ( $arr2 );
+			if ($count1 > $count2) {
+				$path = implode ( '/', $arr1 );
+			} else {
+				$path = '';
+				foreach ( $arr2 as $v ) {
+					$path .= '../';
+				}
+				$path .= implode ( '/', $arr1 );
+			}
+		}
+		return $path;
+	}
+	
+	/**
+	 * url should be redirected final url
+	 *
+	 * @param unknown $url
+	 *        	the final directed url
+	 * @return string
+	 */
+	function urlDir($url) {
+		if (! $this->isUrl ( $url )) {
+			throw new Exception ( 'url is invalid, url=' . $url );
+		}
+		$urlDir = $url;
+		// none / end url should be finally redirected to / ended url
+		if ('/' != substr ( $urlDir, - 1 )) {
+			$urlDir = dirname ( $urlDir ) . '/';
+		}
+		return $urlDir;
 	}
 	
 	/**
