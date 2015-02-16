@@ -143,6 +143,7 @@ class MyCurl_Clone extends MyCurl {
 				if (isset ( $args ['file'] ) && ! file_put_contents ( $args ['file'], $r ['content'], LOCK_EX )) {
 					user_error ( 'write file failed, file=' . $args ['file'], E_USER_WARNING );
 				}
+				phpQuery::unloadDocuments();
 			}
 		}
 	}
@@ -159,6 +160,7 @@ class MyCurl_Clone extends MyCurl {
 			}
 			$path .= $path1;
 		}
+		return $path;
 	}
 	
 	/**

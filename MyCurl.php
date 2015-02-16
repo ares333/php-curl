@@ -145,7 +145,7 @@ class MyCurl {
 	 *        	auto|iconv|mb_convert_encoding
 	 * @return string
 	 */
-	function encoding($html, $in, $out = 'UTF-8', $mode = 'auto') {
+	function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto') {
 		$valid = array (
 				'auto',
 				'iconv',
@@ -161,8 +161,13 @@ class MyCurl {
 		} else {
 			throw new Exception ( 'charsetTrans failed, no function' );
 		}
+		$pattern = '/(<meta[^>]*?charset=(["\']?))([a-z\d_\-]*)(\2[^>]*?>)/is';
+		if (! isset ( $in )) {
+			preg_match ( $pattern, $html, $in );
+			$in = $in [3];
+		}
 		$html = call_user_func ( $func, $in, $out . '//IGNORE', $html );
-		return preg_replace ( '/(<meta[^>]*?charset=(["\']?))[a-z\d_\-]*(\2[^>]*?>)/is', "\\1$out\\3", $html, 1 );
+		return preg_replace ( $pattern, "\\1$out\\4", $html, 1 );
 	}
 	
 	/**
