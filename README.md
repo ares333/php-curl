@@ -1,7 +1,7 @@
 CurlMulti
 =========
 
-This is undoubtedly the best php curl library in the world.It is widely used by many developers.The library is a wrapper of curl_multi_* functions with best performance,maximum flexibility,maximum ease of use and negligible performance consumption.
+This is undoubtedly the best php curl library in the world.It is widely used by many developers.The library is a wrapper of curl_multi_* functions with best performance,maximum flexibility,maximum ease of use and negligible performance consumption.All in all it's a very very powerful library.
 
 Mechanism
 ---------
