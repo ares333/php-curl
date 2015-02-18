@@ -335,6 +335,7 @@ class CurlMulti {
 					$this->info ['all'] ['taskRunningNumNoType'] --;
 				}
 				$this->addTask ();
+				$this->info ['all'] ['finishNum'] ++;
 				// if $this->info['all']['queueNum'] grow very fast there will be no efficiency lost,because outer $this->exec() won't be executed.
 				$this->exec ();
 				$this->callCbInfo ();
@@ -555,7 +556,9 @@ class CurlMulti {
 		if (false == $isCache && false == isset ( $this->userError ) && (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
 			$this->cache ( $task, $r );
 		}
-		$this->info ['all'] ['finishNum'] ++;
+		if ($isCache) {
+			$this->info ['all'] ['finishNum'] ++;
+		}
 	}
 	
 	/**

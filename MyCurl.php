@@ -194,7 +194,7 @@ class MyCurl {
 	}
 	
 	/**
-	 * urlCurrent show be redirected final url
+	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
 	 * @param unknown $uri
 	 *        	uri in the html
@@ -209,6 +209,9 @@ class MyCurl {
 		if (! $this->isUrl ( $urlCurrent )) {
 			throw new Exception ( 'url is invalid, url=' . $urlCurrent );
 		}
+		if (0 === strpos ( $uri, './' )) {
+			$uri = substr ( $uri, 2 );
+		}
 		$urlDir = $this->urlDir ( $urlCurrent );
 		if (0 === strpos ( $uri, '/' )) {
 			$len = strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
@@ -219,7 +222,8 @@ class MyCurl {
 	}
 	
 	/**
-	 * get relative uri of the current page
+	 * get relative uri of the current page.
+	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
 	 * @param unknown $url        	
 	 * @param unknown $urlCurrent
@@ -280,7 +284,7 @@ class MyCurl {
 	}
 	
 	/**
-	 * url should be redirected final url
+	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
 	 * @param unknown $url
 	 *        	the final directed url
