@@ -59,7 +59,7 @@ class MyCurl {
 	 *        	ng non-greed
 	 * @return string boolean
 	 */
-	function substr($str, $start, $end, $mode = 'g') {
+	function substr($str, $start, $end = null, $mode = 'g') {
 		if (isset ( $start )) {
 			$pos1 = strpos ( $str, $start );
 		} else {
@@ -102,13 +102,23 @@ class MyCurl {
 	 *        	array('all'=>array(),'running'=>array())
 	 */
 	function cbCurlInfo($info) {
+		$str = $this->curlInfoString ( $info );
+		echo "\r" . $str;
+	}
+	
+	/**
+	 * CurlMulti info callback string
+	 *
+	 * @param unknown $info        	
+	 */
+	protected function curlInfoString($info) {
 		$all = $info ['all'];
 		$cacheNum = $all ['cacheNum'];
 		$taskPoolNum = $all ['taskPoolNum'];
 		$finishNum = $all ['finishNum'];
 		$speed = round ( $all ['downloadSpeed'] / 1024 ) . 'KB/s';
 		$size = round ( $all ['downloadSize'] / 1024 / 1024 ) . "MB";
-		$str = "\r";
+		$str = '';
 		$str .= sprintf ( "speed:%-10s", $speed );
 		$str .= sprintf ( 'download:%-10s', $size );
 		$str .= sprintf ( 'cache:%-10dfinish:%-10d', $cacheNum, $finishNum );
@@ -117,7 +127,7 @@ class MyCurl {
 			$str .= sprintf ( 'running' . $k . ':%-10d', $all ['taskRunningNumType'] [$k] );
 		}
 		$str .= sprintf ( 'running:%-10d', $all ['taskRunningNumNoType'] );
-		echo $str;
+		return $str;
 	}
 	
 	/**

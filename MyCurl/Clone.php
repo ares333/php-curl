@@ -48,7 +48,6 @@ class MyCurl_Clone extends MyCurl {
 		) );
 		$this->urlAdded [] = $this->url;
 		$this->getCurl ()->start ();
-		return false;
 	}
 	/**
 	 * download and html callback

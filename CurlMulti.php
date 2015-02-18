@@ -50,7 +50,7 @@ class CurlMulti {
 	);
 	// stack or queue
 	public $taskPoolType = 'stack';
-	// task callback,add() should be called in callback
+	// task callback,add() should be called in callback, $cbTask[0] is callback, $cbTask[1] is param.
 	public $cbTask = null;
 	// status callback
 	public $cbInfo = null;
@@ -80,8 +80,6 @@ class CurlMulti {
 	private $userError = null;
 	// if __construct called
 	private $isConstructCalled = false;
-	// signal backoff
-	private $signalBackOff = false;
 	// running info
 	private $info = array (
 			'all' => array (
@@ -205,10 +203,22 @@ class CurlMulti {
 	
 	/**
 	 * add task to taskPool
-	 * 
+	 *
 	 * @param unknown $task        	
 	 */
 	private function addTaskPool($task) {
+		// uniq
+		foreach ( array (
+				'taskPoolAhead',
+				'taskPool' 
+		) as $v ) {
+			foreach ( $this->$v as $k1 => $v1 ) {
+				if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
+					unset ( $this->taskPoolAhead [$k1] );
+				}
+			}
+		}
+		// add
 		if (true == $task [self::TASK_ITEM_CTL] ['ahead']) {
 			$this->taskPoolAhead [] = $task;
 		} else {
@@ -269,29 +279,12 @@ class CurlMulti {
 					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 					}
-					array_unshift ( $task [self::TASK_ITEM_ARGS], $param );
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
+				// must close first,other wise download may be not commpleted in process callback
 				curl_close ( $ch );
 				if ($curlInfo ['result'] == CURLE_OK) {
-					if (isset ( $task [self::TASK_PROCESS] )) {
-						call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
-					}
-					array_shift ( $task [self::TASK_ITEM_ARGS] );
-					// backoff
-					if ($this->signalBackOff) {
-						if (false == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) {
-							$task [self::TASK_ITEM_CTL] ['cache'] = array (
-									'enable' => true,
-									'expire' => 3600 
-							);
-						}
-						$this->addTaskPool($task);
-					}
-					// write cache
-					if (! isset ( $this->userError ) && (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
-						$this->cache ( $task, $param );
-					}
+					$this->doProcess ( $task, $param, false );
 				}
 				// error handle
 				$callFail = false;
@@ -341,7 +334,6 @@ class CurlMulti {
 				} else {
 					$this->info ['all'] ['taskRunningNumNoType'] --;
 				}
-				$this->info ['all'] ['finishNum'] ++;
 				$this->addTask ();
 				// if $this->info['all']['queueNum'] grow very fast there will be no efficiency lost,because outer $this->exec() won't be executed.
 				$this->exec ();
@@ -439,14 +431,16 @@ class CurlMulti {
 			} else {
 				// cbTask
 				if (0 < ($this->maxThread - count ( $this->taskPool )) and ! empty ( $this->cbTask )) {
+					if (! isset ( $this->cbTask [1] )) {
+						$this->cbTask [1] = array ();
+					}
 					call_user_func_array ( $this->cbTask [0], array (
 							$this->cbTask [1] 
 					) );
 				}
 				if (! empty ( $this->taskPoolAhead )) {
 					$task = array_pop ( $this->taskPoolAhead );
-				}
-				if (! empty ( $this->taskPool )) {
+				} elseif (! empty ( $this->taskPool )) {
 					if ($this->taskPoolType == 'stack') {
 						$task = array_pop ( $this->taskPool );
 					} elseif ($this->taskPoolType == 'queue') {
@@ -466,13 +460,8 @@ class CurlMulti {
 							file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
 							unset ( $cache ['content'] );
 						}
-						array_unshift ( $task [self::TASK_ITEM_ARGS], $cache );
-						$this->info ['all'] ['finishNum'] ++;
 						$this->info ['all'] ['cacheNum'] ++;
-						if (isset ( $task [self::TASK_PROCESS] )) {
-							call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
-						}
-						array_shift ( $task [self::TASK_ITEM_ARGS] );
+						$this->doProcess ( $task, $cache, true );
 						$this->callCbInfo ();
 					}
 				}
@@ -534,6 +523,39 @@ class CurlMulti {
 				$c --;
 			}
 		}
+	}
+	
+	/**
+	 * do process
+	 *
+	 * @param unknown $task        	
+	 * @param unknown $r        	
+	 * @param unknown $isCache        	
+	 */
+	private function doProcess($task, $r, $isCache) {
+		array_unshift ( $task [self::TASK_ITEM_ARGS], $r );
+		if (isset ( $task [self::TASK_PROCESS] )) {
+			$userRes = call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
+		}
+		if (! isset ( $userRes )) {
+			$userRes = true;
+		}
+		array_shift ( $task [self::TASK_ITEM_ARGS] );
+		// backoff
+		if (false === $userRes) {
+			if (false == $this->cache ['enable'] && false == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) {
+				$task [self::TASK_ITEM_CTL] ['cache'] = array (
+						'enable' => true,
+						'expire' => 3600 
+				);
+			}
+			$this->addTaskPool ( $task );
+		}
+		// write cache
+		if (false == $isCache && false == isset ( $this->userError ) && (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
+			$this->cache ( $task, $r );
+		}
+		$this->info ['all'] ['finishNum'] ++;
 	}
 	
 	/**
@@ -627,15 +649,6 @@ class CurlMulti {
 				CURLE_OK,
 				$msg 
 		);
-	}
-	
-	/**
-	 * backoff current callback
-	 * current callback will be called later
-	 * must be called in process callback
-	 */
-	function backoff() {
-		$this->signalBackoff = true;
 	}
 	
 	/**
