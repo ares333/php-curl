@@ -103,7 +103,12 @@ class MyCurl {
 	 */
 	function cbCurlInfo($info) {
 		$str = $this->curlInfoString ( $info );
-		echo "\r" . $str;
+		if (PHP_OS == 'Linux') {
+			$str = "\r\33[K" . trim ( $str );
+		} else {
+			$str = "\r" . $str;
+		}
+		echo $str;
 	}
 	
 	/**
@@ -173,11 +178,18 @@ class MyCurl {
 		}
 		$pattern = '/(<meta[^>]*?charset=(["\']?))([a-z\d_\-]*)(\2[^>]*?>)/is';
 		if (! isset ( $in )) {
-			preg_match ( $pattern, $html, $in );
-			$in = $in [3];
+			$n = preg_match ( $pattern, $html, $in );
+			if ($n > 0) {
+				$in = $in [3];
+			} else {
+				$in = null;
+			}
 		}
-		$html = call_user_func ( $func, $in, $out . '//IGNORE', $html );
-		return preg_replace ( $pattern, "\\1$out\\4", $html, 1 );
+		if (isset ( $in )) {
+			$html = call_user_func ( $func, $in, $out . '//IGNORE', $html );
+			$html = preg_replace ( $pattern, "\\1$out\\4", $html, 1 );
+		}
+		return $html;
 	}
 	
 	/**

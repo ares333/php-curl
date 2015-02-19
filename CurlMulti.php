@@ -59,9 +59,6 @@ class CurlMulti {
 	// common fail callback, called if no one specified
 	public $cbFail = null;
 	
-	// singleton
-	private static $instance = null;
-	
 	// max thread num no type
 	private $maxThreadNoType = null;
 	// all added task was saved here first
@@ -125,9 +122,6 @@ class CurlMulti {
 			'running' => array () 
 	);
 	function __construct() {
-		if (isset ( self::$instance )) {
-			throw new CurlMultiException ( 'multi instance is not allowed' );
-		}
 		$this->isConstructCalled = true;
 		if (version_compare ( PHP_VERSION, '5.1.0' ) < 0) {
 			throw new CurlMultiException ( 'PHP 5.1.0+ is needed' );
@@ -284,7 +278,7 @@ class CurlMulti {
 				// must close first,other wise download may be not commpleted in process callback
 				curl_close ( $ch );
 				if ($curlInfo ['result'] == CURLE_OK) {
-					$this->doProcess ( $task, $param, false );
+					$this->process ( $task, $param, false );
 				}
 				// error handle
 				$callFail = false;
@@ -461,8 +455,9 @@ class CurlMulti {
 							file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
 							unset ( $cache ['content'] );
 						}
+						$this->process ( $task, $cache, true );
 						$this->info ['all'] ['cacheNum'] ++;
-						$this->doProcess ( $task, $cache, true );
+						$this->info ['all'] ['finishNum'] ++;
 						$this->callCbInfo ();
 					}
 				}
@@ -533,7 +528,7 @@ class CurlMulti {
 	 * @param unknown $r        	
 	 * @param unknown $isCache        	
 	 */
-	private function doProcess($task, $r, $isCache) {
+	private function process($task, $r, $isCache) {
 		array_unshift ( $task [self::TASK_ITEM_ARGS], $r );
 		if (isset ( $task [self::TASK_PROCESS] )) {
 			$userRes = call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
@@ -555,9 +550,6 @@ class CurlMulti {
 		// write cache
 		if (false == $isCache && false == isset ( $this->userError ) && (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
 			$this->cache ( $task, $r );
-		}
-		if ($isCache) {
-			$this->info ['all'] ['finishNum'] ++;
 		}
 	}
 	
@@ -655,15 +647,27 @@ class CurlMulti {
 	}
 	
 	/**
+	 * return a default $ch initialized with global opt
+	 *
+	 * @param unknown $url        	
+	 * @return resource
+	 */
+	function getCh($url = null) {
+		return $this->curlInit ( $url );
+	}
+	
+	/**
 	 * get curl handle
 	 *
 	 * @param string $url        	
 	 * @return resource
 	 */
-	function curlInit($url) {
+	private function curlInit($url = null) {
 		$ch = curl_init ();
 		$opt = array ();
-		$opt [CURLOPT_URL] = $url;
+		if (isset ( $url )) {
+			$opt [CURLOPT_URL] = $url;
+		}
 		$opt [CURLOPT_HEADER] = false;
 		$opt [CURLOPT_CONNECTTIMEOUT] = 10;
 		$opt [CURLOPT_TIMEOUT] = 30;
