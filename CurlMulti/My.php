@@ -4,10 +4,10 @@
  * @author admin@curlmulti.com
  *
  */
-class MyCurl {
+class CurlMulti_My {
 	private $curl;
 	function __construct() {
-		$this->curl = new CurlMulti ();
+		$this->curl = new CurlMulti_Core ();
 		// default fail callback
 		$this->curl->cbFail = array (
 				$this,

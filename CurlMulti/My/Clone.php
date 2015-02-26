@@ -1,10 +1,11 @@
 <?php
 /**
  * Website copy, keep original directory structure(be supported by sound reason)
+ * phpQuery needed
  * @author admin@curlmulti.com
  *
  */
-class MyCurl_Clone extends MyCurl {
+class CurlMulti_My_Clone extends CurlMulti_My {
 	// overwrite local file
 	public $overwrite = false;
 	// if download pic
@@ -142,7 +143,7 @@ class MyCurl_Clone extends MyCurl {
 				if (isset ( $args ['file'] ) && ! file_put_contents ( $args ['file'], $r ['content'], LOCK_EX )) {
 					user_error ( 'write file failed, file=' . $args ['file'], E_USER_WARNING );
 				}
-				phpQuery::unloadDocuments();
+				phpQuery::unloadDocuments ();
 			}
 		}
 	}

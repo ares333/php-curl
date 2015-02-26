@@ -9,7 +9,7 @@
  * @author admin@curlmulti.com
  *        
  */
-class CurlMulti {
+class CurlMulti_Core {
 	// url
 	const TASK_ITEM_URL = 0x01;
 	// file
@@ -124,7 +124,7 @@ class CurlMulti {
 	function __construct() {
 		$this->isConstructCalled = true;
 		if (version_compare ( PHP_VERSION, '5.1.0' ) < 0) {
-			throw new CurlMultiException ( 'PHP 5.1.0+ is needed' );
+			throw new CurlMulti_Exception ( 'PHP 5.1.0+ is needed' );
 		}
 	}
 	
@@ -137,7 +137,7 @@ class CurlMulti {
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
 	 *        	curl fail callback,for callback first param array('error'=>array(0=>code,1=>msg),'info'=>array),second param $item[args];
-	 * @throws CurlMultiException
+	 * @throws CurlMulti_Exception
 	 * @return \frame\lib\CurlMulti
 	 */
 	function add(array $item, $process = null, $fail = null) {
@@ -221,7 +221,7 @@ class CurlMulti {
 			} elseif ($this->taskPoolType == 'stack') {
 				array_unshift ( $this->taskPool, $task );
 			} else {
-				throw new CurlMultiException ( 'taskPoolType not found, taskPoolType=' . $this->taskPoolType );
+				throw new CurlMulti_Exception ( 'taskPoolType not found, taskPoolType=' . $this->taskPoolType );
 			}
 		}
 	}
@@ -231,10 +231,10 @@ class CurlMulti {
 	 */
 	function start() {
 		if ($this->isRunning) {
-			throw new CurlMultiException ( __CLASS__ . ' is running !' );
+			throw new CurlMulti_Exception ( __CLASS__ . ' is running !' );
 		}
 		if (false === $this->isConstructCalled) {
-			throw new CurlMultiException ( __CLASS__ . ' __construct is not called' );
+			throw new CurlMulti_Exception ( __CLASS__ . ' __construct is not called' );
 		}
 		$this->mh = curl_multi_init ();
 		$this->info ['all'] ['startTime'] = time ();
@@ -441,7 +441,7 @@ class CurlMulti {
 					} elseif ($this->taskPoolType == 'queue') {
 						$task = array_shift ( $this->taskPool );
 					} else {
-						throw new CurlMultiException ( 'taskPoolType not found, taskPoolType=' . $this->taskPoolType );
+						throw new CurlMulti_Exception ( 'taskPoolType not found, taskPoolType=' . $this->taskPoolType );
 					}
 				}
 			}
@@ -563,7 +563,7 @@ class CurlMulti {
 	 */
 	private function cache($task, $content = null) {
 		if (! isset ( $this->cache ['dir'] ))
-			throw new CurlMultiException ( 'Cache dir is not defined' );
+			throw new CurlMulti_Exception ( 'Cache dir is not defined' );
 		$url = $task [self::TASK_ITEM_URL];
 		$key = md5 ( $url );
 		$isDownload = isset ( $task [self::TASK_ITEM_FILE] );
@@ -574,7 +574,7 @@ class CurlMulti {
 			} elseif ($this->cache ['dirLevel'] == 2) {
 				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3, 3 ) . '/' . substr ( $key, 6 );
 			} else {
-				throw new CurlMultiException ( 'cache dirLevel is invalid, dirLevel=' . $this->cache ['dirLevel'] );
+				throw new CurlMulti_Exception ( 'cache dirLevel is invalid, dirLevel=' . $this->cache ['dirLevel'] );
 			}
 		} else {
 			$file .= $key;
@@ -602,18 +602,18 @@ class CurlMulti {
 			$r = false;
 			// check main cache directory
 			if (! is_dir ( $this->cache ['dir'] )) {
-				throw new CurlMultiException ( "Cache dir doesn't exists" );
+				throw new CurlMulti_Exception ( "Cache dir doesn't exists" );
 			} else {
 				$dir = dirname ( $file );
 				// level 1 subdir
 				if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] > 1) {
 					$dir1 = dirname ( $dir );
 					if (! is_dir ( $dir1 ) && ! mkdir ( $dir1 )) {
-						throw new CurlMultiException ( 'Create dir failed, dir=' . $dir1 );
+						throw new CurlMulti_Exception ( 'Create dir failed, dir=' . $dir1 );
 					}
 				}
 				if (! is_dir ( $dir ) && ! mkdir ( $dir )) {
-					throw new CurlMultiException ( 'Create dir failed, dir=' . $dir );
+					throw new CurlMulti_Exception ( 'Create dir failed, dir=' . $dir );
 				}
 				if ($isDownload) {
 					$content ['content'] = base64_encode ( file_get_contents ( $task [self::TASK_ITEM_FILE] ) );
@@ -625,7 +625,7 @@ class CurlMulti {
 				if (file_put_contents ( $file, $content, LOCK_EX )) {
 					$r = true;
 				} else {
-					throw new CurlMultiException ( 'Write cache file failed' );
+					throw new CurlMulti_Exception ( 'Write cache file failed' );
 				}
 			}
 		}
