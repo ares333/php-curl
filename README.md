@@ -14,21 +14,21 @@ QQ Group:215348766
 
 Feature
 -------
-1.Extremely low cpu and memory usage.
-1.Best program performance(tested spider 2000+ html pages per second and 1000MBit/s pic download speed).
-1.Internal download support(use curl download callback,best performance).
-1.Support global parallel and seperate parallel for defferent task type.
-1.Support running info callback.All info you need is returned, include overall and every task infomation.
-1.Support add task in task callback.
-1.Support user callback can be specified.You can do anything in that.
-1.Support process callback backoff.Used to satisfy prerequists.
-1.Support error callback.All error info is returned.
-1.Support max try for tasks.
-1.Support user variable flow arbitrarily.
-1.Support global CURLOPT_* and task CURLOPT_*.
-1.Powerfull cache.Global and task cache config supported.
-1.All public property config can be changed on the fly!
-1.You can develop amazing curl application based on the library.
+1. Extremely low cpu and memory usage.
+1. Best program performance(tested spider 2000+ html pages per second and 1000MBit/s pic download speed).
+1. Internal download support(use curl download callback,best performance).
+1. Support global parallel and seperate parallel for defferent task type.
+1. Support running info callback.All info you need is returned, include overall and every task infomation.
+1. Support add task in task callback.
+1. Support user callback can be specified.You can do anything in that.
+1. Support process callback backoff.Used to satisfy prerequists.
+1. Support error callback.All error info is returned.
+1. Support max try for tasks.
+1. Support user variable flow arbitrarily.
+1. Support global CURLOPT_* and task CURLOPT_*.
+1. Powerfull cache.Global and task cache config supported.
+1. All public property config can be changed on the fly!
+1. You can develop amazing curl application based on the library.
 
 Mechanism
 ---------
