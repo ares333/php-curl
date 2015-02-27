@@ -37,19 +37,19 @@ Without pthreads php is single-threaded language,so the library widely use callb
 
 Files
 -----
-**phpQuery.php**
+**phpQuery.php**<br>
 [https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "Official Website")
 
-**CurlMulti/Core.php**
+**CurlMulti/Core.php**<br>
 Kernel class
 
-**CurlMulti/My.php**
+**CurlMulti/My.php**<br>
 A wraper of CurlMulti_Core.Supported very usefull tools and convention.It's very easy to use.All spider shoud inherent this class.
 
-**CurlMulti/Exception.php**
+**CurlMulti/Exception.php**<br>
 CurlMulti_Exception
 
-**CurlMulti/My/Clone.php**
+**CurlMulti/My/Clone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
 
 API
@@ -113,15 +113,15 @@ Musted be called in subclass.
 ```PHP
 public function add(array $item, $process = null, $fail = null)
 ```
-Add a task to taskpool.
+Add a task to taskpool.<br>
 **$item['url']** Must not be emtpy.<br>
 **$item['file']** If isset the content of the url will be saved.Should be absolute path.The last level directory will be created automaticly.<br>
 **$item['opt']=array()** CURLOPT_* for current task.Override the global $this->opt and merged.<br>
 **$item['args']** Second parameter for callbacks.Include $this->cbFail and $process.<br>
 **$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
-	~~$item['ctl']['type'] Task type use for $this->maxThreadType。<br />
-	~~$item['ctl']['cache']=array('enable'=>null,'expire'=>null) Task cache.Override $this->cache and merged.<br />
-	~~$item['ctl']['ahead'] Regardless of $this->taskPoolType.The task will be allway add to parallel prioritized.<br />
+*$item['ctl']['type']* Task type use for $this->maxThreadType。<br />
+*$item['ctl']['cache']=array('enable'=>null,'expire'=>null)* Task cache.Override $this->cache and merged.<br />
+*$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allway add to parallel prioritized.<br />
 **$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext') and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.If return false in callback,the task will be backoffed to the tail of the taskpool that it will be called again later with same state of current.Returning false is risky,because you must guarantee stop returning false yourself to avoid endless loop.<br />
 **$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.Error key is full error infomation.The second parameter is $item['args'].
 
