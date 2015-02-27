@@ -2,7 +2,8 @@
 /**
  * Website copy, keep original directory structure(be supported by sound reason)
  * phpQuery needed
- * @author admin@curlmulti.com
+ * 
+ * @author admin@phpdr.net
  *
  */
 class CurlMulti_My_Clone extends CurlMulti_My {

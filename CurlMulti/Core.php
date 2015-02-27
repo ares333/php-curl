@@ -6,7 +6,7 @@
  * 
  * more useragent:http://www.useragentstring.com/
  *
- * @author admin@curlmulti.com
+ * @author admin@phpdr.net
  *        
  */
 class CurlMulti_Core {
@@ -652,7 +652,7 @@ class CurlMulti_Core {
 	 * @param unknown $url        	
 	 * @return resource
 	 */
-	function getCh($url = null) {
+	function getch($url = null) {
 		return $this->curlInit ( $url );
 	}
 	

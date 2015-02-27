@@ -1,7 +1,8 @@
 <?php
 /**
  * CurlMulti wrapper, more easy to use 
- * @author admin@curlmulti.com
+ * 
+ * @author admin@phpdr.net
  *
  */
 class CurlMulti_My {
