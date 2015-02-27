@@ -52,9 +52,8 @@ CurlMulti_Exception
 **CurlMulti/My/Clone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
 
-API
----
-**CurlMulti_Core**
+API(CurlMulti_Core)
+-------------------
 ```PHP
 public $maxThread = 10
 ```
