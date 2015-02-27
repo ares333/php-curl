@@ -37,9 +37,110 @@ Without pthreads php is single-threaded language,so the library widely use callb
 
 Files
 -----
+**phpQuery.php**
+[https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "Official Website")
+
+**CurlMulti/Core.php**
+Kernel class
+
+**CurlMulti/My.php**
+A wraper of CurlMulti_Core.Supported very usefull tools and convention.It's very easy to use.All spider shoud inherent this class.
+
+**CurlMulti/Exception.php**
+CurlMulti_Exception
+
+**CurlMulti/My/Clone.php**
+A powerfull site clone tool.It's a perfect tool.
 
 API
 ---
+**CurlMulti_Core**
+```PHP
+public $maxThread = 10
+```
+The limit may be associated with OS or libcurl,but not the library.
+
+```PHP
+public $maxThreadType = array ()
+```
+Key is type(specified in add()).Value is parallel.The sum of values can excced $maxThread.Parallel of notype task is value of $maxThread minus the sum.Parallel of notype less than zero will be set to zero.Zero represent no type task will never be excuted except the config changed in the fly.
+
+```PHP
+public $maxTry = 3
+```
+Curl error or user error max try times.If reached $cbFail will be called.
+
+```PHP
+public $opt = array ()
+```
+Global CURLOPT_* for all tasks.Overrided by CURLOPT_* in add().
+
+```PHP
+public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1)
+```
+The options is very easy to understand.Cache is identified by url.If cache finded,the class will not access the network,but return the cache directly.
+
+```PHP
+public $taskPoolType = 'stack'
+```
+Values are 'stack' or 'queue'.This option decided depth-first or width-first.
+
+```PHP
+public $cbTask = array(0=>'callback',1=>array())
+```
+When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.$cbTask[0] is callback itself.$cbTask[1] is parameters for the callback.
+
+```PHP
+public $cbInfo = null
+```
+Callback for running info.Use print_r() to check it.The speed is limited once per second.
+
+```PHP
+public $cbUser = null
+```
+Callback for user operations very frequently.You can do anything there.
+
+```PHP
+public $cbFail = null
+```
+Callback for failed tasks.Lower priority than 'fail callback' specified than add().
+
+```PHP
+public function __construct()
+```
+Musted be called in subclass.
+
+```PHP
+public function add(array $item, $process = null, $fail = null)
+```
+Add a task to taskpool.
+**$item['url']** Must not be emtpy.<br>
+**$item['file']** If isset the content of the url will be saved.Should be absolute path.The last level directory will be created automaticly.<br>
+**$item['opt']=array()** CURLOPT_* for current task.Override the global $this->opt and merged.<br>
+**$item['args']** Second parameter for callbacks.Include $this->cbFail and $process.<br>
+**$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
+	~~$item['ctl']['type'] Task type use for $this->maxThreadType。<br />
+	~~$item['ctl']['cache']=array('enable'=>null,'expire'=>null) Task cache.Override $this->cache and merged.<br />
+	~~$item['ctl']['ahead'] Regardless of $this->taskPoolType.The task will be allway add to parallel prioritized.<br />
+**$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext') and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.If return false in callback,the task will be backoffed to the tail of the taskpool that it will be called again later with same state of current.Returning false is risky,because you must guarantee stop returning false yourself to avoid endless loop.<br />
+**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.Error key is full error infomation.The second parameter is $item['args'].
+
+```PHP
+public function error($msg)
+```
+A powerfull method.If you think current task is fail in $process(second parameter of $this->add()) callback,you can call this method to make the task go $this->maxTry loop.<br />
+Download task is not affected.Cache write will be ignored.<br>
+Must be called in $process.
+
+```PHP
+public function start()
+```
+Start the loop.This is a blocked method.
+
+```PHP
+public function getch($url = null)
+```
+Get a curl resource with global $this->opt.
 
 Demo
 ----
