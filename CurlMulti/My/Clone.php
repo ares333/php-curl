@@ -117,7 +117,7 @@ class CurlMulti_My_Clone extends CurlMulti_My {
 					foreach ( $$v as $v1 ) {
 						if (! in_array ( $v1, $this->urlAdded )) {
 							$file = $this->getFile ( $v1 );
-							if (null == $file) {
+							if (null == $file && $v == 'urlDownload') {
 								continue;
 							}
 							$item = array (
@@ -194,20 +194,11 @@ class CurlMulti_My_Clone extends CurlMulti_My {
 	 * @return string
 	 */
 	private function getPath($url) {
-		$ext = pathinfo ( $url, PATHINFO_EXTENSION );
-		if (! in_array ( $ext, array (
-				'htm',
-				'html',
-				'css',
-				'js',
-				'jpg',
-				'jpeg',
-				'gif',
-				'png' 
-		) )) {
-			$url = rtrim ( $url, '/' ) . '/index.html';
-		}
 		$parse = parse_url ( $url );
+		$ext = pathinfo ( $parse ['path'], PATHINFO_EXTENSION );
+		if (empty ( $ext )) {
+			$parse ['path'] = rtrim ( $parse ['path'], '/' ) . '/index.html';
+		}
 		$port = '';
 		if (isset ( $parse ['port'] )) {
 			$port = '_' . $port;
