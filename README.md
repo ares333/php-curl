@@ -211,7 +211,7 @@ Return CurlMulti_Core instance.
 Demos
 -----
 **demo1.php**<br>
-Just a basic kernel class demonstration, may be not runnable.
+Just a basic kernel class demonstration, maybe not runnable.
 
 **demo2.php**<br>
 This demo used to be runnable.But everything is changing,so the code not updated.Just a demo.
