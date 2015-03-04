@@ -7,8 +7,12 @@
  */
 class CurlMulti_My {
 	private $curl;
-	function __construct() {
-		$this->curl = new CurlMulti_Core ();
+	function __construct($curlmulti = null) {
+		if (isset ( $curlmulti )) {
+			$this->curl = $curlmulti;
+		} else {
+			$this->curl = new CurlMulti_Core ();
+		}
 		// default fail callback
 		$this->curl->cbFail = array (
 				$this,
@@ -19,15 +23,6 @@ class CurlMulti_My {
 				$this,
 				'cbCurlInfo' 
 		);
-	}
-	
-	/**
-	 * replace curlmulti use yours
-	 *
-	 * @param unknown $curlmulti        	
-	 */
-	function setCurl($curlmulti) {
-		$this->curl = $curlmulti;
 	}
 	
 	/**
