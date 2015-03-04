@@ -448,7 +448,7 @@ class CurlMulti_Core {
 			$noAdd = false;
 			$cache = null;
 			if (! empty ( $task )) {
-				if (array_key_exists ( 'enable', $task [self::TASK_ITEM_CTL] ['cache'] ) && true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] || $this->cache ['enable']) {
+				if ( !empty( $task [self::TASK_ITEM_CTL] ['cache'] ) || !empty( $this->cache ['enable'] ) ) {
 					$cache = $this->cache ( $task );
 					if (null !== $cache) {
 						if (isset ( $task [self::TASK_ITEM_FILE] )) {
@@ -539,7 +539,7 @@ class CurlMulti_Core {
 		array_shift ( $task [self::TASK_ITEM_ARGS] );
 		// backoff
 		if (false === $userRes) {
-			if (false == $this->cache ['enable'] && false == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) {
+			if ( empty( $this->cache ['enable'] ) && empty( $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] ) ) {
 				$task [self::TASK_ITEM_CTL] ['cache'] = array (
 						'enable' => true,
 						'expire' => 3600 
@@ -548,7 +548,7 @@ class CurlMulti_Core {
 			$this->addTaskPool ( $task );
 		}
 		// write cache
-		if (false == $isCache && false == isset ( $this->userError ) && (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
+		if (false == $isCache && false == isset ( $this->userError ) && !empty( $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || !empty( $this->cache ['enable'] ) ) {
 			$this->cache ( $task, $r );
 		}
 	}

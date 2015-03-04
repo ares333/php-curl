@@ -1,4 +1,9 @@
 <?php
+// ini_set('display_errors','on');
+// error_reporting(E_ALL);
+require __DIR__ . '/../CurlMulti/Core.php';
+require __DIR__ . '/../CurlMulti/My.php';
+require __DIR__ . '/../phpQuery.php';
 class Demo extends CurlMulti_My {
 	private $baseUrl = 'http://www.1ting.com';
 	private $noCacheNum = 10;
@@ -64,7 +69,7 @@ class Demo extends CurlMulti_My {
 	 * @param unknown $param        	
 	 */
 	function cb1($r, $param) {
-		if (! $this->httpError ( $r ['info'] )) {
+		if (! $this->hasHttpError ( $r ['info'] )) {
 			$html = phpQuery::newDocumentHTML ( $r ['content'] );
 			$list = $html ['div.singerList:has(h3:contains(\'M\')) ul.allSinger li a'];
 			foreach ( $list as $v ) {
@@ -98,7 +103,7 @@ class Demo extends CurlMulti_My {
 	 * @param unknown $param        	
 	 */
 	function cb2($r, $param) {
-		if (! $this->httpError ( $r ['info'] )) {
+		if (! $this->hasHttpError ( $r ['info'] )) {
 			$html = phpQuery::newDocumentHTML ( $r ['content'] );
 			$list = $html ['#song-list td.songTitle a'];
 			foreach ( $list as $v ) {
@@ -130,7 +135,7 @@ class Demo extends CurlMulti_My {
 	 * @param unknown $param        	
 	 */
 	function cb3($r, $param) {
-		if (! $this->httpError ( $r ['info'] )) {
+		if (! $this->hasHttpError ( $r ['info'] )) {
 			echo "$param[imgFile] download finished. test1=" . $param ['test1'] . "\n";
 		}
 	}
