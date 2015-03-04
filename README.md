@@ -37,9 +37,6 @@ Without pthreads php is single-threaded language,so the library widely use callb
 
 Files
 -----
-**phpQuery.php**<br>
-[https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "Official Website")
-
 **CurlMulti/Core.php**<br>
 Kernel class
 
@@ -51,6 +48,9 @@ CurlMulti_Exception
 
 **CurlMulti/My/Clone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
+
+**phpQuery.php**<br>
+[https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "Official Website")
 
 API(CurlMulti_Core)
 -------------------
@@ -211,7 +211,7 @@ Return CurlMulti_Core instance.
 Demos
 -----
 **demo0.php**<br>
-A simple runnable demo that shows the very basic usage of CurlMulti_Core.
+A simple runnable demo that shows the very basic usage of kernel class.
 
 **demo1.php**<br>
 Just a basic kernel class demonstration, maybe not runnable.
