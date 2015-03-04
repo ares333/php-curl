@@ -141,6 +141,73 @@ public function getch($url = null)
 ```
 Get a curl resource with global $this->opt.
 
+API(CurlMulti_My)
+-----------------
+```PHP
+function __construct($curlmulti = null)
+```
+Set up use default CurlMulti_Core or your own instance.
+
+```PHP
+function hashpath($name, $level = 2)
+```
+Set hashed path.Every directory has max 4096 files.
+
+```PHP
+function substr($str, $start, $end = null, $mode = 'g')
+```
+Get substring of a string use start string and end string include in the string.Start and end are excluded.
+
+```PHP
+function cbCurlFail($error, $args)
+```
+Default fail callback.
+
+```PHP
+function cbCurlInfo($info)
+```
+Default CurlMulti_Core::$cbInfo
+
+```PHP
+protected function curlInfoString($info)
+```
+Get info string
+
+```PHP
+function hasHttpError($info)
+```
+If http code is 200.
+
+```PHP
+function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
+```
+Powerfull function to convert html encoding and set <head></head> in html.$in can be get from <head></head>.
+
+```PHP
+function isUrl($str)
+```
+If is a full url.
+
+```PHP
+function uri2url($uri, $urlCurrent)
+```
+Get full url of $uri used in the $urlCurrent html page.
+
+```PHP
+function url2uri($url, $urlCurrent)
+```
+get relative uri of the current page.
+
+```PHP
+function urlDir($url)
+```
+url should be redirected final url.Final url normally has '/' suffix.
+
+```PHP
+function getCurl()
+```
+Return CurlMulti_Core instance.
+
 Demos
 -----
 **demo1.php**<br>
