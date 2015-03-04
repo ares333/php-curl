@@ -1,6 +1,6 @@
 <?php
-// ini_set('display_errors','on');
-// error_reporting(E_ALL);
+ini_set('display_errors','on');
+error_reporting(E_ALL);
 require __DIR__ . '/../CurlMulti/Core.php';
 require __DIR__ . '/../CurlMulti/My.php';
 require __DIR__ . '/../phpQuery.php';
@@ -17,9 +17,12 @@ class Demo extends CurlMulti_My {
 		if (! is_dir ( $this->imgDir ))
 			mkdir ( $this->imgDir );
 		$this->getCurl()->cache = array (
-				'dir' => $cacheDir,
-				'on' => true,
-				'expire' => 3600 * 24 
+			'enable' => true,
+			'enableDownload' => false,
+			'compress' => false,
+			'dir' => $cacheDir,
+			'expire' => 3600 * 24,
+			'dirLevel' => 1 ,
 		);
 		$this->getCurl()->maxThread = 12;
 		$this->getCurl()->opt [CURLOPT_CONNECTTIMEOUT] = 10;
@@ -114,7 +117,7 @@ class Demo extends CurlMulti_My {
 			$imgFile = $this->imgDir . '/' . $param ['artistName'] . '.' . pathinfo ( $imgUrl, PATHINFO_EXTENSION );
 			$this->getCurl()->add ( array (
 					'url' => $imgUrl,
-					'file' => $imgFile,
+					'file' => iconv('utf-8', 'gbk', $imgFile),
 					'ctl' => array (
 							'type' => 'img' 
 					),
