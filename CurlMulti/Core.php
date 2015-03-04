@@ -448,7 +448,7 @@ class CurlMulti_Core {
 			$noAdd = false;
 			$cache = null;
 			if (! empty ( $task )) {
-				if (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] || $this->cache ['enable']) {
+				if (array_key_exists ( 'enable', $task [self::TASK_ITEM_CTL] ['cache'] ) && true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] || $this->cache ['enable']) {
 					$cache = $this->cache ( $task );
 					if (null !== $cache) {
 						if (isset ( $task [self::TASK_ITEM_FILE] )) {
