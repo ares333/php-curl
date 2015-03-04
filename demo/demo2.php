@@ -11,24 +11,24 @@ class Demo extends CurlMulti_My {
 			mkdir ( $cacheDir );
 		if (! is_dir ( $this->imgDir ))
 			mkdir ( $this->imgDir );
-		$this->curl->cache = array (
+		$this->getCurl()->cache = array (
 				'dir' => $cacheDir,
 				'on' => true,
 				'expire' => 3600 * 24 
 		);
-		$this->curl->maxThread = 12;
-		$this->curl->opt [CURLOPT_CONNECTTIMEOUT] = 10;
-		$this->curl->cbInfo = array (
+		$this->getCurl()->maxThread = 12;
+		$this->getCurl()->opt [CURLOPT_CONNECTTIMEOUT] = 10;
+		$this->getCurl()->cbInfo = array (
 				$this,
 				'cbCurlInfo' 
 		);
-		$this->curl->maxThreadType ['img'] = 10;
+		$this->getCurl()->maxThreadType ['img'] = 10;
 	}
 	/**
 	 * start the loop here
 	 */
 	function fuck() {
-		$this->curl->add ( array (
+		$this->getCurl()->add ( array (
 				'url' => $this->baseUrl . '/group/group0_1.html',
 				'args' => array (
 						// this argument can be passed straight forward
@@ -75,7 +75,7 @@ class Demo extends CurlMulti_My {
 				if (-- $this->noCacheNum > 0) {
 					$useCache = false;
 				}
-				$this->curl->add ( array (
+				$this->getCurl()->add ( array (
 						'url' => $this->baseUrl . $v->attr ( 'href' ),
 						'ctl' => array (
 								'useCache' => $useCache 
@@ -107,7 +107,7 @@ class Demo extends CurlMulti_My {
 			}
 			$imgUrl = $html ['div.sidebar dl.singerInfo img']->attr ( 'src' );
 			$imgFile = $this->imgDir . '/' . $param ['artistName'] . '.' . pathinfo ( $imgUrl, PATHINFO_EXTENSION );
-			$this->curl->add ( array (
+			$this->getCurl()->add ( array (
 					'url' => $imgUrl,
 					'file' => $imgFile,
 					'ctl' => array (
