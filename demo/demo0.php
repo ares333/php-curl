@@ -4,6 +4,10 @@ $url1 = 'https://gcc.gnu.org';
 $url2 = 'http://urlnotexits';
 $curl = new CurlMulti_Core ();
 
+$curl->opt [CURLOPT_HTTPPROXYTUNNEL] = true;
+$curl->opt [CURLOPT_SSL_VERIFYPEER] = false;
+$curl->opt [CURLOPT_SSL_VERIFYHOST] = false;
+
 $curl->add ( array (
 		'url' => $url1,
 		'args' => array (

@@ -1,4 +1,7 @@
 <?php
+include '../CurlMulti/Core.php';
+include '../CurlMulti/My.php';
+include '../phpQuery.php';
 class Demo extends CurlMulti_My {
 	private $baseUrl = 'http://www.1ting.com';
 	private $noCacheNum = 10;
@@ -11,24 +14,21 @@ class Demo extends CurlMulti_My {
 			mkdir ( $cacheDir );
 		if (! is_dir ( $this->imgDir ))
 			mkdir ( $this->imgDir );
-		$this->getCurl()->cache = array (
-				'dir' => $cacheDir,
-				'on' => true,
-				'expire' => 3600 * 24 
-		);
-		$this->getCurl()->maxThread = 12;
-		$this->getCurl()->opt [CURLOPT_CONNECTTIMEOUT] = 10;
-		$this->getCurl()->cbInfo = array (
+		$this->getCurl ()->cache ['dir'] = $cacheDir;
+		$this->getCurl ()->cache ['enalbe'] = true;
+		$this->getCurl ()->maxThread = 12;
+		$this->getCurl ()->opt [CURLOPT_CONNECTTIMEOUT] = 10;
+		$this->getCurl ()->cbInfo = array (
 				$this,
 				'cbCurlInfo' 
 		);
-		$this->getCurl()->maxThreadType ['img'] = 10;
+		$this->getCurl ()->maxThreadType ['img'] = 10;
 	}
 	/**
 	 * start the loop here
 	 */
 	function fuck() {
-		$this->getCurl()->add ( array (
+		$this->getCurl ()->add ( array (
 				'url' => $this->baseUrl . '/group/group0_1.html',
 				'args' => array (
 						// this argument can be passed straight forward
@@ -64,7 +64,7 @@ class Demo extends CurlMulti_My {
 	 * @param unknown $param        	
 	 */
 	function cb1($r, $param) {
-		if (! $this->httpError ( $r ['info'] )) {
+		if (! $this->hasHttpError ( $r ['info'] )) {
 			$html = phpQuery::newDocumentHTML ( $r ['content'] );
 			$list = $html ['div.singerList:has(h3:contains(\'M\')) ul.allSinger li a'];
 			foreach ( $list as $v ) {
@@ -75,7 +75,7 @@ class Demo extends CurlMulti_My {
 				if (-- $this->noCacheNum > 0) {
 					$useCache = false;
 				}
-				$this->getCurl()->add ( array (
+				$this->getCurl ()->add ( array (
 						'url' => $this->baseUrl . $v->attr ( 'href' ),
 						'ctl' => array (
 								'useCache' => $useCache 
@@ -98,7 +98,7 @@ class Demo extends CurlMulti_My {
 	 * @param unknown $param        	
 	 */
 	function cb2($r, $param) {
-		if (! $this->httpError ( $r ['info'] )) {
+		if (! $this->hasHttpError ( $r ['info'] )) {
 			$html = phpQuery::newDocumentHTML ( $r ['content'] );
 			$list = $html ['#song-list td.songTitle a'];
 			foreach ( $list as $v ) {
@@ -107,7 +107,7 @@ class Demo extends CurlMulti_My {
 			}
 			$imgUrl = $html ['div.sidebar dl.singerInfo img']->attr ( 'src' );
 			$imgFile = $this->imgDir . '/' . $param ['artistName'] . '.' . pathinfo ( $imgUrl, PATHINFO_EXTENSION );
-			$this->getCurl()->add ( array (
+			$this->getCurl ()->add ( array (
 					'url' => $imgUrl,
 					'file' => $imgFile,
 					'ctl' => array (
@@ -130,7 +130,7 @@ class Demo extends CurlMulti_My {
 	 * @param unknown $param        	
 	 */
 	function cb3($r, $param) {
-		if (! $this->httpError ( $r ['info'] )) {
+		if (! $this->hasHttpError ( $r ['info'] )) {
 			echo "$param[imgFile] download finished. test1=" . $param ['test1'] . "\n";
 		}
 	}
