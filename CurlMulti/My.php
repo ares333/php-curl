@@ -292,7 +292,7 @@ class CurlMulti_My {
 	}
 	
 	/**
-	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
+	 * url should be redirected final url.Final url normally has '/' suffix.
 	 *
 	 * @param unknown $url
 	 *        	the final directed url
@@ -311,7 +311,7 @@ class CurlMulti_My {
 	}
 	
 	/**
-	 * get CurlMulti instance
+	 * get CurlMulti_Core instance
 	 *
 	 * @return CurlMulti
 	 */
