@@ -210,6 +210,9 @@ Return CurlMulti_Core instance.
 
 Demos
 -----
+**demo0.php**<br>
+A simple runnable demo that shows the very basic usage of CurlMulti_Core.
+
 **demo1.php**<br>
 Just a basic kernel class demonstration, maybe not runnable.
 
