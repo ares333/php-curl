@@ -114,9 +114,9 @@ public function add(array $item, $process = null, $fail = null)
 ```
 Add a task to taskpool.<br>
 **$item['url']** Must not be emtpy.<br>
-**$item['file']** If isset the content of the url will be saved.Should be absolute path.The last level directory will be created automaticly.<br>
+**$item['file']** If is setted the content of the url will be saved.Should be absolute path.The last level directory will be created automaticly.<br>
 **$item['opt']=array()** CURLOPT_* for current task.Override the global $this->opt and merged.<br>
-**$item['args']** Second parameter for callbacks.Include $this->cbFail and $process.<br>
+**$item['args']** Second parameter for callbacks.Include $this->cbFail and $fail and $process.<br>
 **$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
 *$item['ctl']['type']* Task type use for $this->maxThreadType。<br />
 *$item['ctl']['cache']=array('enable'=>null,'expire'=>null)* Task cache.Override $this->cache and merged.<br />
