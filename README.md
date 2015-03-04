@@ -9,7 +9,7 @@ PHP 5.1.0 +
 
 Contact Us
 ----------
-Email: admin@curlmulti.com<br>
+Email: admin@phpdr.com<br>
 QQ Group:215348766
 
 Feature
