@@ -181,7 +181,7 @@ If http code is 200.
 ```PHP
 function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 ```
-Powerfull function to convert html encoding and set <head></head> in html.$in can be get from <head></head>.
+Powerfull function to convert html encoding and set \<head\>\</head\> in html.$in can be get from \<head\>\</head\>.
 
 ```PHP
 function isUrl($str)
