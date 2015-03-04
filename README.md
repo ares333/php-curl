@@ -217,7 +217,7 @@ A simple runnable demo that shows the very basic usage of kernel class.
 Just a basic kernel class demonstration, maybe not runnable.
 
 **demo2.php**<br>
-This demo used to be runnable.But everything is changing,so the code not updated.Just a demo.
+This demo is advanced usage with CurlMulti_My.It's porpuse is to show as much features as possible with as little code as possible.The target site maybe changing,so the code maybe not runnable.
 
 **demo3.php**<br>
 Perfect clone the target site.Copy the demo code from a project use framework.So not tested.
