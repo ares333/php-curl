@@ -668,9 +668,6 @@ class CurlMulti_Core {
 		if (isset ( $url )) {
 			$opt [CURLOPT_URL] = $url;
 		}
-		$opt [CURLOPT_HTTPPROXYTUNNEL] = true;
-		$opt [CURLOPT_SSL_VERIFYPEER] = false;
-		$opt [CURLOPT_SSL_VERIFYHOST] = false;
 		$opt [CURLOPT_HEADER] = false;
 		$opt [CURLOPT_CONNECTTIMEOUT] = 10;
 		$opt [CURLOPT_TIMEOUT] = 30;
