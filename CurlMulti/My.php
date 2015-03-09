@@ -35,8 +35,9 @@ class CurlMulti_My {
 	function hashpath($name, $level = 2) {
 		$file = md5 ( $name );
 		if ($level == 1) {
-			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3 );
 		} elseif ($level == 2) {
+			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3 );
+		} elseif ($level == 3) {
 			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3, 6 ) . '/' . substr ( $file, 6 );
 		} else {
 			throw new Exception ( 'level is invalid, level=' . $level );
@@ -156,12 +157,15 @@ class CurlMulti_My {
 	 *        	auto|iconv|mb_convert_encoding
 	 * @return string
 	 */
-	function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto') {
+	function encoding($html, $in = null, $out = null, $mode = 'auto') {
 		$valid = array (
 				'auto',
 				'iconv',
 				'mb_convert_encoding' 
 		);
+		if (! isset ( $out )) {
+			$out = 'UTF-8';
+		}
 		if (! in_array ( $mode, $valid )) {
 			throw new Exception ( 'invalid mode, mode=' . $mode );
 		}
@@ -178,11 +182,17 @@ class CurlMulti_My {
 			if ($n > 0) {
 				$in = $in [3];
 			} else {
-				$in = null;
+				if (function_exists ( 'mb_detect_encoding' )) {
+					$in = mb_detect_encoding ( $html );
+				} else {
+					$in = null;
+				}
 			}
 		}
 		if (isset ( $in )) {
+			$old = error_reporting ( error_reporting () & ~ E_NOTICE );
 			$html = call_user_func ( $func, $in, $out . '//IGNORE', $html );
+			error_reporting ( $old );
 			$html = preg_replace ( $pattern, "\\1$out\\4", $html, 1 );
 		}
 		return $html;
