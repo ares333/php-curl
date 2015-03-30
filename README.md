@@ -19,8 +19,8 @@ Feature
 1. Internal download support(use curl download callback,best performance).
 1. Support global parallel and seperate parallel for defferent task type.
 1. Support running info callback.All info you need is returned, include overall and every task infomation.
-1. Support add task in task callback.
-1. Support user callback can be specified.You can do anything in that.
+1. Support adding task in task callback.
+1. Support user callback.You can do anything in that.
 1. Support process callback backoff.Used to satisfy prerequists.
 1. Support error callback.All error info is returned.
 1. Support max try for tasks.
