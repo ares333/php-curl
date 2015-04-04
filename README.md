@@ -22,8 +22,8 @@ Feature
 1. Support adding task in task callback.
 1. Support user callback.You can do anything in that.
 1. Support process callback backoff.Used to satisfy prerequists.
-1. Support error callback.All error info is returned.
-1. Support max try for tasks.
+1. Support global error callback and task error callback.All error info is returned.
+1. Support internal max try for tasks.
 1. Support user variable flow arbitrarily.
 1. Support global CURLOPT_* and task CURLOPT_*.
 1. Powerfull cache.Global and task cache config supported.
