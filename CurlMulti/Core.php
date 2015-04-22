@@ -50,6 +50,8 @@ class CurlMulti_Core {
 	);
 	// stack or queue
 	public $taskPoolType = 'stack';
+	// eliminate duplicate for taskpool, will delete previous task and add new one
+	public $taskOverride = false;
 	// task callback,add() should be called in callback, $cbTask[0] is callback, $cbTask[1] is param.
 	public $cbTask = null;
 	// status callback
@@ -202,13 +204,16 @@ class CurlMulti_Core {
 	 */
 	private function addTaskPool($task) {
 		// uniq
-		foreach ( array (
-				'taskPoolAhead',
-				'taskPool' 
-		) as $v ) {
-			foreach ( $this->$v as $k1 => $v1 ) {
-				if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
-					unset ( $this->$v [$k1] );
+		if ($this->taskOverride) {
+			foreach ( array (
+					'taskPoolAhead',
+					'taskPool' 
+			) as $v ) {
+				foreach ( $this->$v as $k1 => $v1 ) {
+					if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
+						$t = &$this->$v;
+						unset ( $t [$k1] );
+					}
 				}
 			}
 		}
