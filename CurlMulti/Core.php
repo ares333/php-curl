@@ -208,7 +208,7 @@ class CurlMulti_Core {
 		) as $v ) {
 			foreach ( $this->$v as $k1 => $v1 ) {
 				if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
-					unset ( $this->taskPoolAhead [$k1] );
+					unset ( $this->$v [$k1] );
 				}
 			}
 		}
