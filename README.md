@@ -120,6 +120,7 @@ Add a task to taskpool.<br>
 **$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
 *$item['ctl']['type']* Task type use for $this->maxThreadType。<br />
 *$item['ctl']['cache']=array('enable'=>null,'expire'=>null)* Task cache.Override $this->cache and merged.<br />
+*$item['ctl']['close']=true* close ch automaticly.<br />
 *$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allway add to parallel prioritized.<br />
 **$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.If return false in callback,the task will be backoffed to the tail of the taskpool that it will be called again later with same state of current.Returning false is risky,because you must guarantee stop returning false yourself to avoid endless loop.<br />
 **$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.Error key is full error infomation.The second parameter is $item['args'].
