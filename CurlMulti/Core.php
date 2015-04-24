@@ -134,7 +134,7 @@ class CurlMulti_Core {
 	 * add a task to taskPool
 	 *
 	 * @param array $item
-	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array('enable'=>bool,'expire'=>0)))]]]])
+	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array('enable'=>bool,'expire'=>0),'close'=>true))]]]])
 	 * @param mixed $process
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
@@ -272,8 +272,7 @@ class CurlMulti_Core {
 					$param = array ();
 					$param ['info'] = $info;
 					$param ['ext'] = array (
-							'init_url' => $task [self::TASK_ITEM_URL],
-							'file' => $task [self::TASK_ITEM_FILE] 
+							'ch' => $ch 
 					);
 					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
@@ -281,7 +280,9 @@ class CurlMulti_Core {
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
 				// must close first,other wise download may be not commpleted in process callback
-				curl_close ( $ch );
+				if (empty ( $task [self::TASK_ITEM_CTL] ['close'] ) || $task [self::TASK_ITEM_CTL] ['close'] == true) {
+					curl_close ( $ch );
+				}
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$this->process ( $task, $param, false );
 				}
