@@ -280,7 +280,7 @@ class CurlMulti_Core {
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
 				// must close first,other wise download may be not commpleted in process callback
-				if (empty ( $task [self::TASK_ITEM_CTL] ['close'] ) || $task [self::TASK_ITEM_CTL] ['close'] == true) {
+				if (! array_key_exists ( 'close', $task [self::TASK_ITEM_CTL] ) || $task [self::TASK_ITEM_CTL] ['close'] == true) {
 					curl_close ( $ch );
 				}
 				if ($curlInfo ['result'] == CURLE_OK) {
