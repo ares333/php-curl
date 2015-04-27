@@ -61,20 +61,21 @@ class CurlMulti_Core {
 	// common fail callback, called if no one specified
 	public $cbFail = null;
 	
+	// is the loop running
+	protected $isRunning = false;
 	// max thread num no type
-	private $maxThreadNoType = null;
+	protected $maxThreadNoType = null;
 	// all added task was saved here first
-	private $taskPool = array ();
+	protected $taskPool = array ();
 	// taskPool with high priority
-	private $taskPoolAhead = array ();
+	protected $taskPoolAhead = array ();
 	// running task(s)
-	private $taskRunning = array ();
+	protected $taskRunning = array ();
 	// failed task need to retry
-	private $taskFail = array ();
+	protected $taskFail = array ();
+	
 	// handle of multi-thread curl
 	private $mh = null;
-	// is process running
-	private $isRunning = false;
 	// user error
 	private $userError = null;
 	// if __construct called
