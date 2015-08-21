@@ -152,12 +152,12 @@ Set up use default CurlMulti_Core or your own instance.
 ```PHP
 function hashpath($name, $level = 2)
 ```
-Set hashed path.Every directory has max 4096 files.
+Get hashed path.Every directory has max 4096 files.
 
 ```PHP
 function substr($str, $start, $end = null, $mode = 'g')
 ```
-Get substring of a string use start string and end string include in the string.Start and end are excluded.
+Get substring between start string and end string.Start and end string are excluded.
 
 ```PHP
 function cbCurlFail($error, $args)
