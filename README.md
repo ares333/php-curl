@@ -1,3 +1,5 @@
+[README_CN.md](README_CN.md "中文文档")
+
 About
 -----
 
@@ -15,7 +17,7 @@ QQ Group:215348766
 Feature
 -------
 1. Extremely low cpu and memory usage.
-1. Best program performance(tested spider 2000+ html pages per second and 1000MBit/s pic download speed).
+1. Best program performance(tested spider 2000+ html pages per second and 1000MBps pic download speed).
 1. Internal download support(use curl download callback,best performance).
 1. Support global parallel and seperate parallel for defferent task type.
 1. Support running info callback.All info you need is returned, include overall and every task infomation.
@@ -33,7 +35,7 @@ Feature
 Mechanism
 ---------
 
-Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions CurlMulti_Core::add() and CurlMulti_Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of CurlMulti_Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use CurlMulti_Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than CurlMulti_Core::$maxThread.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
+Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions CurlMulti_Core::add() and CurlMulti_Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of CurlMulti_Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use CurlMulti_Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than CurlMulti_Core::$maxThread and internal taskpool is empty.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
 
 Files
 -----
@@ -41,7 +43,7 @@ Files
 Kernel class
 
 **CurlMulti/My.php**<br>
-A wraper of CurlMulti_Core.Supported very usefull tools and convention.It's very easy to use.All spider shoud inherent this class.
+A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
 
 **CurlMulti/Exception.php**<br>
 CurlMulti_Exception
@@ -62,12 +64,12 @@ The limit may be associated with OS or libcurl,but not the library.
 ```PHP
 public $maxThreadType = array ()
 ```
-Key is type(specified in add()).Value is parallel.The sum of values can excced $maxThread.Parallel of notype task is value of $maxThread minus the sum.Parallel of notype less than zero will be set to zero.Zero represent no type task will never be excuted except the config changed in the fly.
+Set maxThread for specified task type.Key is type(specified in add()).Value is parallel.The sum of values can excced $maxThread.Parallel of notype task is value of $maxThread minus the sum.Parallel of notype less than zero will be set to zero.Zero represent no type task will never be excuted except the config changed in the fly.
 
 ```PHP
 public $maxTry = 3
 ```
-Curl error or user error max try times.If reached $cbFail will be called.
+Trigger curl error or user error before max try times reached.If reached $cbFail will be called.
 
 ```PHP
 public $opt = array ()
@@ -92,7 +94,7 @@ When the parallel is less than $maxThread and taskpool is empty the class will t
 ```PHP
 public $cbInfo = null
 ```
-Callback for running info.Use print_r() to check it.The speed is limited once per second.
+Callback for running info.Use print_r() to check the info in callback.The speed is limited once per second.
 
 ```PHP
 public $cbUser = null
@@ -121,9 +123,9 @@ Add a task to taskpool.<br>
 *$item['ctl']['type']* Task type use for $this->maxThreadType。<br />
 *$item['ctl']['cache']=array('enable'=>null,'expire'=>null)* Task cache.Override $this->cache and merged.<br />
 *$item['ctl']['close']* close ch automaticly or not.<br />
-*$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allway add to parallel prioritized.<br />
+*$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allways add to parallel prioritized.<br />
 **$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.If return false in callback,the task will be backoffed to the tail of the taskpool that it will be called again later with same state of current.Returning false is risky,because you must guarantee stop returning false yourself to avoid endless loop.<br />
-**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.Error key is full error infomation.The second parameter is $item['args'].
+**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].
 
 ```PHP
 public function error($msg)
