@@ -25,7 +25,7 @@ QQ群:215348766
 1. 支持全局错误回调和单独任务的错误回调，所有和错误相关的信息都被返回。
 1. 支持内部全自动重试。
 1. 支持用户参数任意传递。
-1. 支持CURLOPT_*全局设置和单个任务设置。
+1. 支持CURLOPT_\*全局设置和单个任务设置。
 1. 强大的内置缓存，可以设置全局缓存和单独任务缓存。
 1. 所有配置可以在运行中动态改变并生效！
 1. 基于此库你可以开发各种厉害的CURL应用。
@@ -72,7 +72,7 @@ public $maxTry = 3
 ```PHP
 public $opt = array ()
 ```
-全局CURLOPT_*，可以被add()中设置的opt覆盖。
+全局CURLOPT_\*，可以被add()中设置的opt覆盖。
 
 ```PHP
 public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1)
@@ -115,7 +115,7 @@ public function add(array $item, $process = null, $fail = null)
 添加一个任务到任务池<br>
 **$item['url']** 不能为空。<br>
 **$item['file']** 如果设置了这个参数url对应的内容会被下载到该文件，应该使用绝对路径，最后一层目录能够自动创建。<br>
-**$item['opt']=array()** 当前任务的CURLOPT_*，覆盖全局的CURLOPT_*。<br>
+**$item['opt']=array()** 当前任务的CURLOPT_\*，覆盖全局的CURLOPT_\*。<br>
 **$item['args']** 成功和失败回调的第二个参数。<br>
 **$item['ctl']=array()** 一些额外的控制项<br />
 *$item['ctl']['type']* 任务类型，用在$maxThreadType属性。<br />
@@ -140,7 +140,7 @@ public function start()
 ```PHP
 public function getch($url = null)
 ```
-获取一个curl句柄附带全局CURLOPT_*。
+获取一个curl句柄附带全局CURLOPT_\*。
 
 API(CurlMulti_My)
 -----------------
