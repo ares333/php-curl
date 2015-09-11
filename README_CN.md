@@ -210,17 +210,3 @@ url should be redirected final url.Final url normally has '/' suffix.
 function getCurl()
 ```
 返回核心类的对象。
-
-Demos
------
-**demo0.php**<br>
-一个简单的可运行的demo，展示核心类的基本用法。
-
-**demo1.php**<br>
-仅仅是一个核心类的用法展示，应该不能运行。
-
-**demo2.php**<br>
-CurlMulti_Base的高级用法，目的是以最少的代码展示尽可能多的类库特性，demo中使用的目标站点结构可能变化，如果变化demo应该就不能运行了。
-
-**demo3.php**<br>
-完美的站点克隆工具使用demo。

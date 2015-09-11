@@ -210,17 +210,3 @@ url should be redirected final url.Final url normally has '/' suffix.
 function getCurl()
 ```
 Return CurlMulti_Core instance.
-
-Demos
------
-**demo0.php**<br>
-A simple runnable demo that shows the very basic usage of kernel class.
-
-**demo1.php**<br>
-Just a basic kernel class demonstration, maybe not runnable.
-
-**demo2.php**<br>
-This demo is advanced usage with CurlMulti_Base.It's porpuse is to show as much features as possible with as little code as possible.The target site maybe changing,so the code maybe not runnable.
-
-**demo3.php**<br>
-Perfect clone the target site.
