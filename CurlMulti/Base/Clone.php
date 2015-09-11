@@ -2,7 +2,7 @@
 /**
  * Website copy, keep original directory structure(be supported by sound reason)
  * phpQuery needed
- * 
+ *
  * @author admin@phpdr.net
  *
  */
@@ -11,7 +11,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	public $overwrite = false;
 	// if download pic
 	public $downloadPic = true;
-	
+
 	// init url
 	private $url;
 	// absolute local dir
@@ -22,9 +22,9 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	private $site = array ();
 	/**
 	 *
-	 * @param unknown $curlmulti        	
-	 * @param unknown $url        	
-	 * @param unknown $dir        	
+	 * @param unknown $curlmulti
+	 * @param unknown $url
+	 * @param unknown $dir
 	 */
 	function __construct($url, $dir) {
 		parent::__construct ();
@@ -42,11 +42,11 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 				'url' => $this->url,
 				'args' => array (
 						'url' => $this->url, // to prevent 301,302 etc
-						'file' => $this->getFile ( $this->url ) 
-				) 
+						'file' => $this->getFile ( $this->url )
+				)
 		), array (
 				$this,
-				'cbProcess' 
+				'cbProcess'
 		) );
 		$this->urlAdded [] = $this->url;
 		$this->getCurl ()->start ();
@@ -54,8 +54,8 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	/**
 	 * download and html callback
 	 *
-	 * @param unknown $r        	
-	 * @param unknown $args        	
+	 * @param unknown $r
+	 * @param unknown $args
 	 * @return
 	 *
 	 */
@@ -111,7 +111,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 				// add
 				foreach ( array (
 						'urlDownload',
-						'urlHtml' 
+						'urlHtml'
 				) as $v ) {
 					$$v = array_unique ( $$v );
 					foreach ( $$v as $v1 ) {
@@ -125,8 +125,8 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 									'file' => $file,
 									'args' => array (
 											'url' => $v1,
-											'file' => $file 
-									) 
+											'file' => $file
+									)
 							);
 							if ($v == 'urlDownload') {
 								unset ( $item ['args'] ['file'] );
@@ -135,7 +135,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 							}
 							$this->getCurl ()->add ( $item, array (
 									$this,
-									'cbProcess' 
+									'cbProcess'
 							) );
 							$this->urlAdded [] = $v1;
 						}
@@ -163,11 +163,11 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 		}
 		return $path;
 	}
-	
+
 	/**
 	 * compute local absolute path
 	 *
-	 * @param unknown $url        	
+	 * @param unknown $url
 	 * @return string
 	 */
 	private function getFile($url) {
@@ -186,11 +186,11 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 		}
 		return $file;
 	}
-	
+
 	/**
 	 * relative local file path
 	 *
-	 * @param unknown $url        	
+	 * @param unknown $url
 	 * @return string
 	 */
 	private function getPath($url) {

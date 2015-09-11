@@ -1,15 +1,9 @@
 <?php
-require '../CurlMulti/Core.php';
-$url1 = 'https://gcc.gnu.org';
-$url2 = 'http://urlnotexits';
-$curl = new CurlMulti_Core ();
-
-$curl->opt [CURLOPT_HTTPPROXYTUNNEL] = true;
-$curl->opt [CURLOPT_SSL_VERIFYPEER] = false;
-$curl->opt [CURLOPT_SSL_VERIFYHOST] = false;
-
+require '../../CurlMulti/Core.php';
+$url=array('http://baidu.com','http://bing.com');
+$curl=new CurlMulti_Core();
 $curl->add ( array (
-		'url' => $url1,
+		'url' => $url,
 		'args' => array (
 				'title' => 'This is url1' 
 		) 

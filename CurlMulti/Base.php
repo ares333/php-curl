@@ -1,11 +1,11 @@
 <?php
 /**
- * CurlMulti wrapper, more easy to use 
- * 
+ * CurlMulti wrapper, more easy to use
+ *
  * @author admin@phpdr.net
  *
  */
-class CurlMulti_My {
+class CurlMulti_Base {
 	private $curl;
 	function __construct($curlmulti = null) {
 		if (isset ( $curlmulti )) {
@@ -16,20 +16,20 @@ class CurlMulti_My {
 		// default fail callback
 		$this->curl->cbFail = array (
 				$this,
-				'cbCurlFail' 
+				'cbCurlFail'
 		);
 		// default info callback
 		$this->curl->cbInfo = array (
 				$this,
-				'cbCurlInfo' 
+				'cbCurlInfo'
 		);
 	}
-	
+
 	/**
 	 * 16^3=4096,4096^2=16777216,4096^3=68719476736
 	 *
-	 * @param string $name        	
-	 * @param number $level        	
+	 * @param string $name
+	 * @param number $level
 	 * @return string relative path
 	 */
 	function hashpath($name, $level = 2) {
@@ -44,13 +44,13 @@ class CurlMulti_My {
 		}
 		return $file;
 	}
-	
+
 	/**
 	 * content between start and end
 	 *
-	 * @param string $str        	
-	 * @param string $start        	
-	 * @param string $end        	
+	 * @param string $str
+	 * @param string $start
+	 * @param string $end
 	 * @param String $mode
 	 *        	g greed
 	 *        	ng non-greed
@@ -79,11 +79,11 @@ class CurlMulti_My {
 		$len = strlen ( $start );
 		return substr ( $str, $pos1 + $len, $pos2 - $pos1 - $len );
 	}
-	
+
 	/**
 	 * default CurlMulti fail callback
 	 *
-	 * @param array $error        	
+	 * @param array $error
 	 * @param mixed $args
 	 *        	args in CurlMulti::add()
 	 */
@@ -91,7 +91,7 @@ class CurlMulti_My {
 		$err = $error ['error'];
 		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'] . "\n";
 	}
-	
+
 	/**
 	 * default CurlMulti info callback
 	 *
@@ -107,11 +107,11 @@ class CurlMulti_My {
 		}
 		echo $str;
 	}
-	
+
 	/**
 	 * CurlMulti info callback string
 	 *
-	 * @param unknown $info        	
+	 * @param unknown $info
 	 */
 	protected function curlInfoString($info) {
 		$all = $info ['all'];
@@ -131,11 +131,11 @@ class CurlMulti_My {
 		$str .= sprintf ( 'running:%-10d', $all ['taskRunningNumNoType'] );
 		return $str;
 	}
-	
+
 	/**
 	 * none http 200 go CurlMulti::maxTry loop
 	 *
-	 * @param array $info        	
+	 * @param array $info
 	 * @return boolean
 	 */
 	function hasHttpError($info) {
@@ -145,14 +145,14 @@ class CurlMulti_My {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * html encoding transform
 	 *
-	 * @param string $html        	
-	 * @param string $in        	
-	 * @param string $out        	
-	 * @param string $content        	
+	 * @param string $html
+	 * @param string $in
+	 * @param string $out
+	 * @param string $content
 	 * @param string $mode
 	 *        	auto|iconv|mb_convert_encoding
 	 * @return string
@@ -161,7 +161,7 @@ class CurlMulti_My {
 		$valid = array (
 				'auto',
 				'iconv',
-				'mb_convert_encoding' 
+				'mb_convert_encoding'
 		);
 		if (! isset ( $out )) {
 			$out = 'UTF-8';
@@ -197,20 +197,20 @@ class CurlMulti_My {
 		}
 		return $html;
 	}
-	
+
 	/**
 	 * is a full url
 	 *
-	 * @param unknown $str        	
+	 * @param unknown $str
 	 * @return boolean
 	 */
 	function isUrl($str) {
 		return in_array ( substr ( $str, 0, 7 ), array (
 				'http://',
-				'https:/' 
+				'https:/'
 		) );
 	}
-	
+
 	/**
 	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
@@ -238,12 +238,12 @@ class CurlMulti_My {
 			return $urlDir . $uri;
 		}
 	}
-	
+
 	/**
 	 * get relative uri of the current page.
 	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
-	 * @param unknown $url        	
+	 * @param unknown $url
 	 * @param unknown $urlCurrent
 	 *        	redirected final url of the html page
 	 * @return string
@@ -265,7 +265,7 @@ class CurlMulti_My {
 		foreach ( array (
 				'scheme',
 				'host',
-				'port' 
+				'port'
 		) as $v ) {
 			if ($parse1 [$v] != $parse2 [$v]) {
 				$eq = false;
@@ -300,7 +300,7 @@ class CurlMulti_My {
 		}
 		return $path;
 	}
-	
+
 	/**
 	 * url should be redirected final url.Final url normally has '/' suffix.
 	 *
@@ -319,7 +319,7 @@ class CurlMulti_My {
 		}
 		return $urlDir;
 	}
-	
+
 	/**
 	 * get CurlMulti_Core instance
 	 *
