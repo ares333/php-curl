@@ -6,7 +6,7 @@
  * @author admin@phpdr.net
  *
  */
-class CurlMulti_My_Clone extends CurlMulti_My {
+class CurlMulti_Base_Clone extends CurlMulti_Base {
 	// overwrite local file
 	public $overwrite = false;
 	// if download pic

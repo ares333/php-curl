@@ -12,7 +12,7 @@ if (! file_exists ( $dir )) {
 if (! file_exists ( $cacheDir )) {
 	mkdir ( $cacheDir );
 }
-$clone = new CurlMulti_My_Clone ( $url, $dir );
+$clone = new CurlMulti_Base_Clone ( $url, $dir );
 $clone->overwrite = true;
 $clone->getCurl ()->maxThread = 3;
 $clone->getCurl ()->cache ['enable'] = true;

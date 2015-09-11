@@ -142,7 +142,7 @@ public function getch($url = null)
 ```
 获取一个curl句柄附带全局CURLOPT_\*。
 
-API(CurlMulti_My)
+API(CurlMulti_Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
@@ -220,7 +220,7 @@ Demos
 仅仅是一个核心类的用法展示，应该不能运行。
 
 **demo2.php**<br>
-CurlMulti_My的高级用法，目的是以最少的代码展示尽可能多的类库特性，demo中使用的目标站点结构可能变化，如果变化demo应该就不能运行了。
+CurlMulti_Base的高级用法，目的是以最少的代码展示尽可能多的类库特性，demo中使用的目标站点结构可能变化，如果变化demo应该就不能运行了。
 
 **demo3.php**<br>
 完美的站点克隆工具使用demo。

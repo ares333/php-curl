@@ -144,7 +144,7 @@ public function getch($url = null)
 ```
 Get a curl resource with global $this->opt.
 
-API(CurlMulti_My)
+API(CurlMulti_Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
@@ -220,7 +220,7 @@ A simple runnable demo that shows the very basic usage of kernel class.
 Just a basic kernel class demonstration, maybe not runnable.
 
 **demo2.php**<br>
-This demo is advanced usage with CurlMulti_My.It's porpuse is to show as much features as possible with as little code as possible.The target site maybe changing,so the code maybe not runnable.
+This demo is advanced usage with CurlMulti_Base.It's porpuse is to show as much features as possible with as little code as possible.The target site maybe changing,so the code maybe not runnable.
 
 **demo3.php**<br>
 Perfect clone the target site.

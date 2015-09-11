@@ -2,7 +2,7 @@
 include '../CurlMulti/Core.php';
 include '../CurlMulti/My.php';
 include '../phpQuery.php';
-class Demo extends CurlMulti_My {
+class Demo extends CurlMulti_Base {
 	private $baseUrl = 'http://www.1ting.com';
 	private $noCacheNum = 10;
 	private $imgDir;
