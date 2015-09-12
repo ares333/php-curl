@@ -182,7 +182,6 @@ function hasHttpError($info)
 ```PHP
 function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 ```
-Powerfull function to convert html encoding and set \<head\>\</head\> in html.$in can be get from \<head\>\</head\>.
 强力的转码函数，可以自动获取当前编码，转码后自动修改\<head\>\</head\>中的编码，可选不同的转码函数。
 
 ```PHP
@@ -203,7 +202,6 @@ function url2uri($url, $urlCurrent)
 ```PHP
 function urlDir($url)
 ```
-url should be redirected final url.Final url normally has '/' suffix.
 绝对url对应的目录，参数中的url应该是重定向之后的url。
 
 ```PHP
