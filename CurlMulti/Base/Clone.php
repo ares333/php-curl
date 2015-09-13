@@ -54,9 +54,8 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	/**
 	 * download and html callback
 	 *
-	 * @param unknown $r
-	 * @param unknown $args
-	 * @return
+	 * @param array $r
+	 * @param mixed $args
 	 *
 	 */
 	function cbProcess($r, $args) {
@@ -148,6 +147,11 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 			}
 		}
 	}
+
+	/**
+	 * (non-PHPdoc)
+	 * @see CurlMulti_Base::url2uri()
+	 */
 	function url2uri($url, $urlCurrent) {
 		$path = parent::url2uri ( $url, $urlCurrent );
 		if (! isset ( $path )) {
@@ -167,7 +171,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	/**
 	 * compute local absolute path
 	 *
-	 * @param unknown $url
+	 * @param string $url
 	 * @return string
 	 */
 	private function getFile($url) {
@@ -190,7 +194,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	/**
 	 * relative local file path
 	 *
-	 * @param unknown $url
+	 * @param string $url
 	 * @return string
 	 */
 	private function getPath($url) {

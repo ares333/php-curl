@@ -1,6 +1,6 @@
 <?php
 /**
- * CurlMulti wrapper, more easy to use
+ * CurlMulti_Core wrapper, more easy to use
  *
  * @author admin@phpdr.net
  *
@@ -29,7 +29,7 @@ class CurlMulti_Base {
 	 * 16^3=4096,4096^2=16777216,4096^3=68719476736
 	 *
 	 * @param string $name
-	 * @param number $level
+	 * @param integer $level
 	 * @return string relative path
 	 */
 	function hashpath($name, $level = 2) {
@@ -81,11 +81,11 @@ class CurlMulti_Base {
 	}
 
 	/**
-	 * default CurlMulti fail callback
+	 * default CurlMulti_Core fail callback
 	 *
 	 * @param array $error
 	 * @param mixed $args
-	 *        	args in CurlMulti::add()
+	 *        	args in CurlMulti_Core::add()
 	 */
 	function cbCurlFail($error, $args) {
 		$err = $error ['error'];
@@ -93,7 +93,7 @@ class CurlMulti_Base {
 	}
 
 	/**
-	 * default CurlMulti info callback
+	 * default CurlMulti_Core info callback
 	 *
 	 * @param array $info
 	 *        	array('all'=>array(),'running'=>array())
@@ -109,9 +109,9 @@ class CurlMulti_Base {
 	}
 
 	/**
-	 * CurlMulti info callback string
+	 * CurlMulti_Core info callback string
 	 *
-	 * @param unknown $info
+	 * @param array $info
 	 */
 	protected function curlInfoString($info) {
 		$all = $info ['all'];
@@ -133,7 +133,7 @@ class CurlMulti_Base {
 	}
 
 	/**
-	 * none http 200 go CurlMulti::maxTry loop
+	 * none http 200 go CurlMulti_Core::maxTry loop
 	 *
 	 * @param array $info
 	 * @return boolean
@@ -201,7 +201,7 @@ class CurlMulti_Base {
 	/**
 	 * is a full url
 	 *
-	 * @param unknown $str
+	 * @param string $str
 	 * @return boolean
 	 */
 	function isUrl($str) {
@@ -214,9 +214,9 @@ class CurlMulti_Base {
 	/**
 	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
-	 * @param unknown $uri
+	 * @param string $uri
 	 *        	uri in the html
-	 * @param unknown $urlCurrent
+	 * @param string $urlCurrent
 	 *        	redirected final url of the html page
 	 * @return string
 	 */
@@ -243,8 +243,8 @@ class CurlMulti_Base {
 	 * get relative uri of the current page.
 	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
-	 * @param unknown $url
-	 * @param unknown $urlCurrent
+	 * @param string $url
+	 * @param string $urlCurrent
 	 *        	redirected final url of the html page
 	 * @return string
 	 */
@@ -304,7 +304,7 @@ class CurlMulti_Base {
 	/**
 	 * url should be redirected final url.Final url normally has '/' suffix.
 	 *
-	 * @param unknown $url
+	 * @param string $url
 	 *        	the final directed url
 	 * @return string
 	 */
@@ -323,7 +323,7 @@ class CurlMulti_Base {
 	/**
 	 * get CurlMulti_Core instance
 	 *
-	 * @return CurlMulti
+	 * @return CurlMulti_Core
 	 */
 	function getCurl() {
 		return $this->curl;
