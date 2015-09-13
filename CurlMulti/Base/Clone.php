@@ -22,9 +22,9 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	private $site = array ();
 	/**
 	 *
-	 * @param unknown $curlmulti
-	 * @param unknown $url
-	 * @param unknown $dir
+	 * @param CurlMulti_Core $curlmulti
+	 * @param string $url
+	 * @param string $dir
 	 */
 	function __construct($url, $dir) {
 		parent::__construct ();
