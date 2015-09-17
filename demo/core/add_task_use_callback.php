@@ -11,9 +11,7 @@ $curl->start ();
 function cbTask($param) {
 	static $i = 0;
 	global $curl;
-	if ($i == 30) {
-		return null;
-	} else {
+	if ($i < 30) {
 		$curl->add ( array (
 				'url' => 'http://www.baidu.com?wd=' . $i
 		) );
