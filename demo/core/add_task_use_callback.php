@@ -20,5 +20,5 @@ function cbTask($param) {
 			$curl->cbTask = null;
 		}
 	}
-	echo 'cbTask called ' . ++ $j . " times\n";
+	echo $i.' tasks added, cbTask called ' . ++ $j . " times\n";
 }
