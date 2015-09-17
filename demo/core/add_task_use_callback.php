@@ -1,20 +1,24 @@
 <?php
 require '../../CurlMulti/Core.php';
-require './inc/cb_info.php';
 $curl = new CurlMulti_Core ();
-$curl->cbInfo = 'cbInfo';
+$curl->maxThread = 3;
 $curl->cbTask = array (
 		'cbTask',
 		'this is param for cbTask'
 );
 $curl->start ();
 function cbTask($param) {
-	static $i = 0;
+	static $i = 0, $j = 0;
 	global $curl;
-	if ($i < 30) {
+	$count = 10;
+	if ($i < $count) {
 		$curl->add ( array (
 				'url' => 'http://www.baidu.com?wd=' . $i
 		) );
 		$i ++;
+		if ($i == $count) {
+			$curl->cbTask = null;
+		}
 	}
+	echo 'cbTask called ' . ++ $j . " times\n";
 }
