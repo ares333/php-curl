@@ -426,13 +426,17 @@ class CurlMulti_Core {
 				$task = array_pop ( $this->taskFail );
 			} else {
 				// cbTask
-				if (0 < ($this->maxThread - count ( $this->taskPool )) and ! empty ( $this->cbTask )) {
+				$taskPoolSize = count ( $this->taskPool );
+				if (0 < ($this->maxThread - $taskPoolSize) and ! empty ( $this->cbTask )) {
 					if (! isset ( $this->cbTask [1] )) {
 						$this->cbTask [1] = array ();
 					}
 					call_user_func_array ( $this->cbTask [0], array (
 							$this->cbTask [1]
 					) );
+					if ($taskPoolSize === count ( $this->taskPool )) {
+						break;
+					}
 				}
 				if (! empty ( $this->taskPoolAhead )) {
 					$task = array_pop ( $this->taskPoolAhead );

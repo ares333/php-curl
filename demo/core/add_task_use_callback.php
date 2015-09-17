@@ -11,11 +11,12 @@ $curl->start ();
 function cbTask($param) {
 	static $i = 0;
 	global $curl;
-	if ($i ++ > 100) {
+	if ($i == 30) {
 		return null;
 	} else {
 		$curl->add ( array (
 				'url' => 'http://www.baidu.com?wd=' . $i
 		) );
+		$i ++;
 	}
 }
