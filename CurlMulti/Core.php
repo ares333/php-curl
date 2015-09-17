@@ -419,6 +419,7 @@ class CurlMulti_Core {
 	 */
 	private function addTask() {
 		$c = $this->maxThread - count ( $this->taskRunning );
+		$isTaskPoolAdd = true;
 		while ( $c > 0 ) {
 			$task = array ();
 			// search failed first
@@ -426,13 +427,16 @@ class CurlMulti_Core {
 				$task = array_pop ( $this->taskFail );
 			} else {
 				// cbTask
-				if (! empty ( $this->cbTask ) && empty ( $this->taskPool )) {
+				if ($isTaskPoolAdd && ! empty ( $this->cbTask ) && empty ( $this->taskPool )) {
 					if (! isset ( $this->cbTask [1] )) {
 						$this->cbTask [1] = array ();
 					}
 					call_user_func_array ( $this->cbTask [0], array (
 							$this->cbTask [1]
 					) );
+					if (empty ( $this->taskPool )) {
+						$isTaskPoolAdd = false;
+					}
 				}
 				if (! empty ( $this->taskPoolAhead )) {
 					$task = array_pop ( $this->taskPoolAhead );
