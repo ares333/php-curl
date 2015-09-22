@@ -13,14 +13,12 @@ $curl->add ( array (
 		'url' => $url1
 ), null, 'cbFailTask' )->add ( array (
 		'url' => $url2
-) );
-// start spider
-$curl->start ();
+) )->start ();
 function cbFailTask($err, $args) {
-	echo 'Task Fail: '.$err ['info'] ['url'] . "\n";
+	echo 'Task Fail: ' . $err ['info'] ['url'] . "\n";
 	print_r ( $err ['error'] );
 }
 function cbFailGlobal($err, $args) {
-	echo 'Global Fail: '.$err ['info'] ['url'] . "\n";
+	echo 'Global Fail: ' . $err ['info'] ['url'] . "\n";
 	print_r ( $err ['error'] );
 }
