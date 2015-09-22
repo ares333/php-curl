@@ -99,7 +99,7 @@ class CurlMulti_Base {
 	 *        	array('all'=>array(),'running'=>array())
 	 */
 	function cbCurlInfo($info) {
-		$str = $this->curlInfoString ( $info );
+		$str = $this->cbCurlInfoString ( $info );
 		if (PHP_OS == 'Linux') {
 			$str = "\r\33[K" . trim ( $str );
 		} else {
@@ -113,7 +113,7 @@ class CurlMulti_Base {
 	 *
 	 * @param array $info
 	 */
-	protected function curlInfoString($info) {
+	function cbCurlInfoString($info) {
 		$all = $info ['all'];
 		$cacheNum = $all ['cacheNum'];
 		$taskPoolNum = $all ['taskPoolNum'];
