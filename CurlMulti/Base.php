@@ -99,7 +99,7 @@ class CurlMulti_Base {
 	 *        	array('all'=>array(),'running'=>array())
 	 */
 	function cbCurlInfo($info) {
-		$str = $this->cbCurlInfoString ( $info );
+		$str = $this->cbCurlInfoMeta ( $info, true );
 		if (PHP_OS == 'Linux') {
 			$str = "\r\33[K" . trim ( $str );
 		} else {
@@ -113,23 +113,40 @@ class CurlMulti_Base {
 	 *
 	 * @param array $info
 	 */
-	function cbCurlInfoString($info) {
+	function cbCurlInfoMeta($info, $isString = false) {
 		$all = $info ['all'];
 		$cacheNum = $all ['cacheNum'];
 		$taskPoolNum = $all ['taskPoolNum'];
 		$finishNum = $all ['finishNum'];
 		$speed = round ( $all ['downloadSpeed'] / 1024 ) . 'KB/s';
 		$size = round ( $all ['downloadSize'] / 1024 / 1024 ) . "MB";
-		$str = '';
-		$str .= sprintf ( "speed:%-10s", $speed );
-		$str .= sprintf ( 'download:%-10s', $size );
-		$str .= sprintf ( 'cache:%-10dfinish:%-10d', $cacheNum, $finishNum );
-		$str .= sprintf ( 'taskPool:%-10d', $taskPoolNum );
+		$meta = array ();
+		$meta ['downloadSpeed'] = sprintf ( "%-10s", $speed );
+		$meta ['downloadSize'] = sprintf ( '%-10s', $size );
+		$meta ['cacheNum'] = sprintf ( '%-10d', $cacheNum );
+		$meta ['finishNum'] = sprintf ( '%-10d', $finishNum );
+		$meta ['taskPoolNum'] = sprintf ( '%-10d', $taskPoolNum );
+		$meta ['taskRunningNumType'] = array ();
 		foreach ( $all ['taskRunningNumType'] as $k => $v ) {
-			$str .= sprintf ( 'running' . $k . ':%-10d', $all ['taskRunningNumType'] [$k] );
+			$meta ['taskRunningNumType'] [$k] = sprintf ( '%-10d', $all ['taskRunningNumType'] [$k] );
 		}
-		$str .= sprintf ( 'running:%-10d', $all ['taskRunningNumNoType'] );
-		return $str;
+		$meta ['taskRunningNumNoType'] = sprintf ( '%-10d', $all ['taskRunningNumNoType'] );
+		$meta ['taskRunningNum'] = sprintf ( '%-10d', $all ['taskRunningNum'] );
+		$res = '';
+		if (true == $isString) {
+			foreach ( $meta as $k => $v ) {
+				if (is_array ( $v )) {
+					foreach ( $v as $k1 => $v1 ) {
+						$res .= $k . '_' . $k1 . ':' . $v1;
+					}
+				} else {
+					$res .= $k . ':' . $v;
+				}
+			}
+		} else {
+			$res = &$meta;
+		}
+		return $res;
 	}
 
 	/**

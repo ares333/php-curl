@@ -101,14 +101,14 @@ class CurlMulti_Core {
 					'failNum' => 0,
 					// task num has added
 					'taskNum' => 0,
+					// $this->taskRunning size
+					'taskRunningNum' => 0,
 					// task running num by type,
 					'taskRunningNumType' => array (),
 					// task ruuning num no type
 					'taskRunningNumNoType' => 0,
 					// $this->taskPool size
 					'taskPoolNum' => 0,
-					// $this->taskRunning size
-					'taskRunningNum' => 0,
 					// $this->taskFail size
 					'taskFailNum' => 0,
 					// finish percent
