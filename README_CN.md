@@ -40,13 +40,13 @@ QQ群:215348766
 **CurlMulti/Core.php**<br>
 核心库。
 
-**CurlMulti/My.php**<br>
+**CurlMulti/Base.php**<br>
 核心库的封装，包含非常有用的工具和一些规范。非常易于使用，所有爬虫应该继承这个类。
 
 **CurlMulti/Exception.php**<br>
 CurlMulti_Exception
 
-**CurlMulti/My/Clone.php**<br>
+**CurlMulti/Base/Clone.php**<br>
 一个完美的网站克隆工具。
 
 **phpQuery.php**<br>
