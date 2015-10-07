@@ -42,13 +42,13 @@ Files
 **CurlMulti/Core.php**<br>
 Kernel class
 
-**CurlMulti/My.php**<br>
+**CurlMulti/Base.php**<br>
 A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
 
 **CurlMulti/Exception.php**<br>
 CurlMulti_Exception
 
-**CurlMulti/My/Clone.php**<br>
+**CurlMulti/Base/Clone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
 
 **phpQuery.php**<br>
@@ -64,7 +64,7 @@ The limit may be associated with OS or libcurl,but not the library.
 ```PHP
 public $maxThreadType = array ()
 ```
-Set maxThread for specified task type.Key is type(specified in add()).Value is parallel.The sum of values can excced $maxThread.Parallel of notype task is value of $maxThread minus the sum.Parallel of notype less than zero will be set to zero.Zero represent no type task will never be excuted except the config changed in the fly.
+Set maxThread for specified task type.Key is type(specified in add()).Value is parallel.The sum of values can exceed $maxThread.Parallel of notype task is value of $maxThread minus the sum.Parallel of notype less than zero will be set to zero.Zero represent no type task will never be excuted except the config changed in the fly.
 
 ```PHP
 public $maxTry = 3
