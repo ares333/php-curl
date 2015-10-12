@@ -1,3 +1,5 @@
+[![build status](https://travis-ci.org/sabberworm/PHP-CSS-Parser.png)](https://github.com/ares333/curlmulti)
+
 关于
 -----
 
