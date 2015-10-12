@@ -1,5 +1,7 @@
 [中文文档](README_CN.md "中文文档")
 
+[![build status](https://travis-ci.org/sabberworm/PHP-CSS-Parser.png)](https://travis-ci.org/sabberworm/PHP-CSS-Parser) [![HHVM Status](http://hhvm.h4cc.de/badge/sabberworm/php-css-parser.png)](http://hhvm.h4cc.de/package/sabberworm/php-css-parser)
+
 About
 -----
 
