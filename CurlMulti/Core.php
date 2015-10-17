@@ -49,7 +49,7 @@ class CurlMulti_Core {
 			'dirLevel' => 1
 	);
 	// stack or queue
-	public $taskPoolType = 'stack';
+	public $taskPoolType = 'queue';
 	// eliminate duplicate for taskpool, will delete previous task and add new one
 	public $taskOverride = false;
 	// task callback,add() should be called in callback, $cbTask[0] is callback, $cbTask[1] is param.
@@ -154,6 +154,10 @@ class CurlMulti_Core {
 			} else {
 				// replace space with + to avoid some curl problems
 				$item ['url'] = str_replace ( ' ', '+', $item ['url'] );
+				if (array_key_exists ( 'fragment', parse_url ( $item ['url'] ) )) {
+					$pos = strrpos ( $item ['url'], '#' );
+					$item ['url'] = substr ( $item ['url'], 0, $pos );
+				}
 				// fix
 				if (empty ( $item ['file'] ))
 					$item ['file'] = null;
@@ -488,8 +492,9 @@ class CurlMulti_Core {
 						if (isset ( $task [self::TASK_ITEM_FILE] )) {
 							// curl can create the last level directory
 							$dir = dirname ( $task [self::TASK_ITEM_FILE] );
-							if (! file_exists ( $dir ))
+							if (! file_exists ( $dir )) {
 								mkdir ( $dir, 0777 );
+							}
 							$task [self::TASK_FP] = fopen ( $task [self::TASK_ITEM_FILE], 'w' );
 							curl_setopt ( $task [self::TASK_CH], CURLOPT_FILE, $task [self::TASK_FP] );
 						}

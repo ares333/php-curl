@@ -130,7 +130,9 @@ class CurlMulti_Base {
 		foreach ( $all ['taskRunningNumType'] as $k => $v ) {
 			$meta ['taskRunningNumType'] [$k] = sprintf ( '%-10d', $all ['taskRunningNumType'] [$k] );
 		}
-		$meta ['taskRunningNumNoType'] = sprintf ( '%-10d', $all ['taskRunningNumNoType'] );
+		if (! empty ( $all ['taskRunningNumType'] )) {
+			$meta ['taskRunningNumNoType'] = sprintf ( '%-10d', $all ['taskRunningNumNoType'] );
+		}
 		$meta ['taskRunningNum'] = sprintf ( '%-10d', $all ['taskRunningNum'] );
 		$res = '';
 		if (true == $isString) {
@@ -222,6 +224,7 @@ class CurlMulti_Base {
 	 * @return boolean
 	 */
 	function isUrl($str) {
+		$str = ltrim ( $str );
 		return in_array ( substr ( $str, 0, 7 ), array (
 				'http://',
 				'https:/'
@@ -284,9 +287,11 @@ class CurlMulti_Base {
 				'host',
 				'port'
 		) as $v ) {
-			if ($parse1 [$v] != $parse2 [$v]) {
-				$eq = false;
-				break;
+			if (isset ( $parse1 [$v] ) && isset ( $parse2 [$v] )) {
+				if ($parse1 [$v] != $parse2 [$v]) {
+					$eq = false;
+					break;
+				}
 			}
 		}
 		$path = null;
@@ -294,8 +299,13 @@ class CurlMulti_Base {
 			$len = strlen ( $urlDir ) - strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
 			$path1 = substr ( $url, $len + 1 );
 			$path2 = substr ( $urlDir, $len + 1 );
-			$arr1 = explode ( '/', rtrim ( $path1, '/' ) );
-			$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
+			$arr1 = $arr2 = array ();
+			if (! empty ( $path1 )) {
+				$arr1 = explode ( '/', rtrim ( $path1, '/' ) );
+			}
+			if (! empty ( $path2 )) {
+				$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
+			}
 			foreach ( $arr1 as $k => $v ) {
 				if (array_key_exists ( $k, $arr2 ) && $v == $arr2 [$k]) {
 					unset ( $arr1 [$k], $arr2 [$k] );
@@ -303,17 +313,11 @@ class CurlMulti_Base {
 					break;
 				}
 			}
-			$count1 = count ( $arr1 );
-			$count2 = count ( $arr2 );
-			if ($count1 > $count2) {
-				$path = implode ( '/', $arr1 );
-			} else {
-				$path = '';
-				foreach ( $arr2 as $v ) {
-					$path .= '../';
-				}
-				$path .= implode ( '/', $arr1 );
+			$path = '';
+			foreach ( $arr2 as $v ) {
+				$path .= '../';
 			}
+			$path .= implode ( '/', $arr1 );
 		}
 		return $path;
 	}
@@ -329,10 +333,13 @@ class CurlMulti_Base {
 		if (! $this->isUrl ( $url )) {
 			throw new CurlMulti_Exception ( 'url is invalid, url=' . $url );
 		}
+		$parse = parse_url ( $url );
 		$urlDir = $url;
-		// none / end url should be finally redirected to / ended url
-		if ('/' != substr ( $urlDir, - 1 )) {
-			$urlDir = dirname ( $urlDir ) . '/';
+		if (isset ( $parse ['path'] )) {
+			// none / end url should be finally redirected to / ended url
+			if ('/' != substr ( $urlDir, - 1 )) {
+				$urlDir = dirname ( $urlDir ) . '/';
+			}
 		}
 		return $urlDir;
 	}

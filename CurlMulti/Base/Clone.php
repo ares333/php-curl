@@ -1,22 +1,25 @@
 <?php
 /**
- * Website copy, keep original directory structure(be supported by sound reason)
+ * Website copy, keep original directory structure(be supported by sounded reason)
  * phpQuery needed
  *
  * @author admin@phpdr.net
  *
  */
 class CurlMulti_Base_Clone extends CurlMulti_Base {
+	private $startTime;
 	// overwrite local file
 	public $overwrite = false;
-	// if download pic
-	public $downloadPic = true;
+	// if download resource
+	public $download = array (
+			'pic' => true
+	);
 
 	// init url
 	private $url;
 	// absolute local dir
 	private $dir;
-	// finished url
+	// processed url
 	private $urlAdded = array ();
 	// all site
 	private $site = array ();
@@ -28,27 +31,73 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	 */
 	function __construct($url, $dir) {
 		parent::__construct ();
+		$this->startTime = time () - 1;
+		if (is_array ( $url )) {
+			$urlNew = array ();
+			foreach ( $url as $k => $v ) {
+				if (is_array ( $v )) {
+					foreach ( $v as $k1 => $v1 ) {
+						$path = '';
+						if ('/' != $v1) {
+							$path = '/' . ltrim ( $k1, '/' );
+						}
+						$urlNew [rtrim ( $k, '/' ) . $path] = $v1;
+					}
+				} elseif (is_string ( $v )) {
+					$urlNew [] = $v;
+				} else {
+					user_error ( 'url is invalid', E_USER_ERROR );
+				}
+			}
+			$url = $urlNew;
+		} else {
+			user_error ( 'url is invalid', E_USER_ERROR );
+		}
+		foreach ( $url as $k => $v ) {
+			if (! $this->isUrl ( $k )) {
+				user_error ( 'url is invalid, url=' . $k, E_USER_ERROR );
+			}
+		}
+		if (! is_dir ( $dir )) {
+			user_error ( 'dir not found, dir=' . $dir, E_USER_ERROR );
+		}
 		$this->url = $url;
 		$this->dir = $dir;
-		if (! $this->isUrl ( $url )) {
-			throw new Exception ( 'url is invalid, url=' . $url );
-		}
-		if (! is_dir ( $this->dir )) {
-			throw new Exception ( 'dir not found, dir=' . $this->dir );
-		}
 	}
+
+	/**
+	 * start clone
+	 */
 	function start() {
-		$this->getCurl ()->add ( array (
-				'url' => $this->url,
-				'args' => array (
-						'url' => $this->url, // to prevent 301,302 etc
-						'file' => $this->getFile ( $this->url )
-				)
-		), array (
-				$this,
-				'cbProcess'
-		) );
-		$this->urlAdded [] = $this->url;
+		foreach ( $this->url as $k => $v ) {
+			if ('/' != substr ( $k, - 1 )) {
+				$this->getCurl ()->add ( array (
+						'url' => $k,
+						'opt' => array (
+								CURLOPT_NOBODY => true
+						)
+				), function ($r) use($k, $v) {
+					if ($k != $r ['info'] ['url']) {
+						$this->url [$r ['info'] ['url']] = $v;
+						unset ( $this->url [$k] );
+					}
+				} );
+			}
+		}
+		$this->getCurl ()->start ();
+		foreach ( $this->url as $k => $v ) {
+			$this->getCurl ()->add ( array (
+					'url' => $k,
+					'args' => array (
+							'url' => $k,
+							'file' => $this->url2file ( $k )
+					)
+			), array (
+					$this,
+					'cbProcess'
+			) );
+			$this->urlAdded [] = $k;
+		}
 		$this->getCurl ()->start ();
 	}
 	/**
@@ -60,34 +109,39 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	 */
 	function cbProcess($r, $args) {
 		if (! $this->hasHttpError ( $r ['info'] )) {
+			$urlDownload = array ();
+			$urlParse = array ();
 			if (isset ( $r ['content'] )) {
-				$urlCurrent = $r ['info'] ['url'];
+				$urlCurrent = $args ['url'];
 				$pq = phpQuery::newDocumentHTML ( $r ['content'] );
-				$urlDownload = array ();
 				// css
 				$list = $pq ['link[type$=css]'];
 				foreach ( $list as $v ) {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
 					$v->attr ( 'href', $this->url2uri ( $url, $urlCurrent ) );
-					$urlDownload [] = $url;
+					$urlDownload [$url] = array (
+							'type' => 'css'
+					);
 				}
 				// script
 				$script = $pq ['script[type$=script]'];
 				foreach ( $script as $v ) {
 					$v = pq ( $v );
-					$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-					$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
-					$urlDownload [] = $url;
+					if (null != $v->attr ( 'src' )) {
+						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
+						$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
+						$urlDownload [$url] = array ();
+					}
 				}
 				// pic
 				$pic = $pq ['img'];
-				if ($this->downloadPic) {
+				if ($this->download ['pic']) {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
 						$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
-						$urlDownload [] = $url;
+						$urlDownload [$url] = array ();
 					}
 				} else {
 					foreach ( $pic as $v ) {
@@ -95,70 +149,132 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 						$v->attr ( 'src', $this->uri2url ( $v->attr ( 'src' ), $urlCurrent ) );
 					}
 				}
-				// html
+				// href
 				$a = $pq ['a'];
-				$urlHtml = array ();
 				foreach ( $a as $v ) {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
-					if (0 === strpos ( $url, $this->urlDir ( $urlCurrent ) )) {
+					$doParse = false;
+					foreach ( $this->url as $k1 => $v1 ) {
+						if (0 === strpos ( $url, $k1 )) {
+							if (! empty ( $v1 ['depth'] )) {
+								$temp = $this->urlDepth ( $url, $k1 );
+								if (isset ( $temp ) && $temp > $v1 ['depth']) {
+									continue;
+								}
+							}
+							$doParse = true;
+							$urlParse [$url] = array ();
+							break;
+						}
+					}
+					if ($doParse) {
 						$v->attr ( 'href', $this->url2uri ( $url, $urlCurrent ) );
-						$urlHtml [] = $url;
+					} else {
+						$v->attr ( 'href', $url );
 					}
 				}
 				$r ['content'] = $pq->html ();
-				// add
-				foreach ( array (
-						'urlDownload',
-						'urlHtml'
-				) as $v ) {
-					$$v = array_unique ( $$v );
-					foreach ( $$v as $v1 ) {
-						if (! in_array ( $v1, $this->urlAdded )) {
-							$file = $this->getFile ( $v1 );
-							if (null == $file && $v == 'urlDownload') {
-								continue;
-							}
-							$item = array (
-									'url' => $v1,
-									'file' => $file,
-									'args' => array (
-											'url' => $v1,
-											'file' => $file
-									)
-							);
-							if ($v == 'urlDownload') {
-								unset ( $item ['args'] ['file'] );
-							} else {
-								unset ( $item ['file'] );
-							}
-							$this->getCurl ()->add ( $item, array (
-									$this,
-									'cbProcess'
-							) );
-							$this->urlAdded [] = $v1;
-						}
-					}
-				}
-				if (isset ( $args ['file'] ) && ! file_put_contents ( $args ['file'], $r ['content'], LOCK_EX )) {
+				if (isset ( $args ['file'] ) && false === file_put_contents ( $args ['file'], $r ['content'], LOCK_EX )) {
 					user_error ( 'write file failed, file=' . $args ['file'], E_USER_WARNING );
 				}
 				phpQuery::unloadDocuments ();
+			} elseif ($args ['isDownload']) {
+				if ('css' == $args ['type']) {
+					$content = file_get_contents ( $args ['file'] );
+					$uri = array ();
+					// import
+					preg_match_all ( '/@import\s+url\s*\((.+)\);/iU', $content, $matches );
+					if (! empty ( $matches [1] )) {
+						$uri = array_merge ( $uri, $matches [1] );
+					}
+					// url in css
+					preg_match_all ( '/:\s*url\((\'|")?(.+?)\\1?\)/i', $content, $matches );
+					if (! empty ( $matches [2] )) {
+						$uri = array_merge ( $uri, $matches [2] );
+					}
+					foreach ( $uri as $v ) {
+						$urlDownload [$this->urlDir ( $r ['info'] ['url'] ) . $v] = array (
+								'type' => 'css'
+						);
+					}
+				}
+			}
+			// add
+			foreach ( array (
+					'urlDownload',
+					'urlParse'
+			) as $v ) {
+				foreach ( $$v as $k1 => $v1 ) {
+					if (! in_array ( $k1, $this->urlAdded )) {
+						$file = $this->url2file ( $k1 );
+						if (null == $file) {
+							continue;
+						}
+						$type = null;
+						if (isset ( $v1 ['type'] )) {
+							$type = $v1 ['type'];
+						}
+						$item = array (
+								'url' => $k1,
+								'file' => $file,
+								'args' => array (
+										'url' => $k1,
+										'file' => $file,
+										'type' => $type,
+										'isDownload' => $v == 'urlDownload'
+								)
+						);
+						if ($v == 'urlParse') {
+							unset ( $item ['file'] );
+						}
+						$this->getCurl ()->add ( $item, array (
+								$this,
+								'cbProcess'
+						) );
+						$this->urlAdded [] = $k1;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * calculate relative depth
+	 *
+	 * @param string $url
+	 * @param string $urlBase
+	 */
+	private function urlDepth($url, $urlBase) {
+		if ($this->isUrl ( $url ) && $this->isUrl ( $urlBase )) {
+			if (0 === strpos ( $url, $urlBase )) {
+				$path = ltrim ( substr ( $url, strlen ( $urlBase ) ), '/' );
+				if (false !== $path) {
+					$depth = 0;
+					if (! empty ( $path )) {
+						$depth = count ( explode ( '/', $path ) );
+					}
+					return $depth;
+				}
 			}
 		}
 	}
 
 	/**
 	 * (non-PHPdoc)
+	 *
 	 * @see CurlMulti_Base::url2uri()
 	 */
 	function url2uri($url, $urlCurrent) {
 		$path = parent::url2uri ( $url, $urlCurrent );
 		if (! isset ( $path )) {
-			$urlDir = $this->urlDir ( $urlCurrent );
+			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
-			$path2 = ltrim ( parse_url ( $urlDir, PHP_URL_PATH ), '/' );
-			$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
+			$path2 = ltrim ( parse_url ( $dir2, PHP_URL_PATH ), '/' );
+			$arr2 = array ();
+			if (! empty ( $path2 )) {
+				$arr2 = explode ( '/', rtrim ( $path2, '/' ) );
+			}
 			$path = '../';
 			foreach ( $arr2 as $v ) {
 				$path .= '../';
@@ -174,7 +290,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	 * @param string $url
 	 * @return string
 	 */
-	private function getFile($url) {
+	private function url2file($url) {
 		$file = $this->getPath ( $url );
 		$strrpos = strrpos ( $file, '#' );
 		if (false !== $strrpos) {
@@ -185,8 +301,11 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 		if (! file_exists ( $dir )) {
 			mkdir ( $dir, 0755, true );
 		}
-		if (! $this->overwrite && file_exists ( $file )) {
-			$file = null;
+		if (file_exists ( $file )) {
+			$mtime = filemtime ( $file );
+			if ($mtime > $this->startTime || ! $this->overwrite) {
+				$file = null;
+			}
 		}
 		return $file;
 	}
@@ -199,6 +318,9 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	 */
 	private function getPath($url) {
 		$parse = parse_url ( $url );
+		if (! isset ( $parse ['path'] )) {
+			$parse ['path'] = '';
+		}
 		$ext = pathinfo ( $parse ['path'], PATHINFO_EXTENSION );
 		if (empty ( $ext )) {
 			$parse ['path'] = rtrim ( $parse ['path'], '/' ) . '/index.html';

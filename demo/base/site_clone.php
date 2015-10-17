@@ -3,7 +3,11 @@ include '../../CurlMulti/Core.php';
 include '../../CurlMulti/Base.php';
 include '../../CurlMulti/Base/Clone.php';
 include '../../phpQuery.php';
-$url = 'http://www.laruence.com/manual';
+$url = array (
+		'http://www.laruence.com/manual' => array (
+				'/' => null
+		)
+);
 $dir = __DIR__ . '/manual';
 $cacheDir = __DIR__ . '/cache';
 if (! file_exists ( $dir )) {
