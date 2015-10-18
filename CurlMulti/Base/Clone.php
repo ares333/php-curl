@@ -12,7 +12,13 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	public $overwrite = false;
 	// if download resource
 	public $download = array (
-			'pic' => true
+			'pic' => array (
+					'enable' => true
+			),
+			'zip' => array (
+					'enable' => true,
+					'withPrefix' => false
+			)
 	);
 
 	// init url
@@ -111,7 +117,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 		if (! $this->hasHttpError ( $r ['info'] )) {
 			$urlDownload = array ();
 			$urlParse = array ();
-			if (isset ( $r ['content'] )) {
+			if (isset ( $r ['content'] ) && 0 === strpos ( $r ['info'] ['content_type'], 'text' )) {
 				$urlCurrent = $args ['url'];
 				$pq = phpQuery::newDocumentHTML ( $r ['content'] );
 				// css
@@ -119,7 +125,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 				foreach ( $list as $v ) {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
-					$v->attr ( 'href', $this->url2uri ( $url, $urlCurrent ) );
+					$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
 					$urlDownload [$url] = array (
 							'type' => 'css'
 					);
@@ -130,17 +136,17 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 					$v = pq ( $v );
 					if (null != $v->attr ( 'src' )) {
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-						$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'src', $this->cloneUrl2uri ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				}
 				// pic
 				$pic = $pq ['img'];
-				if ($this->download ['pic']) {
+				if ($this->download ['pic'] ['enable']) {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-						$v->attr ( 'src', $this->url2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'src', $this->cloneUrl2uri ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				} else {
@@ -149,27 +155,39 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 						$v->attr ( 'src', $this->uri2url ( $v->attr ( 'src' ), $urlCurrent ) );
 					}
 				}
+				// link xml
+				$list = $pq ['link[type$=xml]'];
+				foreach ( $list as $v ) {
+					$v = pq ( $v );
+					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
+					if ($this->isProcess ( $url )) {
+						$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$urlDownload [$url] = array ();
+					}
+				}
 				// href
 				$a = $pq ['a'];
 				foreach ( $a as $v ) {
 					$v = pq ( $v );
-					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
-					$doParse = false;
-					foreach ( $this->url as $k1 => $v1 ) {
-						if (0 === strpos ( $url, $k1 )) {
-							if (! empty ( $v1 ['depth'] )) {
-								$temp = $this->urlDepth ( $url, $k1 );
-								if (isset ( $temp ) && $temp > $v1 ['depth']) {
-									continue;
-								}
-							}
-							$doParse = true;
+					$href = $v->attr ( 'href' );
+					$url = $this->uri2url ( $href, $urlCurrent );
+					if ($this->download ['zip'] ['enable'] && '.zip' == substr ( $href, - 4 )) {
+						if ($this->download ['zip'] ['withPrefix']) {
+							$isProcess = $this->isProcess ( $url );
+						} else {
+							$isProcess = true;
+						}
+						if ($isProcess) {
+							$urlDownload [$url] = array ();
+						}
+					} else {
+						$isProcess = $this->isProcess ( $url );
+						if ($isProcess) {
 							$urlParse [$url] = array ();
-							break;
 						}
 					}
-					if ($doParse) {
-						$v->attr ( 'href', $this->url2uri ( $url, $urlCurrent ) );
+					if ($isProcess) {
+						$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
 					} else {
 						$v->attr ( 'href', $url );
 					}
@@ -240,6 +258,28 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	}
 
 	/**
+	 * is needed to process
+	 *
+	 * @param unknown $url
+	 */
+	private function isProcess($url) {
+		$doProcess = false;
+		foreach ( $this->url as $k1 => $v1 ) {
+			if (0 === strpos ( $url, $k1 ) || $url . '/' == $k1) {
+				if (! empty ( $v1 ['depth'] )) {
+					$temp = $this->urlDepth ( $url, $k1 );
+					if (isset ( $temp ) && $temp > $v1 ['depth']) {
+						continue;
+					}
+				}
+				$doProcess = true;
+				break;
+			}
+		}
+		return $doProcess;
+	}
+
+	/**
 	 * calculate relative depth
 	 *
 	 * @param string $url
@@ -261,12 +301,14 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	}
 
 	/**
-	 * (non-PHPdoc)
+	 * url2uri for this class
 	 *
-	 * @see CurlMulti_Base::url2uri()
+	 * @param string $url
+	 * @param string $urlCurrent
+	 * @return string
 	 */
-	function url2uri($url, $urlCurrent) {
-		$path = parent::url2uri ( $url, $urlCurrent );
+	private function cloneUrl2uri($url, $urlCurrent) {
+		$path = $this->url2uri ( $url, $urlCurrent );
 		if (! isset ( $path )) {
 			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
@@ -317,7 +359,7 @@ class CurlMulti_Base_Clone extends CurlMulti_Base {
 	 * @return string
 	 */
 	private function getPath($url) {
-		$parse = parse_url ( $url );
+		$parse = parse_url ( trim ( $url ) );
 		if (! isset ( $parse ['path'] )) {
 			$parse ['path'] = '';
 		}
