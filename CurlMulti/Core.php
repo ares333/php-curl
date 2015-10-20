@@ -148,6 +148,9 @@ class CurlMulti_Core {
 		if (! is_array ( $item )) {
 			user_error ( 'item must be array, item is ' . gettype ( $item ), E_USER_WARNING );
 		} else {
+			if (! isset ( $item ['url'] ) && ! empty ( $item ['opt'] [CURLOPT_URL] )) {
+				$item ['url'] = $item ['opt'] [CURLOPT_URL];
+			}
 			$item ['url'] = trim ( $item ['url'] );
 			if (empty ( $item ['url'] )) {
 				user_error ( "url can't be empty, url=$item[url]", E_USER_WARNING );
