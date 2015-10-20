@@ -70,6 +70,8 @@ CurlMulti_Exception
 
 <sub>1. 针对IE浏览器的注释性css不会处理，因为还没找到一种复合标准的处理方式，这个问题造成的影响可以忽略不计。
 
+<sub>结果展示：http://manual.phpdr.net/
+
 
 **phpQuery.php**<br>
 [https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "phpQuery官网")
