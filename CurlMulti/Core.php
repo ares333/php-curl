@@ -166,8 +166,8 @@ class CurlMulti_Core {
 					$item ['file'] = null;
 				if (empty ( $item ['opt'] ))
 					$item ['opt'] = array ();
-				if (empty ( $item ['args'] ))
-					$item ['args'] = array ();
+				if (!array_key_exists ( 'args', $item ))
+					$item ['args'] = null;
 				if (empty ( $item ['ctl'] )) {
 					$item ['ctl'] = array ();
 				}
