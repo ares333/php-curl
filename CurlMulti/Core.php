@@ -166,7 +166,7 @@ class CurlMulti_Core {
 					$item ['file'] = null;
 				if (empty ( $item ['opt'] ))
 					$item ['opt'] = array ();
-				if (!array_key_exists ( 'args', $item ))
+				if (! array_key_exists ( 'args', $item ))
 					$item ['args'] = null;
 				if (empty ( $item ['ctl'] )) {
 					$item ['ctl'] = array ();
@@ -578,9 +578,17 @@ class CurlMulti_Core {
 		if (! isset ( $this->cache ['dir'] ))
 			throw new CurlMulti_Exception ( 'Cache dir is not defined' );
 		$url = $task [self::TASK_ITEM_URL];
-		$key = md5 ( $url );
-		$isDownload = isset ( $task [self::TASK_ITEM_FILE] );
+		$suffix = '';
+		if (! empty ( $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS] )) {
+			$post = $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS];
+			if (is_array ( $post )) {
+				$post = http_build_query ( $post );
+			}
+			$suffix .= $post;
+		}
+		$key = md5 ( $url . $suffix );
 		$file = rtrim ( $this->cache ['dir'], '/' ) . '/';
+		$isDownload = isset ( $task [self::TASK_ITEM_FILE] );
 		if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] != 0) {
 			if ($this->cache ['dirLevel'] == 1) {
 				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3 );
