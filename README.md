@@ -53,6 +53,28 @@ CurlMulti_Exception
 **CurlMulti/Base/Clone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
 
+<sub>**Feature：**
+
+1. <sub>It's a work of art on software engineer and programming technique.
+1. <sub>Easy to use, has only one public method start(void).
+1. <sub>Low coupling,easy to extend.Copying a site with CurlMulti is very fast.
+1. <sub>All duplicate url in all pages will be processed only once.
+1. <sub>All url and uri in pages will be accurately processed automaticly!
+1. <sub>@import in css and images in css can be downloaded automaticly,ignore @import depth!
+1. <sub>Can process multi url prefix and config the url individually.
+1. <sub>Subprefix for url can be specified and config for the subprefix can be specified.
+1. <sub>Process 3xx redirect automaticly.
+1. <sub>Resources cross site will be shared.For example,site A use js and css of B,when clone B this css and js will not be processed again.
+1. <sub>In one dir arbitray number site can be located and no file will conflict.
+1. <sub>Download option support multitype control.
+
+<sub>**issue:**
+
+<sub>1. Css annotation for IE will not be processed,because a standard way is not founded by now.
+
+<sub>Clone of clone: http://manual.phpdr.net/
+
+
 **phpQuery.php**<br>
 [https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "Official Website")
 
