@@ -8,7 +8,7 @@ $url = array (
 				'/' => null
 		)
 );
-$dir = __DIR__ . '/manual';
+$dir = __DIR__ . '/static';
 $cacheDir = __DIR__ . '/cache';
 if (! file_exists ( $dir )) {
 	mkdir ( $dir );
