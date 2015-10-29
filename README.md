@@ -72,7 +72,7 @@ A powerfull site clone tool.It's a perfect tool.
 
 <sub>1. Css annotation for IE will not be processed,because a standard way is not founded by now.
 
-<sub>Clone of clone: http://manual.phpdr.net/
+<sub>Clone of site: http://manual.phpdr.net/
 
 
 **phpQuery.php**<br>
