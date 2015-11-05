@@ -265,6 +265,8 @@ class CurlMulti_Core {
 			if (isset ( $this->cbUser )) {
 				call_user_func ( $this->cbUser );
 			}
+			//useful for persist
+			$this->addTask ();
 			while ( false != ($curlInfo = curl_multi_info_read ( $this->mh, $this->info ['all'] ['queueNum'] )) ) {
 				$ch = $curlInfo ['handle'];
 				$task = $this->taskRunning [( int ) $ch];
