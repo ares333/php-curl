@@ -159,9 +159,10 @@ Download task is not affected.Cache write will be ignored.<br>
 Must be called in $process.
 
 ```PHP
-public function start()
+public function start($persist=null)
 ```
 Start the loop.This is a blocked method.
+Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
 
 ```PHP
 public function getch($url = null)
