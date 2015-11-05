@@ -235,8 +235,11 @@ class CurlMulti_Core {
 
 	/**
 	 * Perform the actual task(s).
+	 *
+	 * @param
+	 *        	mixed callback control the persist
 	 */
-	function start() {
+	function start($persist = null) {
 		if ($this->isRunning) {
 			throw new CurlMulti_Exception ( __CLASS__ . ' is running !' );
 		}
@@ -345,7 +348,7 @@ class CurlMulti_Core {
 					call_user_func ( $this->cbUser );
 				}
 			}
-		} while ( $this->info ['all'] ['activeNum'] || $this->info ['all'] ['queueNum'] || ! empty ( $this->taskFail ) || ! empty ( $this->taskRunning ) || ! empty ( $this->taskPool ) );
+		} while ( $this->info ['all'] ['activeNum'] || $this->info ['all'] ['queueNum'] || ! empty ( $this->taskFail ) || ! empty ( $this->taskRunning ) || ! empty ( $this->taskPool ) || (isset ( $persist ) && true == call_user_func ( $persist )) );
 		$this->callCbInfo ( true );
 		curl_multi_close ( $this->mh );
 		unset ( $this->mh );
