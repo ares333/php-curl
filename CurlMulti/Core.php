@@ -265,7 +265,7 @@ class CurlMulti_Core {
 			if (isset ( $this->cbUser )) {
 				call_user_func ( $this->cbUser );
 			}
-			//useful for persist
+			// useful for persist
 			$this->addTask ();
 			while ( false != ($curlInfo = curl_multi_info_read ( $this->mh, $this->info ['all'] ['queueNum'] )) ) {
 				$ch = $curlInfo ['handle'];
@@ -315,7 +315,7 @@ class CurlMulti_Core {
 							array_unshift ( $task [self::TASK_ITEM_ARGS], $err );
 							$callFail = true;
 						} else {
-							echo "\nError " . implode ( ', ', $err ['error'] ) . ", url=$info[url]\n";
+							user_error ( "Error " . implode ( ', ', $err ['error'] ) . ", url=$info[url]", E_USER_WARNING );
 						}
 						$this->info ['all'] ['failNum'] ++;
 					} else {
