@@ -81,6 +81,7 @@ API(CurlMulti_Core)
 ```PHP
 public $maxThread = 10
 ```
+最大并发数，这个值可以运行中动态改变。<br>
 最大数限制跟操作系统和libcurl有关，和本库无关。
 
 ```PHP
