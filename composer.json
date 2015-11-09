@@ -1,0 +1,20 @@
+{
+    "name": "ares333/curlmulti",
+    "description": "Undoubtedly the best php curl library.It's power beyond imagination.",
+    "authors": [
+        {
+            "name": "Ares",
+            "email": "admin@phpdr.net"
+        }
+    ],
+    "require": {
+        "php": ">=5.1.0",
+        "ext-curl": "*"
+    },
+    "autoload": {
+        "psr-0": {
+            "CurlMulti_": ["."]
+        },
+        "classmap": ["phpQuery.php"]
+    }
+}
