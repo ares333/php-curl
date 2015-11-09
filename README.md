@@ -83,6 +83,7 @@ API(CurlMulti_Core)
 ```PHP
 public $maxThread = 10
 ```
+Max concurrence num, can be changed in the fly。<br>
 The limit may be associated with OS or libcurl,but not the library.
 
 ```PHP
