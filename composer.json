@@ -17,7 +17,7 @@
         "php": ">=5.1.0",
         "ext-curl": "*"
     },
-    "license":Apache-2.0,
+    "license": "Apache-2.0",
     "autoload": {
         "psr-0": {
             "CurlMulti_": ["."]
