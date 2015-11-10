@@ -22,6 +22,6 @@
         "psr-0": {
             "CurlMulti_": ["."]
         },
-        "classmap": ["phpQuery.php"]
+        "classmap": []
     }
 }
