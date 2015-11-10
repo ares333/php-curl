@@ -7,6 +7,10 @@
             "email": "admin@phpdr.net"
         }
     ],
+    "keywords": [
+        "curl",
+        "curlmulti"
+    ],
     "require": {
         "php": ">=5.1.0",
         "ext-curl": "*"
