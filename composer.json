@@ -12,6 +12,7 @@
         "curlmulti"
     ],
     "replace":[
+        "coderockr/php-query"
     ],
     "require": {
         "php": ">=5.1.0",
