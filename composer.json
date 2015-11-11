@@ -1,5 +1,5 @@
 {
-    "name": "phpdr.net/curlmulti",
+    "name": "phpdr.net/php-curlmulti",
     "description": "Beyond all doubts,It is the best php curl library.",
     "authors": [
         {
@@ -9,7 +9,8 @@
     ],
     "keywords": [
         "curl",
-        "curlmulti"
+        "curlmulti",
+        "php-curlmulti"
     ],
     "replace":[
     ],
