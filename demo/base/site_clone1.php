@@ -2,7 +2,7 @@
 include '../../CurlMulti/Core.php';
 include '../../CurlMulti/Base.php';
 include '../../CurlMulti/Base/Clone.php';
-include '../../phpQuery.php';
+include '../phpQuery.php';
 $url = array (
 		'http://www.laruence.com/manual' => array (
 				'/' => null
