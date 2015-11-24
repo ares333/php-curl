@@ -694,6 +694,7 @@ class CurlMulti_Core {
 		if (isset ( $url )) {
 			$opt [CURLOPT_URL] = $url;
 		}
+		$opt [CURLINFO_HEADER_OUT] = true;
 		$opt [CURLOPT_HEADER] = false;
 		$opt [CURLOPT_CONNECTTIMEOUT] = 10;
 		$opt [CURLOPT_TIMEOUT] = 30;

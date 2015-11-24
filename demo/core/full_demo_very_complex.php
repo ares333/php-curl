@@ -1,7 +1,7 @@
 <?php
 include '../../CurlMulti/Core.php';
 include '../../CurlMulti/Base.php';
-include '../../phpQuery.php';
+include '../phpQuery.php';
 class Demo extends CurlMulti_Base {
 	private $baseUrl = 'http://www.1ting.com';
 	private $noCacheNum = 10;
