@@ -18,7 +18,6 @@ QQ群:215348766
 ----
 1. 极低的CPU和内存使用率。
 1. 速度在程序层面最高(测试抓取html速度达到2000+页每秒，下载速度1000Mbps。
-1. 内部原生下载支持(使用curl文件下载回调，性能最高)。
 1. 支持全局并发设置和根据任务类型单独设置并发。
 1. 支持状态回调，运行中的所有信息都被返回，包括单独的每个任务信息。
 1. 支持通过回调添加任务。
@@ -100,7 +99,7 @@ public $opt = array ()
 全局CURLOPT_\*，可以被add()中设置的opt覆盖。
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1, 'verifyPost' => false)
+public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1, 'verifyPost' => false, 'delete' => false)
 ```
 缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
 
@@ -139,7 +138,6 @@ public function add(array $item, $process = null, $fail = null)
 ```
 添加一个任务到任务池<br>
 **$item['url']** 不能为空。<br>
-**$item['file']** 如果设置了这个参数url对应的内容会被下载到该文件，应该使用绝对路径，最后一层目录能够自动创建。<br>
 **$item['opt']=array()** 当前任务的CURLOPT_\*，覆盖全局的CURLOPT_\*。<br>
 **$item['args']** 成功和失败回调的第二个参数。<br>
 **$item['ctl']=array()** 一些额外的控制项<br />
@@ -150,22 +148,10 @@ public function add(array $item, $process = null, $fail = null)
 **$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。
 
 ```PHP
-public function error($msg)
-```
-一个强力方法，在成功回调中如果你认为当前任务是失败的，可以调用此函数走$curl->maxTry循环。<br />
-下载任务不受影响，如果走$curl->maxTry循环，一定不会写缓存。<br>
-必须在成功回调中调用此方法。
-
-```PHP
 public function start($persist=null)
 ```
 开始回调循环，此方法是阻塞的。
 参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
-
-```PHP
-public function getch($url = null)
-```
-获取一个curl句柄附带全局CURLOPT_\*。
 
 API(CurlMulti_Base)
 -----------------

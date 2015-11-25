@@ -54,9 +54,9 @@ class CurlMulti_Base {
 	 * @param String $mode
 	 *        	g greed
 	 *        	ng non-greed
-	 * @return string|boolean
+	 * @return string boolean
 	 */
-	function between($str, $start, $end = null, $mode = 'g') {
+	function substr($str, $start, $end = null, $mode = 'g') {
 		if (isset ( $start )) {
 			$pos1 = strpos ( $str, $start );
 		} else {
@@ -149,20 +149,6 @@ class CurlMulti_Base {
 			$res = &$meta;
 		}
 		return $res;
-	}
-
-	/**
-	 * none http 200 go CurlMulti_Core::maxTry loop
-	 *
-	 * @param array $info
-	 * @return boolean
-	 */
-	function hasHttpError($info) {
-		if ($info ['http_code'] != 200) {
-			$this->curl->error ( 'http error ' . $info ['http_code'] );
-			return true;
-		}
-		return false;
 	}
 
 	/**

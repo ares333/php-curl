@@ -10,26 +10,20 @@
  *
  */
 class CurlMulti_Core {
-	// url
-	const TASK_ITEM_URL = 0x01;
-	// file
-	const TASK_ITEM_FILE = 0x02;
-	// arguments
-	const TASK_ITEM_ARGS = 0x03;
-	// operation, task level
-	const TASK_ITEM_OPT = 0x04;
-	// control options
-	const TASK_ITEM_CTL = 0x05;
-	// file pointer
-	const TASK_FP = 0x06;
-	// success callback
-	const TASK_PROCESS = 0x07;
-	// curl fail callback
-	const TASK_FAIL = 0x08;
-	// tryed times
-	const TASK_TRYED = 0x09;
 	// handler
-	const TASK_CH = 0x0A;
+	const TASK_CH = 0x01;
+	// arguments
+	const TASK_ITEM_ARGS = 0x02;
+	// operation, task level
+	const TASK_ITEM_OPT = 0x03;
+	// control options
+	const TASK_ITEM_CTL = 0x04;
+	// success callback
+	const TASK_PROCESS = 0x05;
+	// curl fail callback
+	const TASK_FAIL = 0x06;
+	// tryed times
+	const TASK_TRYED = 0x07;
 
 	// global max thread num
 	public $maxThread = 10;
@@ -38,7 +32,17 @@ class CurlMulti_Core {
 	// retry time(s) when task failed
 	public $maxTry = 3;
 	// operation, class level curl opt
-	public $opt = array ();
+	public $opt = array (
+			CURLINFO_HEADER_OUT => true,
+			CURLOPT_HEADER => true,
+			CURLOPT_CONNECTTIMEOUT => 10,
+			CURLOPT_TIMEOUT => 30,
+			CURLOPT_AUTOREFERER => true,
+			CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36',
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_MAXREDIRS => 5
+	);
 	// cache options,dirLevel values is less than 3
 	public $cache = array (
 			'enable' => false,
@@ -47,7 +51,8 @@ class CurlMulti_Core {
 			'dir' => null,
 			'dirLevel' => 1,
 			'expire' => 86400,
-			'verifyPost' => false
+			'verifyPost' => false,
+			'delete' => false
 	);
 	// stack or queue
 	public $taskPoolType = 'queue';
@@ -77,8 +82,6 @@ class CurlMulti_Core {
 
 	// handle of multi-thread curl
 	private $mh = null;
-	// user error
-	private $userError = null;
 	// if __construct called
 	private $isConstructCalled = false;
 	// running info
@@ -136,7 +139,7 @@ class CurlMulti_Core {
 	 * add a task to taskPool
 	 *
 	 * @param array $item
-	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array())]]]])
+	 *        	array('url'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array())]]]])
 	 * @param mixed $process
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
@@ -147,59 +150,57 @@ class CurlMulti_Core {
 	function add(array $item, $process = null, $fail = null) {
 		// check
 		if (! is_array ( $item )) {
-			user_error ( 'item must be array, item is ' . gettype ( $item ), E_USER_WARNING );
-		} else {
-			if (! isset ( $item ['url'] ) && ! empty ( $item ['opt'] [CURLOPT_URL] )) {
-				$item ['url'] = $item ['opt'] [CURLOPT_URL];
-			}
-			$item ['url'] = trim ( $item ['url'] );
-			if (empty ( $item ['url'] )) {
-				user_error ( "url can't be empty, url=$item[url]", E_USER_WARNING );
-			} else {
-				// replace space with + to avoid some curl problems
-				$item ['url'] = str_replace ( ' ', '+', $item ['url'] );
-				if (array_key_exists ( 'fragment', parse_url ( $item ['url'] ) )) {
-					$pos = strrpos ( $item ['url'], '#' );
-					$item ['url'] = substr ( $item ['url'], 0, $pos );
-				}
-				// fix
-				if (empty ( $item ['file'] ))
-					$item ['file'] = null;
-				if (empty ( $item ['opt'] ))
-					$item ['opt'] = array ();
-				if (! array_key_exists ( 'args', $item ))
-					$item ['args'] = null;
-				if (empty ( $item ['ctl'] )) {
-					$item ['ctl'] = array ();
-				}
-				if (empty ( $item ['ctl'] ['cache'] )) {
-					$item ['ctl'] ['cache'] = array ();
-				}
-				if (! isset ( $item ['ctl'] ['ahead'] )) {
-					$item ['ctl'] ['ahead'] = false;
-				}
-				if (empty ( $process )) {
-					$process = null;
-				}
-				if (empty ( $fail )) {
-					$fail = null;
-				}
-				$task = array ();
-				$task [self::TASK_ITEM_URL] = $item ['url'];
-				$task [self::TASK_ITEM_FILE] = $item ['file'];
-				$task [self::TASK_ITEM_ARGS] = array (
-						$item ['args']
-				);
-				$task [self::TASK_ITEM_OPT] = $item ['opt'];
-				$task [self::TASK_ITEM_CTL] = $item ['ctl'];
-				$task [self::TASK_PROCESS] = $process;
-				$task [self::TASK_FAIL] = $fail;
-				$task [self::TASK_TRYED] = 0;
-				$task [self::TASK_CH] = null;
-				$this->addTaskPool ( $task );
-				$this->info ['all'] ['taskNum'] ++;
-			}
+			throw new CurlMulti_Exception ( 'item must be array, item is ' . gettype ( $item ) );
 		}
+		if (! isset ( $item ['url'] ) && ! empty ( $item ['opt'] [CURLOPT_URL] )) {
+			$item ['url'] = $item ['opt'] [CURLOPT_URL];
+		}
+		$item ['url'] = trim ( $item ['url'] );
+		if (empty ( $item ['url'] )) {
+			throw new CurlMulti_Exception ( 'url can\'t be empty, url=' . $item ['url'] );
+		}
+		// replace space with + to avoid some curl problems
+		$item ['url'] = str_replace ( ' ', '+', $item ['url'] );
+		if (array_key_exists ( 'fragment', parse_url ( $item ['url'] ) )) {
+			$pos = strrpos ( $item ['url'], '#' );
+			$item ['url'] = substr ( $item ['url'], 0, $pos );
+		}
+		// fix
+		if (empty ( $item ['file'] ))
+			$item ['file'] = null;
+		if (empty ( $item ['opt'] )) {
+			$item ['opt'] = array ();
+		}
+		$item ['opt'] [CURLOPT_URL] = $item ['url'];
+		if (! array_key_exists ( 'args', $item ))
+			$item ['args'] = array ();
+		if (empty ( $item ['ctl'] )) {
+			$item ['ctl'] = array ();
+		}
+		if (empty ( $item ['ctl'] ['cache'] )) {
+			$item ['ctl'] ['cache'] = array ();
+		}
+		if (! isset ( $item ['ctl'] ['ahead'] )) {
+			$item ['ctl'] ['ahead'] = false;
+		}
+		if (empty ( $process )) {
+			$process = null;
+		}
+		if (empty ( $fail )) {
+			$fail = null;
+		}
+		$task = array ();
+		$task [self::TASK_ITEM_ARGS] = array (
+				$item ['args']
+		);
+		$task [self::TASK_ITEM_OPT] = $item ['opt'];
+		$task [self::TASK_ITEM_CTL] = $item ['ctl'];
+		$task [self::TASK_PROCESS] = $process;
+		$task [self::TASK_FAIL] = $fail;
+		$task [self::TASK_TRYED] = 0;
+		$task [self::TASK_CH] = null;
+		$this->addTaskPool ( $task );
+		$this->info ['all'] ['taskNum'] ++;
 		return $this;
 	}
 
@@ -216,7 +217,7 @@ class CurlMulti_Core {
 					'taskPool'
 			) as $v ) {
 				foreach ( $this->$v as $k1 => $v1 ) {
-					if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
+					if ($v1 [self::TASK_ITEM_OPT] [CURLOPT_URL] == $task [self::TASK_ITEM_OPT] [CURLOPT_URL]) {
 						$t = &$this->$v;
 						unset ( $t [$k1] );
 					}
@@ -270,14 +271,11 @@ class CurlMulti_Core {
 				$task = $this->taskRunning [( int ) $ch];
 				$info = curl_getinfo ( $ch );
 				$this->info ['all'] ['downloadSize'] += $info ['size_download'];
-				if (isset ( $task [self::TASK_FP] )) {
-					fclose ( $task [self::TASK_FP] );
-				}
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$param = array ();
 					$param ['info'] = $info;
 					$param ['ext'] = array ();
-					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
+					if (! isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 						if ($task [self::TASK_ITEM_OPT] [CURLOPT_HEADER]) {
 							$pos = strpos ( $param ['content'], "\r\n\r\n" );
@@ -290,16 +288,19 @@ class CurlMulti_Core {
 				// must close first,other wise download may be not commpleted in process callback
 				curl_close ( $ch );
 				if ($curlInfo ['result'] == CURLE_OK) {
-					$this->process ( $task, $param, false );
+					$userRes = $this->process ( $task, $param, false );
 				}
 				// error handle
 				$callFail = false;
-				if ($curlInfo ['result'] !== CURLE_OK || isset ( $this->userError )) {
+				if ($curlInfo ['result'] !== CURLE_OK || ! empty ( $userRes ['error'] )) {
 					if ($task [self::TASK_TRYED] >= $this->maxTry) {
 						// user error
-						if (isset ( $this->userError )) {
+						if (! empty ( $userRes ['error'] )) {
 							$err = array (
-									'error' => $this->userError
+									'error' => array (
+											CURLE_OK,
+											$userRes ['error']
+									)
 							);
 						} else {
 							$err = array (
@@ -322,9 +323,6 @@ class CurlMulti_Core {
 						$task [self::TASK_ITEM_CTL] ['useCache'] = false;
 						$this->taskFail [] = $task;
 						$this->info ['all'] ['taskNum'] ++;
-					}
-					if (isset ( $this->userError )) {
-						unset ( $this->userError );
 					}
 				}
 				if ($callFail) {
@@ -466,8 +464,14 @@ class CurlMulti_Core {
 			if (! empty ( $task )) {
 				$cache = $this->cache ( $task );
 				if (null !== $cache) {
-					if (isset ( $task [self::TASK_ITEM_FILE] )) {
-						file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
+					if (isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
+						if (flock ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE], LOCK_EX )) {
+							fwrite ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE], $cache ['content'] );
+							flock ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE], LOCK_UN );
+						} else {
+							$temp = stream_get_meta_data ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] );
+							throw new CurlMulti_Exception ( 'Can not lock file, file=' . $temp ['uri'] );
+						}
 						unset ( $cache ['content'] );
 					}
 					$this->process ( $task, $cache, true );
@@ -489,26 +493,10 @@ class CurlMulti_Core {
 						$isNoType = true;
 					}
 					if ($isNoType && $maxThread == 0) {
-						user_error ( 'task was disgarded because maxThreadNoType=0, url=' . $task [self::TASK_ITEM_URL], E_USER_WARNING );
+						user_error ( 'task was disgarded because maxThreadNoType=0, url=' . $task [self::TASK_ITEM_OPT] [CURLOPT_URL], E_USER_WARNING );
 					}
 					if (($isNoType && $this->info ['all'] ['taskRunningNumNoType'] < $maxThread) || (! $isNoType && $this->info ['all'] ['taskRunningNumType'] [$task [self::TASK_ITEM_CTL] ['type']] < $maxThread)) {
-						$task [self::TASK_CH] = $this->curlInit ( $task [self::TASK_ITEM_URL] );
-						// is a download task?
-						if (isset ( $task [self::TASK_ITEM_FILE] )) {
-							// curl can create the last level directory
-							$dir = dirname ( $task [self::TASK_ITEM_FILE] );
-							if (! file_exists ( $dir )) {
-								mkdir ( $dir, 0777 );
-							}
-							$task [self::TASK_FP] = fopen ( $task [self::TASK_ITEM_FILE], 'w' );
-							curl_setopt ( $task [self::TASK_CH], CURLOPT_FILE, $task [self::TASK_FP] );
-						}
-						// single task curl option
-						if (isset ( $task [self::TASK_ITEM_OPT] )) {
-							foreach ( $task [self::TASK_ITEM_OPT] as $k => $v ) {
-								curl_setopt ( $task [self::TASK_CH], $k, $v );
-							}
-						}
+						$task = $this->curlInit ( $task );
 						$this->taskRunning [( int ) $task [self::TASK_CH]] = $task;
 						if (! isset ( $this->info ['all'] ['timeStartDownload'] )) {
 							$this->info ['all'] ['timeStartDownload'] = time ();
@@ -547,6 +535,8 @@ class CurlMulti_Core {
 		array_unshift ( $task [self::TASK_ITEM_ARGS], $param );
 		if (isset ( $task [self::TASK_PROCESS] )) {
 			$userRes = call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
+		} else {
+			$userRes = array ();
 		}
 		if (is_array ( $userRes )) {
 			if (! empty ( $userRes ['cache'] )) {
@@ -554,9 +544,10 @@ class CurlMulti_Core {
 			}
 		}
 		// write cache
-		if (! $isCache && ! isset ( $this->userError )) {
+		if (! $isCache && ! empty ( $userRes ['error'] )) {
 			$this->cache ( $task, $param );
 		}
+		return $userRes;
 	}
 
 	/**
@@ -573,7 +564,7 @@ class CurlMulti_Core {
 		}
 		if (! isset ( $config ['dir'] ))
 			throw new CurlMulti_Exception ( 'Cache dir is not defined' );
-		$url = $task [self::TASK_ITEM_URL];
+		$url = $task [self::TASK_ITEM_OPT] [CURLOPT_URL];
 		$suffix = '';
 		if (true == $config ['verifyPost'] && ! empty ( $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS] )) {
 			$post = $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS];
@@ -584,7 +575,7 @@ class CurlMulti_Core {
 		}
 		$key = md5 ( $url . $suffix );
 		$file = rtrim ( $config ['dir'], '/' ) . '/';
-		$isDownload = isset ( $task [self::TASK_ITEM_FILE] );
+		$isDownload = isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] );
 		if (isset ( $config ['dirLevel'] ) && $config ['dirLevel'] != 0) {
 			if ($config ['dirLevel'] == 1) {
 				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3 );
@@ -633,7 +624,8 @@ class CurlMulti_Core {
 					throw new CurlMulti_Exception ( 'Create dir failed, dir=' . $dir );
 				}
 				if ($isDownload) {
-					$content ['content'] = base64_encode ( file_get_contents ( $task [self::TASK_ITEM_FILE] ) );
+					$temp = stream_get_meta_data ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] );
+					$content ['content'] = base64_encode ( file_get_contents ( $temp ['uri'] ) );
 				}
 				$content = serialize ( $content );
 				if ($config ['compress']) {
@@ -650,57 +642,19 @@ class CurlMulti_Core {
 	}
 
 	/**
-	 * user error for current callback
-	 * not curl error
-	 * must be called in process callback
-	 *
-	 * @param unknown $msg
-	 */
-	function error($msg) {
-		$this->userError = array (
-				CURLE_OK,
-				$msg
-		);
-	}
-
-	/**
-	 * return a default $ch initialized with global opt
-	 *
-	 * @param unknown $url
-	 * @return resource
-	 */
-	function getch($url = null) {
-		return $this->curlInit ( $url );
-	}
-
-	/**
 	 * get curl handle
 	 *
-	 * @param string $url
-	 * @return resource
+	 * @param array $task
+	 * @return array
 	 */
-	private function curlInit($url = null) {
-		$ch = curl_init ();
-		$opt = array ();
-		if (isset ( $url )) {
-			$opt [CURLOPT_URL] = $url;
+	private function curlInit($task) {
+		$task [self::TASK_CH] = curl_init ();
+		$opt = $this->opt;
+		foreach ( $task [self::TASK_ITEM_OPT] as $k => $v ) {
+			$opt [$k] = $v;
 		}
-		$opt [CURLINFO_HEADER_OUT] = true;
-		$opt [CURLOPT_HEADER] = true;
-		$opt [CURLOPT_CONNECTTIMEOUT] = 10;
-		$opt [CURLOPT_TIMEOUT] = 30;
-		$opt [CURLOPT_AUTOREFERER] = true;
-		$opt [CURLOPT_USERAGENT] = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11';
-		$opt [CURLOPT_RETURNTRANSFER] = true;
-		$opt [CURLOPT_FOLLOWLOCATION] = true;
-		$opt [CURLOPT_MAXREDIRS] = 10;
-		// user defined opt
-		if (! empty ( $this->opt )) {
-			foreach ( $this->opt as $k => $v ) {
-				$opt [$k] = $v;
-			}
-		}
-		curl_setopt_array ( $ch, $opt );
-		return $ch;
+		curl_setopt_array ( $task [self::TASK_CH], $opt );
+		$task [self::TASK_ITEM_OPT] = $opt;
+		return $task;
 	}
 }

@@ -20,7 +20,6 @@ Feature
 -------
 1. Extremely low cpu and memory usage.
 1. Best program performance(tested spider 2000+ html pages per second and 1000MBps pic download speed).
-1. Internal download support(use curl download callback,best performance).
 1. Support global parallel and seperate parallel for defferent task type.
 1. Support running info callback.All info you need is returned, include overall and every task infomation.
 1. Support adding task in task callback.
@@ -102,7 +101,7 @@ public $opt = array ()
 Global CURLOPT_* for all tasks.Overrided by CURLOPT_* in add().
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1)
+public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1, 'verifyPost' => false, 'delete' => false)
 ```
 The options is very easy to understand.Cache is identified by url.If cache finded,the class will not access the network,but return the cache directly.
 
@@ -141,7 +140,6 @@ public function add(array $item, $process = null, $fail = null)
 ```
 Add a task to taskpool.<br>
 **$item['url']** Must not be emtpy.<br>
-**$item['file']** If is setted the content of the url will be saved.Should be absolute path.The last level directory will be created automaticly.<br>
 **$item['opt']=array()** CURLOPT_* for current task.Override the global $this->opt and merged.<br>
 **$item['args']** Second parameter for callbacks.Include $this->cbFail and $fail and $process.<br>
 **$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
@@ -152,22 +150,10 @@ Add a task to taskpool.<br>
 **$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].
 
 ```PHP
-public function error($msg)
-```
-A powerfull method.If you think current task is fail in $process(second parameter of $this->add()) callback,you can call this method to make the task go $this->maxTry loop.<br />
-Download task is not affected.Cache write will be ignored.<br>
-Must be called in $process.
-
-```PHP
 public function start($persist=null)
 ```
 Start the loop.This is a blocked method.
 Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
-
-```PHP
-public function getch($url = null)
-```
-Get a curl resource with global $this->opt.
 
 API(CurlMulti_Base)
 -----------------
