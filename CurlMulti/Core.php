@@ -279,6 +279,11 @@ class CurlMulti_Core {
 					$param ['ext'] = array ();
 					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
+						if ($task [self::TASK_ITEM_OPT] [CURLOPT_HEADER]) {
+							$pos = strpos ( $param ['content'], "\r\n\r\n" );
+							$param ['header'] = substr ( $param ['content'], 0, $pos );
+							$param ['content'] = substr ( $param ['content'], $pos + 4 );
+						}
 					}
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
@@ -544,6 +549,9 @@ class CurlMulti_Core {
 			$userRes = call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
 		}
 		if (is_array ( $userRes )) {
+			if (! empty ( $userRes ['cache'] )) {
+				$task [self::TASK_ITEM_CTL] ['cache'] = array_merge ( $task [self::TASK_ITEM_CTL] ['cache'], $userRes ['cache'] );
+			}
 		}
 		// write cache
 		if (! $isCache && ! isset ( $this->userError )) {
@@ -677,7 +685,8 @@ class CurlMulti_Core {
 		if (isset ( $url )) {
 			$opt [CURLOPT_URL] = $url;
 		}
-		$opt [CURLOPT_HEADER] = false;
+		$opt [CURLINFO_HEADER_OUT] = true;
+		$opt [CURLOPT_HEADER] = true;
 		$opt [CURLOPT_CONNECTTIMEOUT] = 10;
 		$opt [CURLOPT_TIMEOUT] = 30;
 		$opt [CURLOPT_AUTOREFERER] = true;
