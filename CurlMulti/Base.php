@@ -54,9 +54,9 @@ class CurlMulti_Base {
 	 * @param String $mode
 	 *        	g greed
 	 *        	ng non-greed
-	 * @return string
+	 * @return string|boolean
 	 */
-	function substr($str, $start, $end = null, $mode = 'g') {
+	function between($str, $start, $end = null, $mode = 'g') {
 		if (isset ( $start )) {
 			$pos1 = strpos ( $str, $start );
 		} else {
@@ -74,7 +74,7 @@ class CurlMulti_Base {
 			$pos2 = strlen ( $str );
 		}
 		if (false === $pos1 || false === $pos2 || $pos2 < $pos1) {
-			return;
+			return false;
 		}
 		$len = strlen ( $start );
 		return substr ( $str, $pos1 + $len, $pos2 - $pos1 - $len );

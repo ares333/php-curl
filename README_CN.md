@@ -23,7 +23,7 @@ QQ群:215348766
 1. 支持状态回调，运行中的所有信息都被返回，包括单独的每个任务信息。
 1. 支持通过回调添加任务。
 1. 支持用户自定义回调，可以在回调中做任何事情。
-1. 支持任务完成回退，用于等待先决条件完成。
+1. 支持成功回调返回值控制任务。
 1. 支持全局错误回调和单独任务的错误回调，所有和错误相关的信息都被返回。
 1. 支持内部全自动重试。
 1. 支持用户参数任意传递。
@@ -100,7 +100,7 @@ public $opt = array ()
 全局CURLOPT_\*，可以被add()中设置的opt覆盖。
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1)
+public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1, 'verifyPost' => false)
 ```
 缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
 
@@ -144,10 +144,9 @@ public function add(array $item, $process = null, $fail = null)
 **$item['args']** 成功和失败回调的第二个参数。<br>
 **$item['ctl']=array()** 一些额外的控制项<br />
 *$item['ctl']['type']* 任务类型，用在$maxThreadType属性。<br />
-*$item['ctl']['cache']=array('enable'=>null,'expire'=>null)* 任务缓存配置，覆盖合并$cache属性。<br />
-*$item['ctl']['close']* 是否自动关闭curl句柄。<br />
+*$item['ctl']['cache']=array()* 任务缓存配置，覆盖合并$cache属性。<br />
 *$item['ctl']['ahead']* 忽略$taskPoolType属性，此种类型的任务总是被优先加入并发中。<br />
-**$process** 任务成功完成调用此回调，回调的第一个参数是结果数组，第二个参数是$item['args']。如果回调中返回false，当前任务会被放到任务池的最后面(称为backoff)等待再次被执行(使用缓存实现)，返回false是有风险的，必须自行保证不会出现无限backoff。<br />
+**$process** 任务成功完成调用此回调，回调的第一个参数是结果数组，第二个参数是$item['args']。<br />
 **$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。
 
 ```PHP

@@ -45,8 +45,9 @@ class CurlMulti_Core {
 			'enableDownload' => false,
 			'compress' => false,
 			'dir' => null,
+			'dirLevel' => 1,
 			'expire' => 86400,
-			'dirLevel' => 1
+			'verifyPost' => false
 	);
 	// stack or queue
 	public $taskPoolType = 'queue';
@@ -135,13 +136,13 @@ class CurlMulti_Core {
 	 * add a task to taskPool
 	 *
 	 * @param array $item
-	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array('enable'=>bool,'expire'=>0),'close'=>true))]]]])
+	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array())]]]])
 	 * @param mixed $process
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
 	 *        	curl fail callback,for callback first param array('error'=>array(0=>code,1=>msg),'info'=>array),second param $item[args];
 	 * @throws CurlMulti_Exception
-	 * @return \frame\lib\CurlMulti
+	 * @return CurlMulti_Core
 	 */
 	function add(array $item, $process = null, $fail = null) {
 		// check
@@ -171,11 +172,8 @@ class CurlMulti_Core {
 				if (empty ( $item ['ctl'] )) {
 					$item ['ctl'] = array ();
 				}
-				if (! isset ( $item ['ctl'] ['cache'] ) || ! isset ( $item ['ctl'] ['cache'] ['enable'] )) {
-					$item ['ctl'] ['cache'] = array (
-							'enable' => false,
-							'expire' => 0
-					);
+				if (empty ( $item ['ctl'] ['cache'] )) {
+					$item ['ctl'] ['cache'] = array ();
 				}
 				if (! isset ( $item ['ctl'] ['ahead'] )) {
 					$item ['ctl'] ['ahead'] = false;
@@ -243,7 +241,7 @@ class CurlMulti_Core {
 		if ($this->isRunning) {
 			throw new CurlMulti_Exception ( __CLASS__ . ' is running !' );
 		}
-		if (false === $this->isConstructCalled) {
+		if (false == $this->isConstructCalled) {
 			throw new CurlMulti_Exception ( __CLASS__ . ' __construct is not called' );
 		}
 		$this->mh = curl_multi_init ();
@@ -278,18 +276,14 @@ class CurlMulti_Core {
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$param = array ();
 					$param ['info'] = $info;
-					$param ['ext'] = array (
-							'ch' => $ch
-					);
+					$param ['ext'] = array ();
 					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 					}
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
 				// must close first,other wise download may be not commpleted in process callback
-				if (! array_key_exists ( 'close', $task [self::TASK_ITEM_CTL] ) || $task [self::TASK_ITEM_CTL] ['close'] == true) {
-					curl_close ( $ch );
-				}
+				curl_close ( $ch );
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$this->process ( $task, $param, false );
 				}
@@ -465,18 +459,16 @@ class CurlMulti_Core {
 			$noAdd = false;
 			$cache = null;
 			if (! empty ( $task )) {
-				if (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable'] || $this->cache ['enable']) {
-					$cache = $this->cache ( $task );
-					if (null !== $cache) {
-						if (isset ( $task [self::TASK_ITEM_FILE] )) {
-							file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
-							unset ( $cache ['content'] );
-						}
-						$this->process ( $task, $cache, true );
-						$this->info ['all'] ['cacheNum'] ++;
-						$this->info ['all'] ['finishNum'] ++;
-						$this->callCbInfo ();
+				$cache = $this->cache ( $task );
+				if (null !== $cache) {
+					if (isset ( $task [self::TASK_ITEM_FILE] )) {
+						file_put_contents ( $task [self::TASK_ITEM_FILE], $cache ['content'], LOCK_EX );
+						unset ( $cache ['content'] );
 					}
+					$this->process ( $task, $cache, true );
+					$this->info ['all'] ['cacheNum'] ++;
+					$this->info ['all'] ['finishNum'] ++;
+					$this->callCbInfo ();
 				}
 				if (! $cache) {
 					$this->setThreadData ();
@@ -542,32 +534,20 @@ class CurlMulti_Core {
 	/**
 	 * do process
 	 *
-	 * @param unknown $task
-	 * @param unknown $r
-	 * @param unknown $isCache
+	 * @param array $task
+	 * @param array $param
+	 * @param boolean $isCache
 	 */
-	private function process($task, $r, $isCache) {
-		array_unshift ( $task [self::TASK_ITEM_ARGS], $r );
+	private function process($task, $param, $isCache) {
+		array_unshift ( $task [self::TASK_ITEM_ARGS], $param );
 		if (isset ( $task [self::TASK_PROCESS] )) {
 			$userRes = call_user_func_array ( $task [self::TASK_PROCESS], $task [self::TASK_ITEM_ARGS] );
 		}
-		if (! isset ( $userRes )) {
-			$userRes = true;
-		}
-		array_shift ( $task [self::TASK_ITEM_ARGS] );
-		// backoff
-		if (false === $userRes) {
-			if (false == $this->cache ['enable'] && false == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) {
-				$task [self::TASK_ITEM_CTL] ['cache'] = array (
-						'enable' => true,
-						'expire' => 3600
-				);
-			}
-			$this->addTaskPool ( $task );
+		if (is_array ( $userRes )) {
 		}
 		// write cache
-		if (false == $isCache && false == isset ( $this->userError ) && (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) || $this->cache ['enable']) {
-			$this->cache ( $task, $r );
+		if (! $isCache && ! isset ( $this->userError )) {
+			$this->cache ( $task, $param );
 		}
 	}
 
@@ -575,16 +555,19 @@ class CurlMulti_Core {
 	 * set or get file cache
 	 *
 	 * @param string $url
-	 * @param mixed $content
-	 *        	array('info','content')
-	 * @return return array|null|boolean
+	 * @param array|null $content
+	 * @return mixed
 	 */
 	private function cache($task, $content = null) {
-		if (! isset ( $this->cache ['dir'] ))
+		$config = array_merge ( $this->cache, $task [self::TASK_ITEM_CTL] );
+		if (! $config ['enable']) {
+			return;
+		}
+		if (! isset ( $config ['dir'] ))
 			throw new CurlMulti_Exception ( 'Cache dir is not defined' );
 		$url = $task [self::TASK_ITEM_URL];
 		$suffix = '';
-		if (! empty ( $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS] )) {
+		if (true == $config ['verifyPost'] && ! empty ( $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS] )) {
 			$post = $task [self::TASK_ITEM_OPT] [CURLOPT_POSTFIELDS];
 			if (is_array ( $post )) {
 				$post = http_build_query ( $post );
@@ -592,15 +575,15 @@ class CurlMulti_Core {
 			$suffix .= $post;
 		}
 		$key = md5 ( $url . $suffix );
-		$file = rtrim ( $this->cache ['dir'], '/' ) . '/';
+		$file = rtrim ( $config ['dir'], '/' ) . '/';
 		$isDownload = isset ( $task [self::TASK_ITEM_FILE] );
-		if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] != 0) {
-			if ($this->cache ['dirLevel'] == 1) {
+		if (isset ( $config ['dirLevel'] ) && $config ['dirLevel'] != 0) {
+			if ($config ['dirLevel'] == 1) {
 				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3 );
-			} elseif ($this->cache ['dirLevel'] == 2) {
+			} elseif ($config ['dirLevel'] == 2) {
 				$file .= substr ( $key, 0, 3 ) . '/' . substr ( $key, 3, 3 ) . '/' . substr ( $key, 6 );
 			} else {
-				throw new CurlMulti_Exception ( 'cache dirLevel is invalid, dirLevel=' . $this->cache ['dirLevel'] );
+				throw new CurlMulti_Exception ( 'cache dirLevel is invalid, dirLevel=' . $config ['dirLevel'] );
 			}
 		} else {
 			$file .= $key;
@@ -608,14 +591,14 @@ class CurlMulti_Core {
 		$r = null;
 		if (! isset ( $content )) {
 			if (file_exists ( $file )) {
-				if (true == $task [self::TASK_ITEM_CTL] ['cache'] ['enable']) {
-					$expire = $task [self::TASK_ITEM_CTL] ['cache'] ['expire'];
+				if (true == $config ['enable']) {
+					$expire = $config ['expire'];
 				} else {
-					$expire = $this->cache ['expire'];
+					$expire = $config ['expire'];
 				}
 				if (time () - filemtime ( $file ) < $expire) {
 					$r = file_get_contents ( $file );
-					if ($this->cache ['compress']) {
+					if ($config ['compress']) {
 						$r = gzuncompress ( $r );
 					}
 					$r = unserialize ( $r );
@@ -627,12 +610,12 @@ class CurlMulti_Core {
 		} else {
 			$r = false;
 			// check main cache directory
-			if (! is_dir ( $this->cache ['dir'] )) {
+			if (! is_dir ( $config ['dir'] )) {
 				throw new CurlMulti_Exception ( "Cache dir doesn't exists" );
 			} else {
 				$dir = dirname ( $file );
 				// level 1 subdir
-				if (isset ( $this->cache ['dirLevel'] ) && $this->cache ['dirLevel'] > 1) {
+				if (isset ( $config ['dirLevel'] ) && $config ['dirLevel'] > 1) {
 					$dir1 = dirname ( $dir );
 					if (! is_dir ( $dir1 ) && ! mkdir ( $dir1 )) {
 						throw new CurlMulti_Exception ( 'Create dir failed, dir=' . $dir1 );
@@ -645,7 +628,7 @@ class CurlMulti_Core {
 					$content ['content'] = base64_encode ( file_get_contents ( $task [self::TASK_ITEM_FILE] ) );
 				}
 				$content = serialize ( $content );
-				if ($this->cache ['compress']) {
+				if ($config ['compress']) {
 					$content = gzcompress ( $content );
 				}
 				if (file_put_contents ( $file, $content, LOCK_EX )) {
@@ -694,7 +677,6 @@ class CurlMulti_Core {
 		if (isset ( $url )) {
 			$opt [CURLOPT_URL] = $url;
 		}
-		$opt [CURLINFO_HEADER_OUT] = true;
 		$opt [CURLOPT_HEADER] = false;
 		$opt [CURLOPT_CONNECTTIMEOUT] = 10;
 		$opt [CURLOPT_TIMEOUT] = 30;

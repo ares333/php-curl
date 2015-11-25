@@ -25,7 +25,7 @@ Feature
 1. Support running info callback.All info you need is returned, include overall and every task infomation.
 1. Support adding task in task callback.
 1. Support user callback.You can do anything in that.
-1. Support process callback backoff.Used to satisfy prerequists.
+1. Support task controll use value returned from process callback .
 1. Support global error callback and task error callback.All error info is returned.
 1. Support internal max try for tasks.
 1. Support user variable flow arbitrarily.
@@ -146,10 +146,9 @@ Add a task to taskpool.<br>
 **$item['args']** Second parameter for callbacks.Include $this->cbFail and $fail and $process.<br>
 **$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
 *$item['ctl']['type']* Task type use for $this->maxThreadType。<br />
-*$item['ctl']['cache']=array('enable'=>null,'expire'=>null)* Task cache.Override $this->cache and merged.<br />
-*$item['ctl']['close']* close ch automaticly or not.<br />
+*$item['ctl']['cache']=array()* Task cache.Override $this->cache and merged.<br />
 *$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allways add to parallel prioritized.<br />
-**$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.If return false in callback,the task will be backoffed to the tail of the taskpool that it will be called again later with same state of current.Returning false is risky,because you must guarantee stop returning false yourself to avoid endless loop.<br />
+**$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.<br />
 **$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].
 
 ```PHP
