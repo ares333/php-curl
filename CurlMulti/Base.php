@@ -7,6 +7,10 @@
  */
 class CurlMulti_Base {
 	private $curl;
+	public $cbInfoFix = array (
+			'prefix' => null,
+			'suffix' => null
+	);
 	function __construct($curlmulti = null) {
 		if (isset ( $curlmulti )) {
 			$this->curl = $curlmulti;
@@ -99,56 +103,88 @@ class CurlMulti_Base {
 	 *        	array('all'=>array(),'running'=>array())
 	 */
 	function cbCurlInfo($info) {
-		$str = $this->cbCurlInfoMeta ( $info, true );
+		static $meta = array (
+				'prefix' => array (
+						0,
+						'PRE'
+				),
+				'downloadSpeed' => array (
+						0,
+						'SPD'
+				),
+				'downloadSize' => array (
+						0,
+						'DWN'
+				),
+				'finishNum' => array (
+						0,
+						'FNH'
+				),
+				'cacheNum' => array (
+						0,
+						'CAC'
+				),
+				'taskRunningNum' => array (
+						0,
+						'TKR'
+				),
+				'taskPoolNum' => array (
+						0,
+						'TKP'
+				),
+				'activeNum' => array (
+						0,
+						'ACT'
+				),
+				'queueNum' => array (
+						0,
+						'QUE'
+				),
+				'taskNum' => array (
+						0,
+						'TSK'
+				),
+				'taskFailNum' => array (
+						0,
+						'TKF'
+				),
+				'suffix' => array (
+						0,
+						'SUF'
+				)
+		);
+		$all = $info ['all'];
+		$all ['prefix'] = $this->cbInfoFix ['prefix'];
+		$all ['suffix'] = $this->cbInfoFix ['suffix'];
+		$all ['downloadSpeed'] = round ( $all ['downloadSpeed'] / 1024 ) . 'KB';
+		$all ['downloadSize'] = round ( $all ['downloadSize'] / 1024 / 1024 ) . "MB";
+		$str = '';
+		$lenPad = 2;
+		$caption = '';
+		foreach ( $meta as $k => $v ) {
+			if (! isset ( $all [$k] )) {
+				continue;
+			}
+			if (mb_strlen ( $all [$k] ) > $v [0]) {
+				$v [0] = mb_strlen ( $all [$k] );
+			}
+			if (PHP_OS == 'Linux') {
+				if (mb_strlen ( $v [1] ) > $v [0]) {
+					$v [0] = mb_strlen ( $v [1] );
+				}
+				$caption .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $v [1] );
+				$str .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $all [$k] );
+			} else {
+				$str .= sprintf ( '%-' . ($v [0] + strlen ( $v [1] ) + 1 + $lenPad) . 's', $v [1] . ':' . $all [$k] );
+			}
+			$meta [$k] = $v;
+		}
 		if (PHP_OS == 'Linux') {
-			$str = "\r\33[K" . trim ( $str );
+			$str = "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim ( $str );
 		} else {
-			$str = "\r" . $str;
+			$str = "\r" . rtrim ( $str );
 		}
 		echo $str;
-	}
-
-	/**
-	 * CurlMulti_Core info callback string
-	 *
-	 * @param array $info
-	 */
-	function cbCurlInfoMeta($info, $isString = false) {
-		$all = $info ['all'];
-		$cacheNum = $all ['cacheNum'];
-		$taskPoolNum = $all ['taskPoolNum'];
-		$finishNum = $all ['finishNum'];
-		$speed = round ( $all ['downloadSpeed'] / 1024 ) . 'KB/s';
-		$size = round ( $all ['downloadSize'] / 1024 / 1024 ) . "MB";
-		$meta = array ();
-		$meta ['downloadSpeed'] = sprintf ( "%-10s", $speed );
-		$meta ['downloadSize'] = sprintf ( '%-10s', $size );
-		$meta ['cacheNum'] = sprintf ( '%-10d', $cacheNum );
-		$meta ['finishNum'] = sprintf ( '%-10d', $finishNum );
-		$meta ['taskPoolNum'] = sprintf ( '%-10d', $taskPoolNum );
-		$meta ['taskRunningNumType'] = array ();
-		foreach ( $all ['taskRunningNumType'] as $k => $v ) {
-			$meta ['taskRunningNumType'] [$k] = sprintf ( '%-10d', $all ['taskRunningNumType'] [$k] );
-		}
-		if (! empty ( $all ['taskRunningNumType'] )) {
-			$meta ['taskRunningNumNoType'] = sprintf ( '%-10d', $all ['taskRunningNumNoType'] );
-		}
-		$meta ['taskRunningNum'] = sprintf ( '%-10d', $all ['taskRunningNum'] );
-		$res = '';
-		if (true == $isString) {
-			foreach ( $meta as $k => $v ) {
-				if (is_array ( $v )) {
-					foreach ( $v as $k1 => $v1 ) {
-						$res .= $k . '_' . $k1 . ':' . $v1;
-					}
-				} else {
-					$res .= $k . ':' . $v;
-				}
-			}
-		} else {
-			$res = &$meta;
-		}
-		return $res;
 	}
 
 	/**
