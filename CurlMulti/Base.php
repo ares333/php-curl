@@ -93,7 +93,7 @@ class CurlMulti_Base {
 	 */
 	function cbCurlFail($error, $args) {
 		$err = $error ['error'];
-		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'] . "\n";
+		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'] . "\n\n";
 	}
 
 	/**

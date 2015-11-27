@@ -268,7 +268,9 @@ class CurlMulti_Core {
 					$param = array ();
 					$param ['info'] = $info;
 					$param ['ext'] = array (
-							'cache' => array () 
+							'cache' => array (
+									'file' => null 
+							) 
 					);
 					if (! isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
@@ -547,7 +549,9 @@ class CurlMulti_Core {
 			}
 		}
 		// process cache
-		$this->cache ( $task, $param );
+		if (! isset ( $param ['ext'] ['cache'] ['file'] )) {
+			$this->cache ( $task, $param );
+		}
 		return $userRes;
 	}
 	
