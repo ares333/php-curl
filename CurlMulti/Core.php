@@ -286,6 +286,9 @@ class CurlMulti_Core {
 				curl_close ( $ch );
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$userRes = $this->process ( $task, $param );
+					if (isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
+						fclose ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] );
+					}
 				}
 				// error handle
 				$callFail = false;
