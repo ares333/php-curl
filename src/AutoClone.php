@@ -1,4 +1,9 @@
 <?php
+
+namespace Ares333\CurlMulti;
+
+use phpQuery;
+
 /**
  * Website copy, keep original directory structure(be supported by sounded reason)
  * phpQuery needed
@@ -6,7 +11,7 @@
  * @author admin@phpdr.net
  *
  */
-class CurlMulti_Base_Clone extends CurlMulti_Base {
+class AutoClone extends Base {
 	private $startTime;
 	// overwrite local file
 	public $overwrite = false;

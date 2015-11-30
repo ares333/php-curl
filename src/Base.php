@@ -1,11 +1,14 @@
 <?php
+
+namespace Ares333\CurlMulti;
+
 /**
  * CurlMulti_Core wrapper, more easy to use
  *
  * @author admin@phpdr.net
  *
  */
-class CurlMulti_Base {
+class Base {
 	private $curl;
 	public $cbInfoFix = array (
 			'prefix' => null,
@@ -15,7 +18,7 @@ class CurlMulti_Base {
 		if (isset ( $curlmulti )) {
 			$this->curl = $curlmulti;
 		} else {
-			$this->curl = new CurlMulti_Core ();
+			$this->curl = new Core ();
 		}
 		// default fail callback
 		$this->curl->cbFail = array (
@@ -44,7 +47,7 @@ class CurlMulti_Base {
 		} elseif ($level == 3) {
 			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3, 6 ) . '/' . substr ( $file, 6 );
 		} else {
-			throw new CurlMulti_Exception ( 'level is invalid, level=' . $level );
+			throw new Exception ( 'level is invalid, level=' . $level );
 		}
 		return $file;
 	}
@@ -72,7 +75,7 @@ class CurlMulti_Base {
 			} elseif ($mode == 'ng') {
 				$pos2 = strpos ( $str, $end, $pos1 );
 			} else {
-				throw new CurlMulti_Exception ( 'mode is invalid, mode=' . $mode );
+				throw new Exception ( 'mode is invalid, mode=' . $mode );
 			}
 		} else {
 			$pos2 = strlen ( $str );
@@ -208,14 +211,14 @@ class CurlMulti_Base {
 			$out = 'UTF-8';
 		}
 		if (! in_array ( $mode, $valid )) {
-			throw new CurlMulti_Exception ( 'invalid mode, mode=' . $mode );
+			throw new Exception ( 'invalid mode, mode=' . $mode );
 		}
 		if (function_exists ( 'iconv' ) && ($mode == 'auto' || $mode == 'iconv')) {
 			$func = 'iconv';
 		} elseif (function_exists ( 'mb_convert_encoding' ) && ($mode == 'auto' || $mode == 'mb_convert_encoding')) {
 			$func = 'mb_convert_encoding';
 		} else {
-			throw new CurlMulti_Exception ( 'charsetTrans failed, no function' );
+			throw new Exception ( 'charsetTrans failed, no function' );
 		}
 		$pattern = '/(<meta[^>]*?charset=(["\']?))([a-z\d_\-]*)(\2[^>]*?>)/is';
 		if (! isset ( $in )) {
@@ -267,7 +270,7 @@ class CurlMulti_Base {
 			return $uri;
 		}
 		if (! $this->isUrl ( $urlCurrent )) {
-			throw new CurlMulti_Exception ( 'url is invalid, url=' . $urlCurrent );
+			throw new Exception ( 'url is invalid, url=' . $urlCurrent );
 		}
 		if (0 === strpos ( $uri, './' )) {
 			$uri = substr ( $uri, 2 );
@@ -292,7 +295,7 @@ class CurlMulti_Base {
 	 */
 	function url2uri($url, $urlCurrent) {
 		if (! $this->isUrl ( $url )) {
-			throw new CurlMulti_Exception ( 'url is invalid, url=' . $url );
+			throw new Exception ( 'url is invalid, url=' . $url );
 		}
 		$urlDir = $this->urlDir ( $urlCurrent );
 		$parse1 = parse_url ( $url );
@@ -353,7 +356,7 @@ class CurlMulti_Base {
 	 */
 	function urlDir($url) {
 		if (! $this->isUrl ( $url )) {
-			throw new CurlMulti_Exception ( 'url is invalid, url=' . $url );
+			throw new Exception ( 'url is invalid, url=' . $url );
 		}
 		$parse = parse_url ( $url );
 		$urlDir = $url;
