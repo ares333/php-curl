@@ -381,7 +381,7 @@ class Core {
 			foreach ( $this->info ['running'] as $v ) {
 				$downloadSpeedCurrent += $v ['speed_download'];
 			}
-			if (count ( $downloadSpeed ) == 10) {
+			if (count ( $downloadSpeed ) == 3) {
 				array_shift ( $downloadSpeed );
 			}
 			$downloadSpeed [] = $downloadSpeedCurrent;
