@@ -1,6 +1,8 @@
 <?php
-require '../../CurlMulti/Core.php';
-$curl = new CurlMulti_Core ();
+//cbUser is called whenever curl has network traffic
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\Core;
+$curl = new Core ();
 $curl->maxThread = 1;
 $curl->cbUser = 'cbUser';
 $url = 'http://www.baidu.com';

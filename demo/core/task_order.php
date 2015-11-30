@@ -1,6 +1,8 @@
 <?php
-require '../../CurlMulti/Core.php';
-$curl = new CurlMulti_Core ();
+// execute in order of task added
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\Core;
+$curl = new Core ();
 $curl->maxThread = 1;
 $curl->taskPoolType = 'queue';
 $url = 'http://www.baidu.com';

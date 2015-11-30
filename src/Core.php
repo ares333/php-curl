@@ -386,15 +386,11 @@ class Core {
 			}
 			$downloadSpeed [] = $downloadSpeedCurrent;
 			$this->info ['all'] ['downloadSpeed'] = round ( array_sum ( $downloadSpeed ) / count ( $downloadSpeed ) );
-			if (0 == $lastTime) {
-				echo "\n";
-			}
 			call_user_func_array ( $this->cbInfo, array (
-					$this->info
+					$this->info,
+					0 == $lastTime,
+					$isLast
 			) );
-			if ($isLast) {
-				echo "\n";
-			}
 			$lastTime = $now;
 		}
 	}
@@ -410,6 +406,8 @@ class Core {
 		// unset none exitst type num
 		foreach ( $this->info ['all'] ['taskRunningNumType'] as $k => $v ) {
 			if ($v == 0 && ! array_key_exists ( $k, $this->maxThreadType )) {
+				print_r ( $this->maxThreadType );
+				exit ();
 				unset ( $this->info ['all'] ['taskRunningNumType'] [$k] );
 			}
 		}

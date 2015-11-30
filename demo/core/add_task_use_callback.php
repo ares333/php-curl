@@ -1,6 +1,7 @@
 <?php
-require '../../CurlMulti/Core.php';
-$curl = new CurlMulti_Core ();
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\Core;
+$curl = new Core ();
 $curl->maxThread = 3;
 $curl->cbTask = array (
 		'cbTask',
@@ -20,5 +21,5 @@ function cbTask($param) {
 			$curl->cbTask = null;
 		}
 	}
-	echo $i.' tasks added, cbTask called ' . ++ $j . " times\n";
+	echo $i . ' tasks added, cbTask called ' . ++ $j . " times\n";
 }

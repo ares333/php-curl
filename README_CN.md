@@ -42,13 +42,13 @@ QQ群:215348766
 核心库。
 
 **CurlMulti/Base.php**<br>
-核心库的封装，包含非常有用的工具和一些规范。非常易于使用，所有爬虫应该继承这个类。
+核心库的封装，包含非常有用的工具和一些规范。
 
 **CurlMulti/Exception.php**<br>
-CurlMulti_Exception
+异常。
 
-**CurlMulti/Base/Clone.php**<br>
-一个完美的网站克隆工具。
+**CurlMulti/AutoClone.php**<br>
+一个完美的全自动网站克隆工具。
 
 <sub>**特性：**
 
@@ -75,7 +75,7 @@ CurlMulti_Exception
 **phpQuery.php**<br>
 [https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "phpQuery官网")
 
-API(CurlMulti_Core)
+API(CurlMulti\Core)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -153,7 +153,7 @@ public function start($persist=null)
 开始回调循环，此方法是阻塞的。
 参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
 
-API(CurlMulti_Base)
+API(CurlMulti\Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)

@@ -1,11 +1,12 @@
 <?php
-require '../../CurlMulti/Core.php';
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\Core;
 $url = array ();
-$curl = new CurlMulti_Core ();
+$curl = new Core ();
 $curl->start ( function () {
 	static $i = 0;
 	echo $i ++ . "\n";
-	if ($i >= 3) {
+	if ($i >= 7) {
 		return false;
 	}
 	sleep ( 1 );

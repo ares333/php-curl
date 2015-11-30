@@ -96,6 +96,9 @@ class AutoClone extends Base {
 			}
 		}
 		$this->getCurl ()->start ();
+		if (isset ( $this->getCurl ()->cbInfo ) && PHP_OS == 'Linux') {
+			echo "\n";
+		}
 		foreach ( $this->url as $k => $v ) {
 			$this->getCurl ()->add ( array (
 					'url' => $k,
@@ -119,7 +122,7 @@ class AutoClone extends Base {
 	 *
 	 */
 	function cbProcess($r, $args) {
-		if (! $this->hasHttpError ( $r ['info'] )) {
+		if (200 == $r ['info'] ['http_code']) {
 			$urlDownload = array ();
 			$urlParse = array ();
 			if (isset ( $r ['content'] ) && 0 === strpos ( $r ['info'] ['content_type'], 'text' )) {
@@ -259,6 +262,13 @@ class AutoClone extends Base {
 					}
 				}
 			}
+		} else {
+			return array (
+					'error' => 'http error ' . $r ['info'] ['http_code'],
+					'cache' => array (
+							'enable' => false
+					)
+			);
 		}
 	}
 

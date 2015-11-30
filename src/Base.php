@@ -96,7 +96,7 @@ class Base {
 	 */
 	function cbCurlFail($error, $args) {
 		$err = $error ['error'];
-		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'] . "\n\n";
+		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'];
 	}
 
 	/**
@@ -105,7 +105,7 @@ class Base {
 	 * @param array $info
 	 *        	array('all'=>array(),'running'=>array())
 	 */
-	function cbCurlInfo($info) {
+	function cbCurlInfo($info, $isFirst, $isLast) {
 		static $meta = array (
 				'prefix' => array (
 						0,
@@ -156,38 +156,77 @@ class Base {
 						'SUF'
 				)
 		);
+		static $metaType = array ();
 		$all = $info ['all'];
 		$all ['prefix'] = $this->cbInfoFix ['prefix'];
 		$all ['suffix'] = $this->cbInfoFix ['suffix'];
 		$all ['downloadSpeed'] = round ( $all ['downloadSpeed'] / 1024 ) . 'KB';
 		$all ['downloadSize'] = round ( $all ['downloadSize'] / 1024 / 1024 ) . "MB";
+		if (! empty ( $all ['taskRunningNumType'] )) {
+			foreach ( $all ['taskRunningNumType'] as $k => $v ) {
+				$key = 'T(' . $k . ')';
+				$all [$key] = $v;
+				if (! array_key_exists ( $key, $metaType )) {
+					$metaType [$key] = array (
+							0,
+							$key
+					);
+				}
+			}
+		}
+		foreach ( array_keys ( $meta ) as $v ) {
+			if (! array_key_exists ( $v, $all )) {
+				unset ( $meta [$v] );
+			}
+		}
 		$str = '';
 		$lenPad = 2;
 		$caption = '';
-		foreach ( $meta as $k => $v ) {
-			if (! isset ( $all [$k] )) {
-				continue;
-			}
-			if (mb_strlen ( $all [$k] ) > $v [0]) {
-				$v [0] = mb_strlen ( $all [$k] );
-			}
-			if (PHP_OS == 'Linux') {
-				if (mb_strlen ( $v [1] ) > $v [0]) {
-					$v [0] = mb_strlen ( $v [1] );
+		foreach ( array (
+				'meta',
+				'metaType'
+		) as $name ) {
+			foreach ( $$name as $k => $v ) {
+				if (! isset ( $all [$k] )) {
+					continue;
 				}
-				$caption .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $v [1] );
-				$str .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $all [$k] );
-			} else {
-				$str .= sprintf ( '%-' . ($v [0] + strlen ( $v [1] ) + 1 + $lenPad) . 's', $v [1] . ':' . $all [$k] );
+				if (mb_strlen ( $all [$k] ) > $v [0]) {
+					$v [0] = mb_strlen ( $all [$k] );
+				}
+				if (PHP_OS == 'Linux') {
+					if (mb_strlen ( $v [1] ) > $v [0]) {
+						$v [0] = mb_strlen ( $v [1] );
+					}
+					$caption .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $v [1] );
+					$str .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $all [$k] );
+				} else {
+					$str .= sprintf ( '%-' . ($v [0] + strlen ( $v [1] ) + 1 + $lenPad) . 's', $v [1] . ':' . $all [$k] );
+				}
+				${$name} [$k] = $v;
 			}
-			$meta [$k] = $v;
 		}
+		$pre = ob_get_clean ();
 		if (PHP_OS == 'Linux') {
-			$str = "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim ( $str );
+			if (! empty ( $pre ) && ! $isFirst) {
+				$pre .= "\n\n";
+			}
+			$str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim ( $str );
 		} else {
-			$str = "\r" . rtrim ( $str );
+			if (! empty ( $pre ) && ! $isFirst) {
+				$pre .= "\n";
+			}
+			$str = $pre . "\r" . rtrim ( $str );
+		}
+		if ($isFirst) {
+			$str = "\n" . $str;
+		}
+		if ($isLast) {
+			$str .= "\n";
 		}
 		echo $str;
+		if (! $isLast) {
+			ob_start ();
+		}
 	}
 
 	/**

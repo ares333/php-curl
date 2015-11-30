@@ -1,8 +1,6 @@
 <?php
-include '../../CurlMulti/Core.php';
-include '../../CurlMulti/Base.php';
-include '../../CurlMulti/Base/Clone.php';
-include '../phpQuery.php';
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\AutoClone;
 $url = array (
 		'http://www.laruence.com/manual' => array (
 				'/' => null
@@ -16,7 +14,7 @@ if (! file_exists ( $dir )) {
 if (! file_exists ( $cacheDir )) {
 	mkdir ( $cacheDir );
 }
-$clone = new CurlMulti_Base_Clone ( $url, $dir );
+$clone = new AutoClone ( $url, $dir );
 $clone->overwrite = true;
 $clone->getCurl ()->maxThread = 3;
 $clone->getCurl ()->cache ['enable'] = true;

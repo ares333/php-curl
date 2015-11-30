@@ -1,8 +1,9 @@
 <?php
-require '../../CurlMulti/Core.php';
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\Core;
 $url1 = 'http://badurl1';
 $url2 = 'http://badurl2';
-$curl = new CurlMulti_Core ();
+$curl = new Core ();
 $curl->maxTry = 1;
 $curl->opt [CURLOPT_CONNECTTIMEOUT] = 1;
 $curl->opt [CURLOPT_TIMEOUT] = 1;

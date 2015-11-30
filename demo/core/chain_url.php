@@ -1,6 +1,7 @@
 <?php
-require '../../CurlMulti/Core.php';
-$curl = new CurlMulti_Core ();
+require_once '../../vendor/autoload.php';
+use Ares333\CurlMulti\Core;
+$curl = new Core ();
 $url = 'http://baidu.com';
 $curl->add ( array (
 		'url' => $url

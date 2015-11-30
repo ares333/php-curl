@@ -10,7 +10,7 @@
   "keywords" : [ "curl", "curlmulti", "php-curlmulti" ],
   "autoload" : {
     "psr-4" : {
-      "Ares333\\CurlMult\\" : [ "src" ]
+      "Ares333\\CurlMulti\\" : [ "src" ]
     }
   },
   "authors" : [ {
