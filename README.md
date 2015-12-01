@@ -178,19 +178,9 @@ function cbCurlFail($error, $args)
 Default fail callback.
 
 ```PHP
-function cbCurlInfo($info)
+function cbCurlInfo($info,$isFirst,$isLast)
 ```
 Default CurlMulti_Core::$cbInfo
-
-```PHP
-protected function curlInfoString($info)
-```
-Get info string
-
-```PHP
-function hasHttpError($info)
-```
-If http code is 200.
 
 ```PHP
 function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')

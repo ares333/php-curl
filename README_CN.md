@@ -176,19 +176,9 @@ function cbCurlFail($error, $args)
 全局默认错误回调。
 
 ```PHP
-function cbCurlInfo($info)
+function cbCurlInfo($info,$isFirst,$isLast)
 ```
 默认的信息回调，以标准形式输出运行信息。
-
-```PHP
-protected function curlInfoString($info)
-```
-获取信息字符串。
-
-```PHP
-function hasHttpError($info)
-```
-判断http状态码是否是200。
 
 ```PHP
 function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
