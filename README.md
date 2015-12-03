@@ -40,16 +40,16 @@ Without pthreads php is single-threaded language,so the library widely use callb
 
 Files
 -----
-**CurlMulti/Core.php**<br>
+**src/Core.php**<br>
 Kernel class
 
-**CurlMulti/Base.php**<br>
+**src/Base.php**<br>
 A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
 
-**CurlMulti/Exception.php**<br>
+**src/Exception.php**<br>
 CurlMulti_Exception
 
-**CurlMulti/Base/Clone.php**<br>
+**src/AutoClone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
 
 <sub>**Feature：**
@@ -73,11 +73,7 @@ A powerfull site clone tool.It's a perfect tool.
 
 <sub>Clone of site: http://manual.phpdr.net/
 
-
-**phpQuery.php**<br>
-[https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "Official Website")
-
-API(CurlMulti_Core)
+API(Core)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -155,7 +151,7 @@ public function start($persist=null)
 Start the loop.This is a blocked method.
 Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
 
-API(CurlMulti_Base)
+API(Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
