@@ -38,16 +38,16 @@ QQ群:215348766
 
 文件
 ----
-**CurlMulti/Core.php**<br>
+**src/Core.php**<br>
 核心库。
 
-**CurlMulti/Base.php**<br>
+**src/Base.php**<br>
 核心库的封装，包含非常有用的工具和一些规范。
 
-**CurlMulti/Exception.php**<br>
+**src/Exception.php**<br>
 异常。
 
-**CurlMulti/AutoClone.php**<br>
+**src/AutoClone.php**<br>
 一个完美的全自动网站克隆工具。
 
 <sub>**特性：**
@@ -71,11 +71,7 @@ QQ群:215348766
 
 <sub>结果展示：http://manual.phpdr.net/
 
-
-**phpQuery.php**<br>
-[https://code.google.com/p/phpquery/](https://code.google.com/p/phpquery/ "phpQuery官网")
-
-API(CurlMulti\Core)
+API(Core)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -153,7 +149,7 @@ public function start($persist=null)
 开始回调循环，此方法是阻塞的。
 参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
 
-API(CurlMulti\Base)
+API(Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
