@@ -1,7 +1,5 @@
 [中文文档](README_CN.md "中文文档")
 
-[![build status](https://travis-ci.org/sabberworm/PHP-CSS-Parser.png)](https://github.com/ares333/curlmulti)
-
 About
 -----
 
