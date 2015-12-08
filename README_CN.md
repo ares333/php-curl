@@ -9,7 +9,7 @@ PHP 5.1.0 +
 
 安装
 ----
-packagist.org： phpdr.net/php-curlmulti
+packagist.org： phpdr.net/php-curlmulti<br>
 composer install
 
 联系我们
