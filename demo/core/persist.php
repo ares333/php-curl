@@ -1,5 +1,5 @@
 <?php
-require_once '../../vendor/autoload.php';
+require_once '../vendor/autoload.php';
 use Ares333\CurlMulti\Core;
 $url = array ();
 $curl = new Core ();

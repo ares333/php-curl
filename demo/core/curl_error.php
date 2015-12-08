@@ -1,5 +1,5 @@
 <?php
-require_once '../../vendor/autoload.php';
+require_once '../vendor/autoload.php';
 use Ares333\CurlMulti\Core;
 $url1 = 'http://badurl1';
 $url2 = 'http://badurl2';

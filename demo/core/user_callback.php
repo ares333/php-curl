@@ -1,6 +1,6 @@
 <?php
 //cbUser is called whenever curl has network traffic
-require_once '../../vendor/autoload.php';
+require_once '../vendor/autoload.php';
 use Ares333\CurlMulti\Core;
 $curl = new Core ();
 $curl->maxThread = 1;
