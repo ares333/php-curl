@@ -9,6 +9,10 @@ Requirement
 -----------
 PHP 5.1.0 +
 
+Install
+-------
+composer install
+
 Contact Us
 ----------
 Email: admin@phpdr.com<br>
