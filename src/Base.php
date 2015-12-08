@@ -131,13 +131,13 @@ class Base {
 						0,
 						'TKR'
 				),
-				'taskPoolNum' => array (
-						0,
-						'TKP'
-				),
 				'activeNum' => array (
 						0,
 						'ACT'
+				),
+				'taskPoolNum' => array (
+						0,
+						'TKP'
 				),
 				'queueNum' => array (
 						0,
