@@ -1,5 +1,5 @@
 <?php
-require_once '../../vendor/autoload.php';
+require_once '../vendor/autoload.php';
 use Ares333\CurlMulti\Core;
 $curl = new Core ();
 $url = 'http://www.baidu.com/img/bd_logo1.png';
