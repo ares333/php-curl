@@ -11,7 +11,7 @@ PHP 5.1.0 +
 
 Install
 -------
-packagist.org: phpdr.net/php-curlmulti
+packagist.org: phpdr.net/php-curlmulti<br>
 composer install
 
 Contact Us
