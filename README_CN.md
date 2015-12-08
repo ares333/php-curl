@@ -7,6 +7,10 @@
 ----
 PHP 5.1.0 +
 
+安装
+----
+composer install
+
 联系我们
 --------
 Email: admin@phpdr.com<br>
