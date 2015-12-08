@@ -7,7 +7,7 @@ This is undoubtedly the best php curl library.It is widely used by many develope
 
 Requirement
 -----------
-PHP 5.1.0 +
+PHP 5.3 +
 
 Install
 -------
