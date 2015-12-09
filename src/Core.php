@@ -197,17 +197,6 @@ class Core {
 		$task [self::TASK_FAIL] = $fail;
 		$task [self::TASK_TRYED] = 0;
 		$task [self::TASK_CH] = null;
-		$this->addTaskPool ( $task );
-		$this->info ['all'] ['taskNum'] ++;
-		return $this;
-	}
-
-	/**
-	 * add task to taskPool
-	 *
-	 * @param unknown $task
-	 */
-	private function addTaskPool($task) {
 		// uniq
 		if ($this->taskOverride) {
 			foreach ( array (
@@ -228,6 +217,8 @@ class Core {
 		} else {
 			$this->taskPool [] = $task;
 		}
+		$this->info ['all'] ['taskNum'] ++;
+		return $this;
 	}
 
 	/**
