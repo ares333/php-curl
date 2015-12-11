@@ -409,9 +409,9 @@ class Base {
 	}
 
 	/**
-	 * get CurlMulti_Core instance
+	 * get CurlMulti\Core instance
 	 *
-	 * @return CurlMulti_Core
+	 * @return \Ares333\CurlMulti\Core
 	 */
 	function getCurl() {
 		return $this->curl;

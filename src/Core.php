@@ -121,6 +121,7 @@ class Core {
 			),
 			'running' => array ()
 	);
+	private static $instance;
 
 	/**
 	 *
@@ -131,6 +132,18 @@ class Core {
 		if (version_compare ( PHP_VERSION, '5.1.0' ) < 0) {
 			throw new Exception ( 'PHP 5.1.0+ is needed' );
 		}
+	}
+
+	/**
+	 * get singleton instance
+	 *
+	 * @return self
+	 */
+	static function getInstance() {
+		if (! isset ( static::$instance )) {
+			static::$instance = new self ();
+		}
+		return static::$instance;
 	}
 
 	/**
