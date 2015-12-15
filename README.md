@@ -11,8 +11,14 @@ PHP 5.3 +
 
 Install
 -------
-packagist.org: phpdr.net/php-curlmulti<br>
-composer install
+composer.json
+<pre>
+{
+  "require" : {
+    "phpdr.net/php-curlmulti" : "2.*"
+  }
+}
+</pre>
 
 Contact Us
 ----------
