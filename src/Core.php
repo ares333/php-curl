@@ -55,7 +55,8 @@ class Core {
 			'dirLevel' => 1,
 			'expire' => 86400,
 			'verifyPost' => false,
-			'overwrite' => false
+			'overwrite' => false,
+			'overwriteExpire' => 86400
 	);
 	// stack or queue
 	public $taskPoolType = 'queue';
@@ -603,16 +604,23 @@ class Core {
 			$file .= $key;
 		}
 		if (! isset ( $content )) {
-			if ($config ['overwrite']) {
-				return;
-			}
 			if (file_exists ( $file )) {
-				if (true == $config ['enable']) {
-					$expire = $config ['expire'];
-				} else {
-					$expire = $config ['expire'];
+				$expire = $config ['expire'];
+				if (! is_numeric ( $expire )) {
+					throw new Exception ( 'cache expire is invalid, expire=' . $expire );
 				}
-				if (time () - filemtime ( $file ) < $expire) {
+				$time = time ();
+				$mtime = filemtime ( $file );
+				if ($config ['overwrite']) {
+					$overwriteExpire = $config ['overwriteExpire'];
+					if (! is_numeric ( $overwriteExpire )) {
+						throw new Exception ( 'cache overwrite expire is invalid, expire=' . $overwriteExpire );
+					}
+					if ($time - $mtime > $overwriteExpire) {
+						return;
+					}
+				}
+				if ($time - $mtime < $expire) {
 					$r = file_get_contents ( $file );
 					if ($config ['compress']) {
 						$r = gzuncompress ( $r );
