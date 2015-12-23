@@ -285,9 +285,9 @@ class Core {
 							$param ['header'] = $param ['header'] [0];
 							$pos = 0;
 							foreach ( $param ['header'] as $v ) {
-								$pos += strlen ( $v ) + 2;
+								$pos += strlen ( $v ) + 4;
 							}
-							$param ['content'] = substr ( $param ['content'], $pos + 4 );
+							$param ['content'] = substr ( $param ['content'], $pos );
 						}
 					}
 				}
