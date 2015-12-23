@@ -178,8 +178,6 @@ class Core {
 			$item ['url'] = substr ( $item ['url'], 0, $pos );
 		}
 		// fix
-		if (empty ( $item ['file'] ))
-			$item ['file'] = null;
 		if (empty ( $item ['opt'] )) {
 			$item ['opt'] = array ();
 		}
@@ -283,8 +281,12 @@ class Core {
 					if (! isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 						if ($task [self::TASK_ITEM_OPT] [CURLOPT_HEADER]) {
-							$pos = strpos ( $param ['content'], "\r\n\r\n" );
-							$param ['header'] = substr ( $param ['content'], 0, $pos );
+							preg_match_all ( "/HTTP\/.+(?=\r\n\r\n)/Usm", $param ['content'], $param ['header'] );
+							$param ['header'] = $param ['header'] [0];
+							$pos = 0;
+							foreach ( $param ['header'] as $v ) {
+								$pos += strlen ( $v ) + 2;
+							}
 							$param ['content'] = substr ( $param ['content'], $pos + 4 );
 						}
 					}
