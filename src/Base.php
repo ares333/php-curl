@@ -10,9 +10,10 @@ namespace Ares333\CurlMulti;
  */
 class Base {
 	private $curl;
+	// array('prefix'=>array(array(0,'PRE'),100),'suffix'=>null)
 	public $cbInfoFix = array (
-			'prefix' => null,
-			'suffix' => null
+			'prefix' => array (),
+			'suffix' => array ()
 	);
 	function __construct($curlmulti = null) {
 		if (isset ( $curlmulti )) {
@@ -100,17 +101,138 @@ class Base {
 	}
 
 	/**
+	 * write message to IPC
+	 */
+	function cbCurlInfoIPC($info, $isFirst, $isLast) {
+		$pid = posix_getpid ();
+		$this->cbInfoFix ['prefix'] [] = array (
+				array (
+						0,
+						'PID'
+				),
+				'#' . $pid
+		);
+		ob_start ();
+		$res = $this->cbCurlInfo ( $info, $isFirst, $isLast, false );
+		ob_end_clean ();
+		$msg = array (
+				'isLast' => $isLast,
+				'pid' => $pid,
+				'caption' => $res ['caption'],
+				'content' => $res ['content'],
+				'output' => $res ['output']
+		);
+		while ( false === msg_send ( $this->getMessageQueue () [0], 1, $msg, true, false, $errorCode ) ) {
+			if ($errorCode != MSG_EAGAIN) {
+				user_error ( 'IPC failed to send message, errorCode=' . $errorCode, E_USER_WARNING );
+			} else {
+				break;
+			}
+		}
+	}
+
+	/**
+	 * get IPC message and display
+	 *
+	 * @param callback $callback
+	 *        	return true to end the loop, called on every loop
+	 */
+	function curlInfoIPC($callback = null) {
+		$queue = $this->getMessageQueue ( true ) [0];
+		$nc = ncurses_init ();
+		$window = ncurses_newwin ( 0, 0, 0, 0 );
+		$caption = '';
+		$list = array ();
+		$lastClear = time ();
+		while ( true ) {
+			$time = time ();
+			if ($time - $lastClear > 10) {
+				ncurses_clear ();
+				$lastClear = $time;
+			}
+			$error = '';
+			if (msg_receive ( $queue, 0, $msgtype, 1024 * 1024, $msg, true, MSG_IPC_NOWAIT, $errorCode )) {
+				if (strlen ( $msg ['caption'] ) > strlen ( $caption )) {
+					$caption = $msg ['caption'];
+				}
+				$pid = $msg ['pid'];
+				$isLast = $msg ['isLast'];
+				unset ( $msg ['pid'], $msg ['isLast'], $msg ['caption'] );
+				$list [$pid] = $msg;
+				if (true === $isLast) {
+					unset ( $list [$pid] );
+					ncurses_clear ();
+					if (empty ( $list )) {
+						break;
+					}
+				}
+			} else {
+				if ($errorCode != MSG_ENOMSG) {
+					$error = 'IPC receive error, errorCode=' . $errorCode;
+				}
+			}
+			$content = '';
+			$output = '';
+			foreach ( $list as $k => $v ) {
+				$content .= $v ['content'] . "\n";
+				$output .= $v ['output'] . "\n";
+			}
+			$str = trim ( $caption . "\n" . $content . "\n" . $output . "\n" . $error );
+			ncurses_move ( 0, 0 );
+			ncurses_addstr ( $str );
+			ncurses_refresh ();
+			if (isset ( $callback )) {
+				if (call_user_func ( $callback )) {
+					break;
+				}
+			}
+			usleep ( 100 * 1000 );
+		}
+		ncurses_end ();
+		msg_remove_queue ( $queue );
+	}
+
+	/**
+	 * get IPC message queue
+	 *
+	 * @return resource
+	 */
+	private function getMessageQueue($remove = false) {
+		static $queue;
+		if (! isset ( $queue )) {
+			$queue = array ();
+			$key = ftok ( __FILE__, 'C' );
+			$queue [] = msg_get_queue ( $key );
+			$queue [] = $key;
+			if ($remove) {
+				while ( msg_stat_queue ( $queue [0] ) ['msg_qnum'] > 0 ) {
+					$errorCode = null;
+					if (! msg_receive ( $queue [0], 0, $msgtype, 1024 * 1024, $message, false, $errorCode )) {
+						if ($errorCode === MSG_ENOMSG) {
+							break;
+						} else {
+							user_error ( 'IPC can not receive message, errorCode=' . $errorCode, E_USER_WARNING );
+							break;
+						}
+					}
+				}
+			}
+		}
+		return $queue;
+	}
+
+	/**
 	 * default CurlMulti_Core info callback
 	 *
 	 * @param array $info
 	 *        	array('all'=>array(),'running'=>array())
+	 * @param bool $isFirst
+	 * @param bool $isLast
+	 * @param bool $useOb
+	 *
 	 */
-	function cbCurlInfo($info, $isFirst, $isLast) {
+	function cbCurlInfo($info, $isFirst, $isLast, $useOb = true) {
 		static $meta = array (
-				'prefix' => array (
-						0,
-						'PRE'
-				),
 				'downloadSpeed' => array (
 						0,
 						'SPD'
@@ -150,16 +272,26 @@ class Base {
 				'taskFailNum' => array (
 						0,
 						'TKF'
-				),
-				'suffix' => array (
-						0,
-						'SUF'
 				)
 		);
+		// meta running num of task type
 		static $metaType = array ();
 		$all = $info ['all'];
-		$all ['prefix'] = $this->cbInfoFix ['prefix'];
-		$all ['suffix'] = $this->cbInfoFix ['suffix'];
+		// meta prefix suffix
+		foreach ( $this->cbInfoFix as $k => $v ) {
+			foreach ( $v as $v1 ) {
+				if (! array_key_exists ( $v1 [0] [1], $meta )) {
+					if ($k === 'prefix') {
+						$meta = array_merge ( array (
+								$v1 [0] [1] => $v1 [0]
+						), $meta );
+					} else {
+						$meta [$v1 [0] [1]] = $v1 [0];
+					}
+				}
+				$all [$v1 [0] [1]] = $v1 [1];
+			}
+		}
 		$all ['downloadSpeed'] = round ( $all ['downloadSpeed'] / 1024 ) . 'KB';
 		$all ['downloadSize'] = round ( $all ['downloadSize'] / 1024 / 1024 ) . "MB";
 		if (! empty ( $all ['taskRunningNumType'] )) {
@@ -174,12 +306,13 @@ class Base {
 				}
 			}
 		}
+		// clean
 		foreach ( array_keys ( $meta ) as $v ) {
 			if (! array_key_exists ( $v, $all )) {
 				unset ( $meta [$v] );
 			}
 		}
-		$str = '';
+		$content = '';
 		$lenPad = 2;
 		$caption = '';
 		foreach ( array (
@@ -198,19 +331,24 @@ class Base {
 						$v [0] = mb_strlen ( $v [1] );
 					}
 					$caption .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $v [1] );
-					$str .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $all [$k] );
+					$content .= sprintf ( '%-' . ($v [0] + $lenPad) . 's', $all [$k] );
 				} else {
-					$str .= sprintf ( '%-' . ($v [0] + strlen ( $v [1] ) + 1 + $lenPad) . 's', $v [1] . ':' . $all [$k] );
+					$content .= sprintf ( '%-' . ($v [0] + strlen ( $v [1] ) + 1 + $lenPad) . 's', $v [1] . ':' . $all [$k] );
 				}
 				${$name} [$k] = $v;
 			}
 		}
-		$pre = ob_get_clean ();
+		if ($useOb) {
+			$output = ob_get_clean ();
+		} else {
+			$output = '';
+		}
+		$pre = $output;
 		if (PHP_OS == 'Linux') {
 			if (! empty ( $pre ) && ! $isFirst) {
 				$pre .= "\n\n";
 			}
-			$str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim ( $str );
+			$str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim ( $content );
 		} else {
 			if (! empty ( $pre ) && ! $isFirst) {
 				$pre .= "\n";
@@ -224,9 +362,14 @@ class Base {
 			$str .= "\n";
 		}
 		echo $str;
-		if (! $isLast) {
+		if (! $isLast && $useOb) {
 			ob_start ();
 		}
+		return array (
+				'caption' => $caption,
+				'content' => $content,
+				'output' => trim ( $output )
+		);
 	}
 
 	/**
@@ -409,9 +552,9 @@ class Base {
 	}
 
 	/**
-	 * get CurlMulti_Core instance
+	 * get CurlMulti\Core instance
 	 *
-	 * @return CurlMulti_Core
+	 * @return \Ares333\CurlMulti\Core
 	 */
 	function getCurl() {
 		return $this->curl;

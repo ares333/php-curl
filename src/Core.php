@@ -55,7 +55,8 @@ class Core {
 			'dirLevel' => 1,
 			'expire' => 86400,
 			'verifyPost' => false,
-			'overwrite' => false
+			'overwrite' => false,
+			'overwriteExpire' => 86400
 	);
 	// stack or queue
 	public $taskPoolType = 'queue';
@@ -121,6 +122,7 @@ class Core {
 			),
 			'running' => array ()
 	);
+	private static $instance;
 
 	/**
 	 *
@@ -131,6 +133,18 @@ class Core {
 		if (version_compare ( PHP_VERSION, '5.1.0' ) < 0) {
 			throw new Exception ( 'PHP 5.1.0+ is needed' );
 		}
+	}
+
+	/**
+	 * get singleton instance
+	 *
+	 * @return self
+	 */
+	static function getInstance() {
+		if (! isset ( static::$instance )) {
+			static::$instance = new self ();
+		}
+		return static::$instance;
 	}
 
 	/**
@@ -164,8 +178,6 @@ class Core {
 			$item ['url'] = substr ( $item ['url'], 0, $pos );
 		}
 		// fix
-		if (empty ( $item ['file'] ))
-			$item ['file'] = null;
 		if (empty ( $item ['opt'] )) {
 			$item ['opt'] = array ();
 		}
@@ -269,9 +281,13 @@ class Core {
 					if (! isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 						if ($task [self::TASK_ITEM_OPT] [CURLOPT_HEADER]) {
-							$pos = strpos ( $param ['content'], "\r\n\r\n" );
-							$param ['header'] = substr ( $param ['content'], 0, $pos );
-							$param ['content'] = substr ( $param ['content'], $pos + 4 );
+							preg_match_all ( "/HTTP\/.+(?=\r\n\r\n)/Usm", $param ['content'], $param ['header'] );
+							$param ['header'] = $param ['header'] [0];
+							$pos = 0;
+							foreach ( $param ['header'] as $v ) {
+								$pos += strlen ( $v ) + 4;
+							}
+							$param ['content'] = substr ( $param ['content'], $pos );
 						}
 					}
 				}
@@ -590,16 +606,23 @@ class Core {
 			$file .= $key;
 		}
 		if (! isset ( $content )) {
-			if ($config ['overwrite']) {
-				return;
-			}
 			if (file_exists ( $file )) {
-				if (true == $config ['enable']) {
-					$expire = $config ['expire'];
-				} else {
-					$expire = $config ['expire'];
+				$expire = $config ['expire'];
+				if (! is_numeric ( $expire )) {
+					throw new Exception ( 'cache expire is invalid, expire=' . $expire );
 				}
-				if (time () - filemtime ( $file ) < $expire) {
+				$time = time ();
+				$mtime = filemtime ( $file );
+				if ($config ['overwrite']) {
+					$overwriteExpire = $config ['overwriteExpire'];
+					if (! is_numeric ( $overwriteExpire )) {
+						throw new Exception ( 'cache overwrite expire is invalid, expire=' . $overwriteExpire );
+					}
+					if ($time - $mtime > $overwriteExpire) {
+						return;
+					}
+				}
+				if ($time - $mtime < $expire) {
 					$r = file_get_contents ( $file );
 					if ($config ['compress']) {
 						$r = gzuncompress ( $r );
