@@ -157,7 +157,7 @@ class Core {
 	 * @param mixed $fail
 	 *        	curl fail callback,for callback first param array('error'=>array(0=>code,1=>msg),'info'=>array),second param $item[args];
 	 * @throws Exception
-	 * @return CurlMulti_Core
+	 * @return self
 	 */
 	function add(array $item, $process = null, $fail = null) {
 		// check
