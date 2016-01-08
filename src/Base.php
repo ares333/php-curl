@@ -353,7 +353,7 @@ class Base {
 			if (! empty ( $pre ) && ! $isFirst) {
 				$pre .= "\n";
 			}
-			$str = $pre . "\r" . rtrim ( $str );
+			$str = $pre . "\r" . rtrim ( $content );
 		}
 		if ($isFirst) {
 			$str = "\n" . $str;
