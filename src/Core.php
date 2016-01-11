@@ -99,6 +99,8 @@ class Core {
 					'downloadSpeed' => 0,
 					// byte
 					'downloadSize' => 0,
+					// byte
+					'headerSize' => 0,
 					// finished task number,include failed task and cache
 					'finishNum' => 0,
 					// The number of cache used
@@ -122,6 +124,7 @@ class Core {
 			),
 			'running' => array ()
 	);
+	private $sizeProcessed = 0;
 	private static $instance;
 
 	/**
@@ -270,6 +273,7 @@ class Core {
 				$task = $this->taskRunning [( int ) $ch];
 				$info = curl_getinfo ( $ch );
 				$this->info ['all'] ['downloadSize'] += $info ['size_download'];
+				$this->info ['all'] ['headerSize'] += $info ['header_size'];
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$param = array ();
 					$param ['info'] = $info;
@@ -348,8 +352,9 @@ class Core {
 				} else {
 					$this->info ['all'] ['taskRunningNumNoType'] --;
 				}
-				$this->addTask ();
 				$this->info ['all'] ['finishNum'] ++;
+				$this->sizeProcessed += $info ['size_download'] + $info ['header_size'];
+				$this->addTask ();
 				// if $this->info['all']['queueNum'] grow very fast there will be no efficiency lost,because outer $this->exec() won't be executed.
 				$this->exec ();
 				$this->callCbInfo ();
@@ -368,8 +373,13 @@ class Core {
 	 * call $this->cbInfo
 	 */
 	private function callCbInfo($isLast = false) {
-		static $lastTime = 0;
+		static $downloadStartTime;
 		static $downloadSpeed = array ();
+		static $lastTime = 0;
+		if (! isset ( $downloadStartTime )) {
+			$downloadStartTime = time ();
+		}
+		$downloadSpeedLimit = 3;
 		$now = time ();
 		if (($isLast || $now - $lastTime > 0) && isset ( $this->cbInfo )) {
 			$this->info ['all'] ['taskPoolNum'] = count ( $this->taskPool );
@@ -383,16 +393,17 @@ class Core {
 			foreach ( $this->taskRunning as $k => $v ) {
 				$this->info ['running'] [$k] = curl_getinfo ( $v [self::TASK_CH] );
 			}
-			// download speed
-			$downloadSpeedCurrent = 0;
-			foreach ( $this->info ['running'] as $v ) {
-				$downloadSpeedCurrent += $v ['speed_download'];
+			if ($now - $downloadStartTime > 0) {
+				if (count ( $downloadSpeed ) > $downloadSpeedLimit) {
+					array_shift ( $downloadSpeed );
+				}
+				$downloadSpeed [] = round ( $this->sizeProcessed / ($now - $downloadStartTime) );
+				$this->info ['all'] ['downloadSpeed'] = round ( array_sum ( $downloadSpeed ) / count ( $downloadSpeed ) );
 			}
-			if (count ( $downloadSpeed ) == 3) {
-				array_shift ( $downloadSpeed );
+			if ($now - $downloadStartTime > $downloadSpeedLimit) {
+				$this->sizeProcessed = 0;
+				$downloadStartTime = $now;
 			}
-			$downloadSpeed [] = $downloadSpeedCurrent;
-			$this->info ['all'] ['downloadSpeed'] = round ( array_sum ( $downloadSpeed ) / count ( $downloadSpeed ) );
 			call_user_func_array ( $this->cbInfo, array (
 					$this->info,
 					0 == $lastTime,
@@ -413,8 +424,6 @@ class Core {
 		// unset none exitst type num
 		foreach ( $this->info ['all'] ['taskRunningNumType'] as $k => $v ) {
 			if ($v == 0 && ! array_key_exists ( $k, $this->maxThreadType )) {
-				print_r ( $this->maxThreadType );
-				exit ();
 				unset ( $this->info ['all'] ['taskRunningNumType'] [$k] );
 			}
 		}
