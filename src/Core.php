@@ -277,11 +277,7 @@ class Core {
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$param = array ();
 					$param ['info'] = $info;
-					$param ['ext'] = array (
-							'cache' => array (
-									'file' => null
-							)
-					);
+					$param ['ext'] = array ();
 					if (! isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
 						if ($task [self::TASK_ITEM_OPT] [CURLOPT_HEADER]) {
@@ -569,7 +565,7 @@ class Core {
 			}
 		}
 		// process cache
-		if (! isset ( $param ['ext'] ['cache'] ['file'] )) {
+		if (empty ( $param ['ext'] ['cache'] ['file'] )) {
 			$this->cache ( $task, $param );
 		}
 		return $userRes;
@@ -644,6 +640,9 @@ class Core {
 				}
 			}
 		} else {
+			if (! isset ( $content ['ext'] ['cache'] )) {
+				$content ['ext'] ['cache'] = array ();
+			}
 			$content ['ext'] ['cache'] ['file'] = $file;
 			// check main cache directory
 			if (! is_dir ( $config ['dir'] )) {
