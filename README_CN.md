@@ -9,14 +9,7 @@ PHP 5.4 +
 
 安装
 ----
-composer.json
-<pre>
-{
-  "require" : {
-    "phpdr.net/php-curlmulti" : "2.*"
-  }
-}
-</pre>
+composer require phpdr.net/php-curlmulti:2.*
 
 联系我们
 --------

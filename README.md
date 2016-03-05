@@ -11,14 +11,7 @@ PHP 5.4 +
 
 Install
 -------
-composer.json
-<pre>
-{
-  "require" : {
-    "phpdr.net/php-curlmulti" : "2.*"
-  }
-}
-</pre>
+composer require phpdr.net/php-curlmulti:2.*
 
 Contact Us
 ----------
