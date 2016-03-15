@@ -104,7 +104,7 @@ public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' =
 The options is very easy to understand.Cache is identified by url.If cache finded,the class will not access the network,but return the cache directly.
 
 ```PHP
-public $taskPoolType = 'stack'
+public $taskPoolType = 'queue'
 ```
 Values are 'stack' or 'queue'.This option decide depth-first or width-first.Default value is 'stack' depth-first.
 

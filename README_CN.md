@@ -102,7 +102,7 @@ public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' =
 缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
 
 ```PHP
-public $taskPoolType = 'stack'
+public $taskPoolType = 'queue'
 ```
 有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先，默认是stack深度优先。
 
