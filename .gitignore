@@ -1,3 +1,8 @@
-.settings
-.buildpath
-.project
+/.settings/*
+/.buildpath
+/.classpath
+/.project
+/vendor/*
+/composer.lock
+/demo/vendor/*
+/demo/composer.lock
