@@ -5,18 +5,11 @@
 
 需求
 ----
-PHP 5.3 +
+PHP 5.4 +
 
 安装
 ----
-composer.json
-<pre>
-{
-  "require" : {
-    "phpdr.net/php-curlmulti" : "2.*"
-  }
-}
-</pre>
+composer require phpdr.net/php-curlmulti:2.*
 
 联系我们
 --------
@@ -26,7 +19,7 @@ QQ群:215348766
 特性
 ----
 1. 极低的CPU和内存使用率。
-1. 速度在程序层面最高(测试抓取html速度达到2000+页每秒，下载速度1000Mbps。
+1. 速度在程序层面最高(实测抓取html速度达到2000+页每秒，下载速度1000Mbps)。
 1. 支持全局并发设置和根据任务类型单独设置并发。
 1. 支持状态回调，运行中的所有信息都被返回，包括单独的每个任务信息。
 1. 支持通过回调添加任务。
@@ -109,7 +102,7 @@ public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' =
 缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
 
 ```PHP
-public $taskPoolType = 'stack'
+public $taskPoolType = 'queue'
 ```
 有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先，默认是stack深度优先。
 
