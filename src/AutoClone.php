@@ -34,6 +34,8 @@ class AutoClone extends Base {
 	private $urlAdded = array ();
 	// all site
 	private $site = array ();
+	// windows system flag
+	private $isWin;
 	/**
 	 *
 	 * @param CurlMulti_Core $curlmulti
@@ -74,6 +76,9 @@ class AutoClone extends Base {
 		}
 		$this->url = $url;
 		$this->dir = $dir;
+		$this->isWin = (0 === strpos(PHP_OS, 'WIN'));
+;
+
 	}
 
 	/**
@@ -201,8 +206,14 @@ class AutoClone extends Base {
 					}
 				}
 				$r ['content'] = $pq->html ();
-				if (isset ( $args ['file'] ) && false === file_put_contents ( $args ['file'], $r ['content'], LOCK_EX )) {
-					user_error ( 'write file failed, file=' . $args ['file'], E_USER_WARNING );
+				$path = $args ['file'];
+				if (isset ( $path) ){					
+					if($this->isWin ){
+						$path = mb_convert_encoding($path, 'gbk', 'utf-8');
+					}
+					if(false === file_put_contents ( $path, $r ['content'], LOCK_EX )) {
+						user_error ( 'write file failed, file=' . $path, E_USER_WARNING );
+					}
 				}
 				phpQuery::unloadDocuments ();
 			} elseif ($args ['isDownload']) {
@@ -355,7 +366,10 @@ class AutoClone extends Base {
 		}
 		$file = $this->dir . '/' . $file;
 		$dir = dirname ( $file );
-		if (! file_exists ( $dir )) {
+		if($this->isWin){
+			$dir = mb_convert_encoding($dir, 'gbk', 'utf-8');
+		}
+		if (! file_exists ( $dir )) {			
 			mkdir ( $dir, 0755, true );
 		}
 		if (file_exists ( $file )) {
