@@ -4,5 +4,3 @@
 /.project
 /vendor/*
 /composer.lock
-/demo/vendor/*
-/demo/composer.lock
