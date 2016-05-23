@@ -1,6 +1,7 @@
 <?php
 
 namespace Ares333\CurlMulti;
+
 use phpQuery;
 
 /**
@@ -11,7 +12,6 @@ use phpQuery;
  *
  */
 class AutoClone extends Base {
-	private $startTime;
 	// overwrite local file
 	public $overwrite = false;
 	// if download resource
@@ -24,7 +24,9 @@ class AutoClone extends Base {
 					'withPrefix' => false
 			)
 	);
-
+	public $logError = true;
+	private $errorLog;
+	private $startTime;
 	// init url
 	private $url;
 	// absolute local dir
@@ -33,16 +35,12 @@ class AutoClone extends Base {
 	private $urlAdded = array ();
 	// all site
 	private $site = array ();
-	//error log
-	public $errorLog = true;
-	private $errorLogFile;
-	
 	// windows system flag
 	private $isWin;
-	
+
 	/**
 	 *
-	 * @param CurlMulti_Core $curlmulti
+	 * @param Core $curlmulti
 	 * @param string $url
 	 * @param string $dir
 	 */
@@ -80,26 +78,18 @@ class AutoClone extends Base {
 		}
 		$this->url = $url;
 		$this->dir = $dir;
-		$this->isWin = (0 === strpos(PHP_OS, 'WIN'));		
-	}
-	
-	function __destruct(){
-		if($this->$errorLogFile){
-			fclose($this->$errorLogFile);
+		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));
+		if (! empty ( $this->getCurl ()->cache ['dir'] )) {
+			$this->errorLog = $this->getCurl ()->cache ['dir'] . '/autoCloneError.log';
+		} else {
+			$this->errorLog = __DIR__ . '/autoCloneError.log';
 		}
 	}
-	
+
 	/**
 	 * start clone
 	 */
 	function start() {
-		if($this->errorLog){
-			$this->getCurl()->cbFail = array (
-				$this,
-				'acCbCurlFail'
-			);
-			$this->errorLogFile = fopen($this->getCurl()->cache ['dir'].'/errorLog.txt','a');			
-		}		
 		foreach ( $this->url as $k => $v ) {
 			if ('/' != substr ( $k, - 1 )) {
 				$this->getCurl ()->add ( array (
@@ -198,7 +188,7 @@ class AutoClone extends Base {
 				foreach ( $a as $v ) {
 					$v = pq ( $v );
 					$href = $v->attr ( 'href' );
-					if($this->isScript($href)){
+					if (strtolower ( substr ( ltrim ( $href ), 0, 11 ) ) == 'javascript:') {
 						continue;
 					}
 					$url = $this->uri2url ( $href, $urlCurrent );
@@ -225,11 +215,11 @@ class AutoClone extends Base {
 				}
 				$r ['content'] = $pq->html ();
 				$path = $args ['file'];
-				if (isset ( $path) ){					
-					if($this->isWin ){
-						$path = mb_convert_encoding($path, 'gbk', 'utf-8');
+				if (isset ( $path )) {
+					if ($this->isWin) {
+						$path = mb_convert_encoding ( $path, 'gbk', 'utf-8' );
 					}
-					if(false === file_put_contents ( $path, $r ['content'], LOCK_EX )) {
+					if (false === file_put_contents ( $path, $r ['content'], LOCK_EX )) {
 						user_error ( 'write file failed, file=' . $path, E_USER_WARNING );
 					}
 				}
@@ -302,16 +292,19 @@ class AutoClone extends Base {
 	}
 
 	/**
-	 *  CurlMulti_Core fail callback， Write in error log
 	 *
-	 * @param array $error
-	 * @param mixed $args
-	 *        	args in CurlMulti_Core::add()
+	 * {@inheritDoc}
+	 * @see \Ares333\CurlMulti\Base::cbCurlFail()
 	 */
-	function acCbCurlFail($error, $args){
-		$err = $error ['error'];
-		fwrite($this->errorLogFile, "Curl error $err[0]: $err[1], url=" . $error ['info'] ['url']."\n");
+	function cbCurlFail($error, $args) {
+		if ($this->logError) {
+			$err = $error ['error'];
+			file_put_contents ( $this->errorLog, "Curl error $err[0]: $err[1], url=" . $error ['info'] ['url'] . "\n", FILE_APPEND );
+		} else {
+			parent::cbCurlFail ( $error, $args );
+		}
 	}
+
 	/**
 	 * is needed to process
 	 *
@@ -395,10 +388,10 @@ class AutoClone extends Base {
 		}
 		$file = $this->dir . '/' . $file;
 		$dir = dirname ( $file );
-		if($this->isWin){
-			$dir = mb_convert_encoding($dir, 'gbk', 'utf-8');
+		if ($this->isWin) {
+			$dir = mb_convert_encoding ( $dir, 'gbk', 'utf-8' );
 		}
-		if (! file_exists ( $dir )) {			
+		if (! file_exists ( $dir )) {
 			mkdir ( $dir, 0755, true );
 		}
 		if (file_exists ( $file )) {
@@ -430,16 +423,5 @@ class AutoClone extends Base {
 			$port = '_' . $port;
 		}
 		return $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
-	}
-	
-	 /**
-	 * href is a javascript
-	 *
-	 * @param string $str
-	 * @return boolean
-	 */
-	function isScript($str) {
-		$str = ltrim ( $str );
-		return substr ( $str, 0, 11 ) == 'javascript:';
 	}
 }
