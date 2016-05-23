@@ -300,9 +300,9 @@ class AutoClone extends Base {
 			);
 		}
 	}
-	
+
 	/**
-	 *  CurlMulti_Core fail callback
+	 *  CurlMulti_Core fail callback， Write in error log
 	 *
 	 * @param array $error
 	 * @param mixed $args
@@ -312,8 +312,6 @@ class AutoClone extends Base {
 		$err = $error ['error'];
 		fwrite($this->errorLogFile, "Curl error $err[0]: $err[1], url=" . $error ['info'] ['url']."\n");
 	}
-	
-
 	/**
 	 * is needed to process
 	 *
@@ -440,7 +438,7 @@ class AutoClone extends Base {
 	 * @param string $str
 	 * @return boolean
 	 */
-	private function isScript($str) {
+	function isScript($str) {
 		$str = ltrim ( $str );
 		return substr ( $str, 0, 11 ) == 'javascript:';
 	}
