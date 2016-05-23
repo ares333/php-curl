@@ -1,7 +1,6 @@
 <?php
 
 namespace Ares333\CurlMulti;
-
 use phpQuery;
 
 /**
@@ -34,8 +33,13 @@ class AutoClone extends Base {
 	private $urlAdded = array ();
 	// all site
 	private $site = array ();
+	//error log
+	public $errorLog = true;
+	private $errorLogFile;
+	
 	// windows system flag
 	private $isWin;
+	
 	/**
 	 *
 	 * @param CurlMulti_Core $curlmulti
@@ -76,15 +80,26 @@ class AutoClone extends Base {
 		}
 		$this->url = $url;
 		$this->dir = $dir;
-		$this->isWin = (0 === strpos(PHP_OS, 'WIN'));
-;
-
+		$this->isWin = (0 === strpos(PHP_OS, 'WIN'));		
 	}
-
+	
+	function __destruct(){
+		if($this->$errorLogFile){
+			fclose($this->$errorLogFile);
+		}
+	}
+	
 	/**
 	 * start clone
 	 */
 	function start() {
+		if($this->errorLog){
+			$this->getCurl()->cbFail = array (
+				$this,
+				'acCbCurlFail'
+			);
+			$this->errorLogFile = fopen($this->getCurl()->cache ['dir'].'/errorLog.txt','a');			
+		}		
 		foreach ( $this->url as $k => $v ) {
 			if ('/' != substr ( $k, - 1 )) {
 				$this->getCurl ()->add ( array (
@@ -183,6 +198,9 @@ class AutoClone extends Base {
 				foreach ( $a as $v ) {
 					$v = pq ( $v );
 					$href = $v->attr ( 'href' );
+					if($this->isScript($href)){
+						continue;
+					}
 					$url = $this->uri2url ( $href, $urlCurrent );
 					if ($this->download ['zip'] ['enable'] && '.zip' == substr ( $href, - 4 )) {
 						if ($this->download ['zip'] ['withPrefix']) {
@@ -283,6 +301,17 @@ class AutoClone extends Base {
 		}
 	}
 
+	/**
+	 *  CurlMulti_Core fail callback， Write in error log
+	 *
+	 * @param array $error
+	 * @param mixed $args
+	 *        	args in CurlMulti_Core::add()
+	 */
+	function acCbCurlFail($error, $args){
+		$err = $error ['error'];
+		fwrite($this->errorLogFile, "Curl error $err[0]: $err[1], url=" . $error ['info'] ['url']."\n");
+	}
 	/**
 	 * is needed to process
 	 *
@@ -401,5 +430,16 @@ class AutoClone extends Base {
 			$port = '_' . $port;
 		}
 		return $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
+	}
+	
+	 /**
+	 * href is a javascript
+	 *
+	 * @param string $str
+	 * @return boolean
+	 */
+	function isScript($str) {
+		$str = ltrim ( $str );
+		return substr ( $str, 0, 11 ) == 'javascript:';
 	}
 }
