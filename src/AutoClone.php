@@ -94,7 +94,7 @@ class AutoClone extends Base {
 	 */
 	function start() {
 		if($this->errorLog){
-			$this->curl->cbFail = array (
+			$this->getCurl()->cbFail = array (
 				$this,
 				'acCbCurlFail'
 			);
