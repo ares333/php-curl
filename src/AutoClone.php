@@ -79,17 +79,17 @@ class AutoClone extends Base {
 		$this->url = $url;
 		$this->dir = $dir;
 		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));
-		if (! empty ( $this->getCurl ()->cache ['dir'] )) {
-			$this->errorLog = $this->getCurl ()->cache ['dir'] . '/autoCloneError.log';
-		} else {
-			$this->errorLog = __DIR__ . '/autoCloneError.log';
-		}
 	}
 
 	/**
 	 * start clone
 	 */
 	function start() {
+		if (! empty ( $this->getCurl ()->cache ['dir'] )) {
+			$this->errorLog = $this->getCurl ()->cache ['dir'] . '/autoCloneError.log';
+		} else {
+			$this->errorLog = './autoCloneError.log';
+		}
 		foreach ( $this->url as $k => $v ) {
 			if ('/' != substr ( $k, - 1 )) {
 				$this->getCurl ()->add ( array (
@@ -294,6 +294,7 @@ class AutoClone extends Base {
 	/**
 	 *
 	 * {@inheritDoc}
+	 *
 	 * @see \Ares333\CurlMulti\Base::cbCurlFail()
 	 */
 	function cbCurlFail($error, $args) {
