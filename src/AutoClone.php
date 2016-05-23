@@ -78,18 +78,18 @@ class AutoClone extends Base {
 		}
 		$this->url = $url;
 		$this->dir = $dir;
-		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));
-		if (! empty ( $this->getCurl ()->cache ['dir'] )) {
-			$this->errorLog = $this->getCurl ()->cache ['dir'] . '/autoCloneError.log';
-		} else {
-			$this->errorLog = __DIR__ . '/autoCloneError.log';
-		}
+		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));		
 	}
 
 	/**
 	 * start clone
 	 */
 	function start() {
+		if (! empty ( $this->getCurl ()->cache ['dir'] )) {
+			$this->errorLog = $this->getCurl ()->cache ['dir'] . '/autoCloneError.log';
+		} else {
+			$this->errorLog = __DIR__ . '/autoCloneError.log';
+		}
 		foreach ( $this->url as $k => $v ) {
 			if ('/' != substr ( $k, - 1 )) {
 				$this->getCurl ()->add ( array (
