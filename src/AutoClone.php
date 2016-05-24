@@ -120,7 +120,11 @@ class AutoClone extends Base {
 					$this,
 					'cbProcess'
 			) );
-			$this->urlAdded [] = $k;
+			$hash = $this->hashArray($k);
+			if(! array_key_exists($hash[0], $this->urlAdded) ){
+				$this->urlAdded[$hash[0]] = array();
+			}
+			$this->urlAdded [$hash[0]] [] = $hash[1];			
 		}
 		$this->getCurl ()->start ();
 	}
@@ -251,7 +255,8 @@ class AutoClone extends Base {
 					'urlParse'
 			) as $v ) {
 				foreach ( $$v as $k1 => $v1 ) {
-					if (! in_array ( $k1, $this->urlAdded )) {
+					$hash = $this->hashArray($k1);
+					if (! $this->duplicate($hash)) {
 						$file = $this->url2file ( $k1 );
 						if (null == $file) {
 							continue;
@@ -277,7 +282,8 @@ class AutoClone extends Base {
 								$this,
 								'cbProcess'
 						) );
-						$this->urlAdded [] = $k1;
+						$this->urlAdded [$hash[0]] [] = $hash[1];	
+								
 					}
 				}
 			}
@@ -425,4 +431,31 @@ class AutoClone extends Base {
 		}
 		return $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
 	}
+	
+	/**
+	 *check  url duplicate	 *
+	 * @param array $hash
+	 * @return boolean
+	 */
+	private function  duplicate($hash){
+		if( array_key_exists($hash[0], $this->urlAdded) ){
+			if ( in_array($hash[1], $this->urlAdded[$hash[0]])) {
+				return true;
+			}			
+		}else{
+			$this->urlAdded [$hash[0]] = array();
+		}
+		return false;		
+	}
+	
+	/**
+	 * url trans hash array	 *
+	 * @param $url
+	 * @return array
+	 */
+	private function hashArray($url){
+		$hash = md5($url, true);
+		return array(substr($hash, 0, 2), substr($hash, 2));		
+	}
+	
 }
