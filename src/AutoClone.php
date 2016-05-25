@@ -431,6 +431,9 @@ class AutoClone extends Base {
 	private function getQuery($url) {
 		$query = parse_url ( $url, PHP_URL_QUERY );
 		if (! empty ( $query )) {
+			parse_str ( $query, $query );
+			sort ( $query );
+			$query = http_build_query ( $query );
 			if (strlen ( $query ) >= 250) {
 				$query = md5 ( $query ) . '.html';
 			}
@@ -458,7 +461,7 @@ class AutoClone extends Base {
 								$url
 						)
 				);
-			} else if (! array_key_exists ( $level2, $this->urlAdded [$level1] )) {
+			} elseif (! array_key_exists ( $level2, $this->urlAdded [$level1] )) {
 				$this->urlAdded [$level1] [$level2] = array (
 						$url
 				);
