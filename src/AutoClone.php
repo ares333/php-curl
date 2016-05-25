@@ -120,7 +120,7 @@ class AutoClone extends Base {
 					$this,
 					'cbProcess'
 			) );
-			$this->urlAdded [] = $k;
+			$this->urlAdd ( $k );
 		}
 		$this->getCurl ()->start ();
 	}
@@ -251,7 +251,7 @@ class AutoClone extends Base {
 					'urlParse'
 			) as $v ) {
 				foreach ( $$v as $k1 => $v1 ) {
-					if (! in_array ( $k1, $this->urlAdded )) {
+					if (! $this->urlAdd ( $k1, true )) {
 						$file = $this->url2file ( $k1 );
 						if (null == $file) {
 							continue;
@@ -277,7 +277,7 @@ class AutoClone extends Base {
 								$this,
 								'cbProcess'
 						) );
-						$this->urlAdded [] = $k1;
+						$this->urlAdd ( $k1 );
 					}
 				}
 			}
@@ -437,5 +437,36 @@ class AutoClone extends Base {
 			$query = '？/' . $query;
 		}
 		return $query;
+	}
+
+	/**
+	 * add processed url
+	 *
+	 * @param string $url
+	 * @param bool $check
+	 */
+	private function urlAdd($url, $check = false) {
+		$md5raw = md5 ( $url, true );
+		$md5 = bin2hex ( $md5raw );
+		$level1 = substr ( $md5, 0, 3 );
+		$level2 = substr ( $md5, 3, 3 );
+		$key = substr ( $md5raw, 3 );
+		if ($check) {
+			return empty ( $this->urlAdded [$level1] [$level2] ) && in_array ( $url, $this->urlAdded [$level1] [$level2] );
+		} else {
+			if (! array_key_exists ( $level1, $this->urlAdded )) {
+				$this->urlAdded [$level1] = array (
+						$level2 => array (
+								$url
+						)
+				);
+			} else if (! array_key_exists ( $level2, $this->urlAdded [$level1] )) {
+				$this->urlAdded [$level1] [$level2] = array (
+						$url
+				);
+			} elseif (! in_array ( $url, $this->urlAdded [$level1] [$level2] )) {
+				$this->urlAdded [$level1] [$level2] [] = $url;
+			}
+		}
 	}
 }
