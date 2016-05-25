@@ -143,7 +143,7 @@ class AutoClone extends Base {
 				foreach ( $list as $v ) {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
-					$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+					$v->attr ( 'href', $this->url2uriClone ( $url, $urlCurrent ) );
 					$urlDownload [$url] = array (
 							'type' => 'css'
 					);
@@ -154,7 +154,7 @@ class AutoClone extends Base {
 					$v = pq ( $v );
 					if (null != $v->attr ( 'src' )) {
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-						$v->attr ( 'src', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'src', $this->url2uriClone ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				}
@@ -164,7 +164,7 @@ class AutoClone extends Base {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-						$v->attr ( 'src', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'src', $this->url2uriClone ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				} else {
@@ -179,7 +179,7 @@ class AutoClone extends Base {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
 					if ($this->isProcess ( $url )) {
-						$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'href', $this->url2uriClone ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				}
@@ -208,7 +208,7 @@ class AutoClone extends Base {
 						}
 					}
 					if ($isProcess) {
-						$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'href', $this->url2uriClone ( $url, $urlCurrent ) );
 					} else {
 						$v->attr ( 'href', $url );
 					}
@@ -356,8 +356,8 @@ class AutoClone extends Base {
 	 * @param string $urlCurrent
 	 * @return string
 	 */
-	private function cloneUrl2uri($url, $urlCurrent) {
-		$path = $this->url2uri ( $url, $urlCurrent );
+	private function url2uriClone($url, $urlCurrent) {
+		$path = $this->url2uri ( $url, $urlCurrent ) . $this->getQuery ( $url );
 		if (! isset ( $path )) {
 			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
@@ -382,12 +382,7 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2file($url) {
-		$file = $this->getPath ( $url );
-		$strrpos = strrpos ( $file, '#' );
-		if (false !== $strrpos) {
-			$file = substr ( $file, 0, $strrpos );
-		}
-		$file = $this->dir . '/' . $file;
+		$file = $this->dir . '/' . $this->getPath ( $url );
 		$dir = dirname ( $file );
 		if ($this->isWin) {
 			$dir = mb_convert_encoding ( $dir, 'gbk', 'utf-8' );
@@ -423,6 +418,24 @@ class AutoClone extends Base {
 		if (isset ( $parse ['port'] )) {
 			$port = '_' . $port;
 		}
-		return $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
+		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'] . $this->getQuery ( $url );
+		return $path;
+	}
+
+	/**
+	 * calculate query
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	private function getQuery($url) {
+		$query = parse_url ( $url, PHP_URL_QUERY );
+		if (! empty ( $query )) {
+			if (strlen ( $query ) >= 250) {
+				$query = md5 ( $query ) . '.html';
+			}
+			$query = '？/' . $query;
+		}
+		return $query;
 	}
 }
