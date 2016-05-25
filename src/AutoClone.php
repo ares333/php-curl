@@ -440,19 +440,17 @@ class AutoClone extends Base {
 	}
 
 	/**
-	 * add processed url
+	 * add processed url or check
 	 *
 	 * @param string $url
 	 * @param bool $check
 	 */
 	private function urlAdd($url, $check = false) {
-		$md5raw = md5 ( $url, true );
-		$md5 = bin2hex ( $md5raw );
+		$md5 = md5 ( $url );
 		$level1 = substr ( $md5, 0, 3 );
 		$level2 = substr ( $md5, 3, 3 );
-		$key = substr ( $md5raw, 3 );
 		if ($check) {
-			return empty ( $this->urlAdded [$level1] [$level2] ) && in_array ( $url, $this->urlAdded [$level1] [$level2] );
+			return ! empty ( $this->urlAdded [$level1] [$level2] ) && in_array ( $url, $this->urlAdded [$level1] [$level2] );
 		} else {
 			if (! array_key_exists ( $level1, $this->urlAdded )) {
 				$this->urlAdded [$level1] = array (

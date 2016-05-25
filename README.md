@@ -73,7 +73,7 @@ A powerfull site clone tool.It's a perfect tool.
 
 <sub>1. Css annotation for IE will not be processed,because a standard way is not founded by now.
 
-<sub>1. File name is hashed when filename length greater than OS limit.Use leveled dir can avoid this.The function is developed).
+<sub>1. File name is hashed when filename length greater than OS limit.(Use leveled dir can avoid this,but the function is developed).
 
 <sub>Clone of site: http://manual.phpdr.net/
 
