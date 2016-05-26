@@ -449,21 +449,36 @@ class Base {
 	 */
 	function uri2url($uri, $urlCurrent) {
 		if ($this->isUrl ( $uri )) {
-			return $uri;
+			$url = $uri;
+		}else{
+			if (! $this->isUrl ( $urlCurrent )) {
+				throw new Exception ( 'url is invalid, url=' . $urlCurrent );
+			}
+			if (0 === strpos ( $uri, './' )) {
+				$uri = substr ( $uri, 2 );
+			}
+			$urlDir = $this->urlDir ( $urlCurrent );
+			if (0 === strpos ( $uri, '/' )) {
+				$len = strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
+				$url = substr ( $urlDir, 0, 0 - $len ) . $uri;
+			} else {
+				$url =  $urlDir . $uri;
+			}
 		}
-		if (! $this->isUrl ( $urlCurrent )) {
-			throw new Exception ( 'url is invalid, url=' . $urlCurrent );
+		
+		//sort query
+		$pos = strrpos ( $url, '?' );
+		if (false !== $pos) {
+			parse_str(parse_url($url, PHP_URL_QUERY ), $query);
+			ksort($query);
+			$url = substr ( $url, 0, $pos ).'?'.http_build_query ( $query );
+			$frag = parse_url($url, PHP_URL_FRAGMENT);
+			if(! empty($frag)){
+				$url .= "#".$frag;
+			}
 		}
-		if (0 === strpos ( $uri, './' )) {
-			$uri = substr ( $uri, 2 );
-		}
-		$urlDir = $this->urlDir ( $urlCurrent );
-		if (0 === strpos ( $uri, '/' )) {
-			$len = strlen ( parse_url ( $urlDir, PHP_URL_PATH ) );
-			return substr ( $urlDir, 0, 0 - $len ) . $uri;
-		} else {
-			return $urlDir . $uri;
-		}
+		
+		return trim($url);
 	}
 
 	/**
@@ -549,6 +564,14 @@ class Base {
 			}
 		}
 		return $urlDir;
+	}
+	
+	function removeFragment($url){
+		$pos = strrpos ( $url, '#' );
+		if (false !== $pos) {
+			$url = substr ( $url, 0, $pos );	
+		}
+		return $url;
 	}
 
 	/**
