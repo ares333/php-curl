@@ -24,6 +24,8 @@ class AutoClone extends Base {
 					'withPrefix' => false
 			)
 	);
+	// max file name length
+	public $fileNameLen = 250;
 	public $logError = true;
 	private $errorLog;
 	private $startTime;
@@ -357,7 +359,8 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2uriClone($url, $urlCurrent) {
-		$path = $this->url2uri ( $url, $urlCurrent ) . $this->getQuery ( $url );
+		$url = $this->rebuildUrl($url);
+		$path = $this->url2uri ( $url, $urlCurrent );
 		if (! isset ( $path )) {
 			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
@@ -382,6 +385,8 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2file($url) {
+		$url = $this->removeFragment($url);	
+		$url = $this->rebuildUrl($url);	
 		$file = $this->dir . '/' . $this->getPath ( $url );
 		$dir = dirname ( $file );
 		if ($this->isWin) {
@@ -406,41 +411,15 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function getPath($url) {
-		$parse = parse_url ( trim ( $url ) );
-		if (! isset ( $parse ['path'] )) {
-			$parse ['path'] = '';
-		}
-		$ext = pathinfo ( $parse ['path'], PATHINFO_EXTENSION );
-		if (empty ( $ext )) {
-			$parse ['path'] = rtrim ( $parse ['path'], '/' ) . '/index.html';
-		}
+		$parse = parse_url ($url);
 		$port = '';
 		if (isset ( $parse ['port'] )) {
-			$port = '_' . $port;
+			$port = '_' . $parse ['port'];
 		}
-		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'] . $this->getQuery ( $url );
+		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
 		return $path;
 	}
 
-	/**
-	 * calculate query
-	 *
-	 * @param string $url
-	 * @return string
-	 */
-	private function getQuery($url) {
-		$query = parse_url ( $url, PHP_URL_QUERY );
-		if (! empty ( $query )) {
-			parse_str ( $query, $query );
-			sort ( $query );
-			$query = http_build_query ( $query );
-			if (strlen ( $query ) >= 250) {
-				$query = md5 ( $query ) . '.html';
-			}
-			$query = '？/' . $query;
-		}
-		return $query;
-	}
 
 	/**
 	 * add processed url or check
@@ -449,6 +428,7 @@ class AutoClone extends Base {
 	 * @param bool $check
 	 */
 	private function urlAdd($url, $check = false) {
+		$url = $this->removeFragment($url);		
 		$md5 = md5 ( $url );
 		$level1 = substr ( $md5, 0, 3 );
 		$level2 = substr ( $md5, 3, 3 );
@@ -470,4 +450,30 @@ class AutoClone extends Base {
 			}
 		}
 	}
+	
+	private function rebuildUrl($url){
+		$pos = strrpos ( $url, '#' );
+		if (false !== $pos) {
+			$frag = substr ( $url, $pos);		
+			$url = substr ( $url, 0, $pos );				
+		}
+		$pos = strrpos ( $url, '?' );
+		if (false !== $pos) {
+			$query = substr ( $url, $pos + 1);		
+			$url = substr ( $url, 0, $pos );									
+		}
+		$ext = pathinfo ( parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
+		if (empty ( $ext )) {
+			$url = rtrim ($url, '/' ) . '/index.html';
+			$ext = 'html';
+		}	
+		if($query){
+			if (strlen ($query) + strlen (pathinfo($url, PATHINFO_BASENAME)) + 1 >= $this->fileNameLen) {
+				$query = md5 ( $query );
+			}
+			$url = preg_replace("/\.".$ext."$/", "_".$query.".".$ext, $url);
+		}
+		return $url.$frag;		
+	}
+	
 }
