@@ -78,7 +78,7 @@ class AutoClone extends Base {
 		}
 		$this->url = $url;
 		$this->dir = $dir;
-		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));		
+		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));
 	}
 
 	/**
@@ -88,7 +88,7 @@ class AutoClone extends Base {
 		if (! empty ( $this->getCurl ()->cache ['dir'] )) {
 			$this->errorLog = $this->getCurl ()->cache ['dir'] . '/autoCloneError.log';
 		} else {
-			$this->errorLog = __DIR__ . '/autoCloneError.log';
+			$this->errorLog = './autoCloneError.log';
 		}
 		foreach ( $this->url as $k => $v ) {
 			if ('/' != substr ( $k, - 1 )) {
@@ -120,7 +120,7 @@ class AutoClone extends Base {
 					$this,
 					'cbProcess'
 			) );
-			$this->urlAdded [] = $k;
+			$this->urlAdd ( $k );
 		}
 		$this->getCurl ()->start ();
 	}
@@ -143,7 +143,7 @@ class AutoClone extends Base {
 				foreach ( $list as $v ) {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
-					$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+					$v->attr ( 'href', $this->url2uriClone ( $url, $urlCurrent ) );
 					$urlDownload [$url] = array (
 							'type' => 'css'
 					);
@@ -154,7 +154,7 @@ class AutoClone extends Base {
 					$v = pq ( $v );
 					if (null != $v->attr ( 'src' )) {
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-						$v->attr ( 'src', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'src', $this->url2uriClone ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				}
@@ -164,7 +164,7 @@ class AutoClone extends Base {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
 						$url = $this->uri2url ( $v->attr ( 'src' ), $urlCurrent );
-						$v->attr ( 'src', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'src', $this->url2uriClone ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				} else {
@@ -179,7 +179,7 @@ class AutoClone extends Base {
 					$v = pq ( $v );
 					$url = $this->uri2url ( $v->attr ( 'href' ), $urlCurrent );
 					if ($this->isProcess ( $url )) {
-						$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'href', $this->url2uriClone ( $url, $urlCurrent ) );
 						$urlDownload [$url] = array ();
 					}
 				}
@@ -208,7 +208,7 @@ class AutoClone extends Base {
 						}
 					}
 					if ($isProcess) {
-						$v->attr ( 'href', $this->cloneUrl2uri ( $url, $urlCurrent ) );
+						$v->attr ( 'href', $this->url2uriClone ( $url, $urlCurrent ) );
 					} else {
 						$v->attr ( 'href', $url );
 					}
@@ -251,7 +251,7 @@ class AutoClone extends Base {
 					'urlParse'
 			) as $v ) {
 				foreach ( $$v as $k1 => $v1 ) {
-					if (! in_array ( $k1, $this->urlAdded )) {
+					if (! $this->urlAdd ( $k1, true )) {
 						$file = $this->url2file ( $k1 );
 						if (null == $file) {
 							continue;
@@ -277,7 +277,7 @@ class AutoClone extends Base {
 								$this,
 								'cbProcess'
 						) );
-						$this->urlAdded [] = $k1;
+						$this->urlAdd ( $k1 );
 					}
 				}
 			}
@@ -294,6 +294,7 @@ class AutoClone extends Base {
 	/**
 	 *
 	 * {@inheritDoc}
+	 *
 	 * @see \Ares333\CurlMulti\Base::cbCurlFail()
 	 */
 	function cbCurlFail($error, $args) {
@@ -355,8 +356,8 @@ class AutoClone extends Base {
 	 * @param string $urlCurrent
 	 * @return string
 	 */
-	private function cloneUrl2uri($url, $urlCurrent) {
-		$path = $this->url2uri ( $url, $urlCurrent );
+	private function url2uriClone($url, $urlCurrent) {
+		$path = $this->url2uri ( $url, $urlCurrent ) . $this->getQuery ( $url );
 		if (! isset ( $path )) {
 			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
@@ -381,12 +382,7 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2file($url) {
-		$file = $this->getPath ( $url );
-		$strrpos = strrpos ( $file, '#' );
-		if (false !== $strrpos) {
-			$file = substr ( $file, 0, $strrpos );
-		}
-		$file = $this->dir . '/' . $file;
+		$file = $this->dir . '/' . $this->getPath ( $url );
 		$dir = dirname ( $file );
 		if ($this->isWin) {
 			$dir = mb_convert_encoding ( $dir, 'gbk', 'utf-8' );
@@ -422,6 +418,56 @@ class AutoClone extends Base {
 		if (isset ( $parse ['port'] )) {
 			$port = '_' . $port;
 		}
-		return $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
+		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'] . $this->getQuery ( $url );
+		return $path;
+	}
+
+	/**
+	 * calculate query
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	private function getQuery($url) {
+		$query = parse_url ( $url, PHP_URL_QUERY );
+		if (! empty ( $query )) {
+			parse_str ( $query, $query );
+			sort ( $query );
+			$query = http_build_query ( $query );
+			if (strlen ( $query ) >= 250) {
+				$query = md5 ( $query ) . '.html';
+			}
+			$query = '？/' . $query;
+		}
+		return $query;
+	}
+
+	/**
+	 * add processed url or check
+	 *
+	 * @param string $url
+	 * @param bool $check
+	 */
+	private function urlAdd($url, $check = false) {
+		$md5 = md5 ( $url );
+		$level1 = substr ( $md5, 0, 3 );
+		$level2 = substr ( $md5, 3, 3 );
+		if ($check) {
+			return ! empty ( $this->urlAdded [$level1] [$level2] ) && in_array ( $url, $this->urlAdded [$level1] [$level2] );
+		} else {
+			if (! array_key_exists ( $level1, $this->urlAdded )) {
+				$this->urlAdded [$level1] = array (
+						$level2 => array (
+								$url
+						)
+				);
+			} elseif (! array_key_exists ( $level2, $this->urlAdded [$level1] )) {
+				$this->urlAdded [$level1] [$level2] = array (
+						$url
+				);
+			} elseif (! in_array ( $url, $this->urlAdded [$level1] [$level2] )) {
+				$this->urlAdded [$level1] [$level2] [] = $url;
+			}
+		}
 	}
 }
