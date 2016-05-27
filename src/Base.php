@@ -444,15 +444,28 @@ class Base {
 	 * @param string $uri
 	 *        	uri in the html
 	 * @param string $urlCurrent
-	 *        	redirected final url of the html page
+	 *        	redirected final url of the page
 	 * @return string
 	 */
 	function uri2url($uri, $urlCurrent) {
+		if (empty ( $uri )) {
+			return $urlCurrent;
+		}
 		if ($this->isUrl ( $uri )) {
 			return $uri;
 		}
 		if (! $this->isUrl ( $urlCurrent )) {
 			throw new Exception ( 'url is invalid, url=' . $urlCurrent );
+		}
+		// uri started with ?,#
+		if (0 === strpos ( $uri, '#' ) || 0 === strpos ( $uri, '?' )) {
+			if (false !== ($pos = strpos ( $urlCurrent, '#' ))) {
+				$urlCurrent = substr ( $urlCurrent, 0, $pos );
+			}
+			if (false !== ($pos = strpos ( $urlCurrent, '?' ))) {
+				$urlCurrent = substr ( $urlCurrent, 0, $pos );
+			}
+			return $urlCurrent . $uri;
 		}
 		if (0 === strpos ( $uri, './' )) {
 			$uri = substr ( $uri, 2 );
