@@ -161,7 +161,7 @@ class AutoClone extends Base {
 					}
 				}
 				// pic
-				$pic = $pq ['img'];
+				$pic = $pq ['img,image'];
 				if ($this->download ['pic'] ['enable']) {
 					foreach ( $pic as $v ) {
 						$v = pq ( $v );
