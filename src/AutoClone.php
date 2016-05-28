@@ -357,7 +357,8 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2uriClone($url, $urlCurrent) {
-		$path = $this->url2uri ( $url, $urlCurrent ) . $this->getQuery ( $url );
+		$path = $this->url2uri ( $url, $urlCurrent );
+		$path = $this->fixPath ( $path );
 		if (! isset ( $path )) {
 			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
@@ -410,14 +411,7 @@ class AutoClone extends Base {
 		if (! isset ( $parse ['path'] )) {
 			$parse ['path'] = '';
 		}
-		$ext = pathinfo ( $parse ['path'], PATHINFO_EXTENSION );
-		if (empty ( $ext )) {
-			if (substr ( $parse ['path'], - 1 ) === '/') {
-				$parse ['path'] = rtrim ( $parse ['path'], '/' ) . '/index.html';
-			} else {
-				$parse ['path'] .= '.html';
-			}
-		}
+		$parse ['path'] = $this->fixPath ( $parse ['path'] );
 		$port = '';
 		if (isset ( $parse ['port'] )) {
 			$port = '_' . $parse ['port'];
@@ -473,5 +467,23 @@ class AutoClone extends Base {
 				$this->urlAdded [$level1] [$level2] [] = $url;
 			}
 		}
+	}
+
+	/**
+	 * fix uri and file path
+	 *
+	 * @param string $path
+	 * @return string
+	 */
+	private function fixPath($path) {
+		$ext = pathinfo ( $path, PATHINFO_EXTENSION );
+		if (empty ( $ext )) {
+			if (substr ( $path, - 1 ) === '/') {
+				$path = rtrim ( $path, '/' ) . '/index.html';
+			} else {
+				$path .= '.html';
+			}
+		}
+		return $path;
 	}
 }
