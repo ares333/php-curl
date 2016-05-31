@@ -1,7 +1,5 @@
 <?php
-
 namespace Ares333\CurlMulti;
-
 /**
  * CurlMulti_Core wrapper, more easy to use
  *
@@ -32,7 +30,6 @@ class Base {
 				'cbCurlInfo'
 		);
 	}
-
 	/**
 	 * 16^3=4096,4096^2=16777216,4096^3=68719476736
 	 *
@@ -52,7 +49,6 @@ class Base {
 		}
 		return $file;
 	}
-
 	/**
 	 * content between start and end
 	 *
@@ -87,7 +83,6 @@ class Base {
 		$len = strlen ( $start );
 		return substr ( $str, $pos1 + $len, $pos2 - $pos1 - $len );
 	}
-
 	/**
 	 * default CurlMulti_Core fail callback
 	 *
@@ -99,7 +94,6 @@ class Base {
 		$err = $error ['error'];
 		echo "\nCurl error $err[0]: $err[1], url=" . $error ['info'] ['url'];
 	}
-
 	/**
 	 * write message to IPC
 	 */
@@ -130,7 +124,6 @@ class Base {
 			}
 		}
 	}
-
 	/**
 	 * get IPC message and display
 	 *
@@ -191,7 +184,6 @@ class Base {
 		ncurses_end ();
 		msg_remove_queue ( $queue );
 	}
-
 	/**
 	 * get IPC message queue
 	 *
@@ -220,7 +212,6 @@ class Base {
 		}
 		return $queue;
 	}
-
 	/**
 	 * default CurlMulti_Core info callback
 	 *
@@ -371,7 +362,6 @@ class Base {
 				'output' => trim ( $output )
 		);
 	}
-
 	/**
 	 * html encoding transform
 	 *
@@ -423,7 +413,6 @@ class Base {
 		}
 		return $html;
 	}
-
 	/**
 	 * is a full url
 	 *
@@ -437,22 +426,34 @@ class Base {
 				'https:/'
 		) );
 	}
-
 	/**
 	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
 	 *
 	 * @param string $uri
 	 *        	uri in the html
 	 * @param string $urlCurrent
-	 *        	redirected final url of the html page
+	 *        	redirected final url of the page
 	 * @return string
 	 */
 	function uri2url($uri, $urlCurrent) {
+		if (empty ( $uri )) {
+			return $urlCurrent;
+		}
 		if ($this->isUrl ( $uri )) {
 			return $uri;
 		}
 		if (! $this->isUrl ( $urlCurrent )) {
 			throw new Exception ( 'url is invalid, url=' . $urlCurrent );
+		}
+		// uri started with ?,#
+		if (0 === strpos ( $uri, '#' ) || 0 === strpos ( $uri, '?' )) {
+			if (false !== ($pos = strpos ( $urlCurrent, '#' ))) {
+				$urlCurrent = substr ( $urlCurrent, 0, $pos );
+			}
+			if (false !== ($pos = strpos ( $urlCurrent, '?' ))) {
+				$urlCurrent = substr ( $urlCurrent, 0, $pos );
+			}
+			return $urlCurrent . $uri;
 		}
 		if (0 === strpos ( $uri, './' )) {
 			$uri = substr ( $uri, 2 );
@@ -465,7 +466,6 @@ class Base {
 			return $urlDir . $uri;
 		}
 	}
-
 	/**
 	 * get relative uri of the current page.
 	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
@@ -528,7 +528,6 @@ class Base {
 		}
 		return $path;
 	}
-
 	/**
 	 * url should be redirected final url.Final url normally has '/' suffix.
 	 *
@@ -550,7 +549,6 @@ class Base {
 		}
 		return $urlDir;
 	}
-
 	/**
 	 * get CurlMulti\Core instance
 	 *

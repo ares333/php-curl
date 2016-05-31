@@ -1,9 +1,6 @@
 <?php
-
 namespace Ares333\CurlMulti;
-
 use phpQuery;
-
 /**
  * Website copy, keep original directory structure(be supported by sounded reason)
  * phpQuery needed
@@ -39,7 +36,6 @@ class AutoClone extends Base {
 	private $site = array ();
 	// windows system flag
 	private $isWin;
-
 	/**
 	 *
 	 * @param Core $curlmulti
@@ -82,7 +78,6 @@ class AutoClone extends Base {
 		$this->dir = $dir;
 		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));
 	}
-
 	/**
 	 * start clone
 	 */
@@ -138,7 +133,7 @@ class AutoClone extends Base {
 			$urlDownload = array ();
 			$urlParse = array ();
 			if (isset ( $r ['content'] ) && 0 === strpos ( $r ['info'] ['content_type'], 'text' )) {
-				$urlCurrent = $args ['url'];
+				$urlCurrent = $r ['info'] ['url'];
 				$pq = phpQuery::newDocumentHTML ( $r ['content'] );
 				// css
 				$list = $pq ['link[type$=css]'];
@@ -292,7 +287,6 @@ class AutoClone extends Base {
 			);
 		}
 	}
-
 	/**
 	 *
 	 * {@inheritDoc}
@@ -307,7 +301,6 @@ class AutoClone extends Base {
 			parent::cbCurlFail ( $error, $args );
 		}
 	}
-
 	/**
 	 * is needed to process
 	 *
@@ -329,7 +322,6 @@ class AutoClone extends Base {
 		}
 		return $doProcess;
 	}
-
 	/**
 	 * calculate relative depth
 	 *
@@ -350,7 +342,6 @@ class AutoClone extends Base {
 			}
 		}
 	}
-
 	/**
 	 * url2uri for this class
 	 *
@@ -375,9 +366,14 @@ class AutoClone extends Base {
 			}
 			$path .= $path1;
 		}
+		$cPath = parse_url ( $urlCurrent, PHP_URL_PATH );
+		if (empty ( pathinfo ( $cPath, PATHINFO_EXTENSION ))) {
+			if('/' != substr ( $cPath, - 1 )){
+				$path = "../" . $path;
+			}
+		}
 		return $path;
 	}
-
 	/**
 	 * compute local absolute path
 	 *
@@ -403,7 +399,6 @@ class AutoClone extends Base {
 		}
 		return $file;
 	}
-
 	/**
 	 * relative local file path
 	 *
@@ -419,8 +414,6 @@ class AutoClone extends Base {
 		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
 		return $path;
 	}
-
-
 	/**
 	 * add processed url or check
 	 *
@@ -512,5 +505,15 @@ class AutoClone extends Base {
 			}
 		}		
 		return trim($url);
+	}
+	
+	function test($uri, $currentUrl){
+		echo "[uri]  $uri\n";
+		echo "[curUrl]  $currentUrl\n";
+		$url = $this->uri2url($uri, $currentUrl);
+		echo "[uri2url]  ".$url."\n";
+		echo '[url2file-current]  '.$this->url2file($currentUrl)."\n";
+		echo '[url2file-uri]  '.$this->url2file($url)."\n";
+		echo '[href]  '.$this->url2uriClone($url, $currentUrl)."\n";
 	}
 }
