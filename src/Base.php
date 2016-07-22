@@ -46,7 +46,7 @@ class Base {
 		} elseif ($level == 2) {
 			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3 );
 		} elseif ($level == 3) {
-			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3, 6 ) . '/' . substr ( $file, 6 );
+			$file = substr ( $file, 0, 3 ) . '/' . substr ( $file, 3, 3 ) . '/' . substr ( $file, 6 );
 		} else {
 			throw new Exception ( 'level is invalid, level=' . $level );
 		}
