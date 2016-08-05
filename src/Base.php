@@ -9,7 +9,7 @@ namespace Ares333\CurlMulti;
  *
  */
 class Base {
-	private $curl;
+	protected $curl;
 	// array('prefix'=>array(array(0,'PRE'),100),'suffix'=>null)
 	public $cbInfoFix = array (
 			'prefix' => array (),
