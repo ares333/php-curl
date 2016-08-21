@@ -280,7 +280,7 @@ class Core {
 					$param ['ext'] = array ();
 					if (! isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
-						if ($task [self::TASK_ITEM_OPT] [CURLOPT_HEADER]) {
+						if ( isset ( $task [self::TASK_ITEM_OPT] [CURLOPT_HEADER] ) ) {
 							preg_match_all ( "/HTTP\/.+(?=\r\n\r\n)/Usm", $param ['content'], $param ['header'] );
 							$param ['header'] = $param ['header'] [0];
 							$pos = 0;
