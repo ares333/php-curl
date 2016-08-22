@@ -1,14 +1,11 @@
 <?php
-
 namespace Ares333\CurlMulti;
-
 use phpQuery;
-
 /**
  * Website copy, keep original directory structure(be supported by sounded reason)
  * phpQuery needed
  *
- * @author admin@phpdr.net
+ * @author 275244351@qq.com
  *
  */
 class AutoClone extends Base {
@@ -24,6 +21,8 @@ class AutoClone extends Base {
 					'withPrefix' => false
 			)
 	);
+	// max file name length
+	public $fileNameLen = 250;
 	public $logError = true;
 	private $errorLog;
 	private $startTime;
@@ -37,7 +36,6 @@ class AutoClone extends Base {
 	private $site = array ();
 	// windows system flag
 	private $isWin;
-
 	/**
 	 *
 	 * @param Core $curlmulti
@@ -80,7 +78,6 @@ class AutoClone extends Base {
 		$this->dir = $dir;
 		$this->isWin = (0 === strpos ( PHP_OS, 'WIN' ));
 	}
-
 	/**
 	 * start clone
 	 */
@@ -136,7 +133,7 @@ class AutoClone extends Base {
 			$urlDownload = array ();
 			$urlParse = array ();
 			if (isset ( $r ['content'] ) && 0 === strpos ( $r ['info'] ['content_type'], 'text' )) {
-				$urlCurrent = $args ['url'];
+				$urlCurrent = $r ['info'] ['url'];
 				$pq = phpQuery::newDocumentHTML ( $r ['content'] );
 				// css
 				$list = $pq ['link[type$=css]'];
@@ -290,7 +287,6 @@ class AutoClone extends Base {
 			);
 		}
 	}
-
 	/**
 	 *
 	 * {@inheritDoc}
@@ -305,7 +301,6 @@ class AutoClone extends Base {
 			parent::cbCurlFail ( $error, $args );
 		}
 	}
-
 	/**
 	 * is needed to process
 	 *
@@ -327,7 +322,6 @@ class AutoClone extends Base {
 		}
 		return $doProcess;
 	}
-
 	/**
 	 * calculate relative depth
 	 *
@@ -348,7 +342,6 @@ class AutoClone extends Base {
 			}
 		}
 	}
-
 	/**
 	 * url2uri for this class
 	 *
@@ -357,8 +350,8 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2uriClone($url, $urlCurrent) {
+		$url = $this->rebuildUrl($url);
 		$path = $this->url2uri ( $url, $urlCurrent );
-		$path = $this->fixPath ( $path );
 		if (! isset ( $path )) {
 			$dir2 = $this->urlDir ( $urlCurrent );
 			$path1 = $this->getPath ( $url );
@@ -373,9 +366,14 @@ class AutoClone extends Base {
 			}
 			$path .= $path1;
 		}
+		$cPath = parse_url ( $urlCurrent, PHP_URL_PATH );
+		if (empty ( pathinfo ( $cPath, PATHINFO_EXTENSION ))) {
+			if('/' != substr ( $cPath, - 1 )){
+				$path = "../" . $path;
+			}
+		}
 		return $path;
 	}
-
 	/**
 	 * compute local absolute path
 	 *
@@ -383,6 +381,8 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function url2file($url) {
+		$url = $this->removeFragment($url);	
+		$url = $this->rebuildUrl($url);	
 		$file = $this->dir . '/' . $this->getPath ( $url );
 		$dir = dirname ( $file );
 		if ($this->isWin) {
@@ -399,7 +399,6 @@ class AutoClone extends Base {
 		}
 		return $file;
 	}
-
 	/**
 	 * relative local file path
 	 *
@@ -407,39 +406,14 @@ class AutoClone extends Base {
 	 * @return string
 	 */
 	private function getPath($url) {
-		$parse = parse_url ( trim ( $url ) );
-		if (! isset ( $parse ['path'] )) {
-			$parse ['path'] = '';
-		}
-		$parse ['path'] = $this->fixPath ( $parse ['path'] );
+		$parse = parse_url ($url);
 		$port = '';
 		if (isset ( $parse ['port'] )) {
 			$port = '_' . $parse ['port'];
 		}
-		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'] . $this->getQuery ( $url );
+		$path = $parse ['scheme'] . '_' . $parse ['host'] . $port . $parse ['path'];
 		return $path;
 	}
-
-	/**
-	 * calculate query
-	 *
-	 * @param string $url
-	 * @return string
-	 */
-	private function getQuery($url) {
-		$query = parse_url ( $url, PHP_URL_QUERY );
-		if (! empty ( $query )) {
-			parse_str ( $query, $query );
-			sort ( $query );
-			$query = http_build_query ( $query );
-			if (strlen ( $query ) >= 250) {
-				$query = md5 ( $query ) . '.html';
-			}
-			$query = '？/' . $query;
-		}
-		return $query;
-	}
-
 	/**
 	 * add processed url or check
 	 *
@@ -447,6 +421,7 @@ class AutoClone extends Base {
 	 * @param bool $check
 	 */
 	private function urlAdd($url, $check = false) {
+		$url = $this->removeFragment($url);		
 		$md5 = md5 ( $url );
 		$level1 = substr ( $md5, 0, 3 );
 		$level2 = substr ( $md5, 3, 3 );
@@ -468,22 +443,77 @@ class AutoClone extends Base {
 			}
 		}
 	}
-
+	
 	/**
-	 * fix uri and file path
+	 * trans query as a part of file name
 	 *
-	 * @param string $path
-	 * @return string
-	 */
-	private function fixPath($path) {
-		$ext = pathinfo ( $path, PATHINFO_EXTENSION );
-		if (empty ( $ext )) {
-			if (substr ( $path, - 1 ) === '/') {
-				$path = rtrim ( $path, '/' ) . '/index.html';
-			} else {
-				$path .= '.html';
-			}
+	 */	
+	private function rebuildUrl($url){
+		$pos = strrpos ( $url, '#' );
+		if (false !== $pos) {
+			$frag = substr ( $url, $pos);		
+			$url = substr ( $url, 0, $pos );				
 		}
-		return $path;
+		$pos = strrpos ( $url, '?' );
+		if (false !== $pos) {
+			$query = substr ( $url, $pos + 1);		
+			$url = substr ( $url, 0, $pos );									
+		}
+		$ext = pathinfo ( parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
+		if (empty ( $ext )) {
+			$url = rtrim ($url, '/' ) . '/index.html';
+			$ext = 'html';
+		}	
+		if($query){
+			if (strlen ($query) + strlen (pathinfo($url, PATHINFO_BASENAME)) + 1 >= $this->fileNameLen) {
+				$query = md5 ( $query );
+			}
+			$url = preg_replace("/\.".$ext."$/", "_".$query.".".$ext, $url);
+		}
+		return $url.$frag;		
+	}
+	/**
+	 * remove fragment of url
+	 */	
+	function removeFragment($url){
+		$pos = strrpos ( $url, '#' );
+		if (false !== $pos) {
+			$url = substr ( $url, 0, $pos );	
+		}
+		return $url;
+	}
+	
+	/**
+	 *
+	 * {@inheritDoc}
+	 *
+	 * sort qeury keys and trim url
+	 * 
+	 * @see \Ares333\CurlMulti\Base::uri2url()
+	 */
+	function uri2url($uri, $urlCurrent){
+		$url = parent::uri2url($uri, $urlCurrent);
+		//sort query
+		$pos = strrpos ( $url, '?' );
+		if (false !== $pos) {
+			parse_str(parse_url($url, PHP_URL_QUERY ), $query);
+			ksort($query);
+			$url = substr ( $url, 0, $pos ).'?'.http_build_query ( $query );
+			$frag = parse_url($url, PHP_URL_FRAGMENT);
+			if(! empty($frag)){
+				$url .= "#".$frag;
+			}
+		}		
+		return trim($url);
+	}
+	
+	function test($uri, $currentUrl){
+		echo "[uri]  $uri\n";
+		echo "[curUrl]  $currentUrl\n";
+		$url = $this->uri2url($uri, $currentUrl);
+		echo "[uri2url]  ".$url."\n";
+		echo '[url2file-current]  '.$this->url2file($currentUrl)."\n";
+		echo '[url2file-uri]  '.$this->url2file($url)."\n";
+		echo '[href]  '.$this->url2uriClone($url, $currentUrl)."\n";
 	}
 }
