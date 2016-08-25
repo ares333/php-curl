@@ -8,7 +8,7 @@
  * To activate this file, delete '.example' from filename.
  */
 // probably you want to use one of those functions here
-//phpQuery::ajaxAllowHost();
-//phpQuery::ajaxAllowURL();
-//phpQuery::plugin();
+// phpQuery::ajaxAllowHost();
+// phpQuery::ajaxAllowURL();
+// phpQuery::plugin();
 ?>
