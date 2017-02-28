@@ -4,11 +4,11 @@ namespace Ares333\CurlMulti;
 use phpQuery;
 
 /**
- * Website copy, keep original directory structure(be supported by sounded reason)
+ * Website copy, keep original directory structure
  * phpQuery needed
  *
  * @author admin@phpdr.net
- *        
+ *
  */
 class AutoClone extends Base
 {
@@ -43,9 +43,9 @@ class AutoClone extends Base
 
     /**
      *
-     * @param Core $curlmulti            
-     * @param string $url            
-     * @param string $dir            
+     * @param Core $curlmulti
+     * @param string $url
+     * @param string $dir
      */
     function __construct($url, $dir)
     {
@@ -133,8 +133,8 @@ class AutoClone extends Base
     /**
      * download and html callback
      *
-     * @param array $r            
-     * @param mixed $args            
+     * @param array $r
+     * @param mixed $args
      *
      */
     function cbProcess($r, $args)
@@ -317,7 +317,7 @@ class AutoClone extends Base
     /**
      * is needed to process
      *
-     * @param unknown $url            
+     * @param unknown $url
      */
     private function isProcess($url)
     {
@@ -340,8 +340,8 @@ class AutoClone extends Base
     /**
      * calculate relative depth
      *
-     * @param string $url            
-     * @param string $urlBase            
+     * @param string $url
+     * @param string $urlBase
      */
     private function urlDepth($url, $urlBase)
     {
@@ -362,8 +362,8 @@ class AutoClone extends Base
     /**
      * url2uri for this class
      *
-     * @param string $url            
-     * @param string $urlCurrent            
+     * @param string $url
+     * @param string $urlCurrent
      * @return string
      */
     private function url2uriClone($url, $urlCurrent)
@@ -390,7 +390,7 @@ class AutoClone extends Base
     /**
      * compute local absolute path
      *
-     * @param string $url            
+     * @param string $url
      * @return string
      */
     private function url2file($url)
@@ -415,7 +415,7 @@ class AutoClone extends Base
     /**
      * relative local file path
      *
-     * @param string $url            
+     * @param string $url
      * @return string
      */
     private function getPath($url)
@@ -436,7 +436,7 @@ class AutoClone extends Base
     /**
      * calculate query
      *
-     * @param string $url            
+     * @param string $url
      * @return string
      */
     private function getQuery($url)
@@ -457,8 +457,8 @@ class AutoClone extends Base
     /**
      * add processed url or check
      *
-     * @param string $url            
-     * @param bool $check            
+     * @param string $url
+     * @param bool $check
      */
     private function urlAdd($url, $check = false)
     {
@@ -487,7 +487,7 @@ class AutoClone extends Base
     /**
      * fix uri and file path
      *
-     * @param string $path            
+     * @param string $path
      * @return string
      */
     private function fixPath($path)

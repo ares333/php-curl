@@ -5,17 +5,12 @@ namespace Ares333\CurlMulti;
  * CurlMulti_Core wrapper, more easy to use
  *
  * @author admin@phpdr.net
- *        
+ *
  */
 class Base
 {
 
     protected $curl;
-    // array('prefix'=>array(array(0,'PRE'),100),'suffix'=>null)
-    public $cbInfoFix = array(
-        'prefix' => array(),
-        'suffix' => array()
-    );
 
     function __construct($curlmulti = null)
     {
@@ -39,8 +34,8 @@ class Base
     /**
      * 16^3=4096,4096^2=16777216,4096^3=68719476736
      *
-     * @param string $name            
-     * @param integer $level            
+     * @param string $name
+     * @param integer $level
      * @return string relative path
      */
     function hashpath($name, $level = 2)
@@ -59,9 +54,9 @@ class Base
     /**
      * content between start and end
      *
-     * @param string $str            
-     * @param string $start            
-     * @param string $end            
+     * @param string $str
+     * @param string $start
+     * @param string $end
      * @param String $mode
      *            g greed
      *            ng non-greed
@@ -95,7 +90,7 @@ class Base
     /**
      * default CurlMulti_Core fail callback
      *
-     * @param array $error            
+     * @param array $error
      * @param mixed $args
      *            args in CurlMulti_Core::add()
      */
@@ -106,140 +101,13 @@ class Base
     }
 
     /**
-     * write message to IPC
-     */
-    function cbCurlInfoIPC($info, $isFirst, $isLast)
-    {
-        $pid = posix_getpid();
-        $this->cbInfoFix['prefix'][] = array(
-            array(
-                0,
-                'PID'
-            ),
-            '#' . $pid
-        );
-        ob_start();
-        $res = $this->cbCurlInfo($info, $isFirst, $isLast, false);
-        ob_end_clean();
-        $msg = array(
-            'isLast' => $isLast,
-            'pid' => $pid,
-            'caption' => $res['caption'],
-            'content' => $res['content'],
-            'output' => $res['output']
-        );
-        while (false === msg_send($this->getMessageQueue()[0], 1, $msg, true, false, $errorCode)) {
-            if ($errorCode != MSG_EAGAIN) {
-                user_error('IPC failed to send message, errorCode=' . $errorCode, E_USER_WARNING);
-            } else {
-                break;
-            }
-        }
-    }
-
-    /**
-     * get IPC message and display
-     *
-     * @param callback $callback
-     *            return true to end the loop, called on every loop
-     */
-    function curlInfoIPC($callback = null)
-    {
-        $queue = $this->getMessageQueue(true)[0];
-        $nc = ncurses_init();
-        $window = ncurses_newwin(0, 0, 0, 0);
-        $caption = '';
-        $list = array();
-        $lastClear = time();
-        while (true) {
-            $time = time();
-            if ($time - $lastClear > 10) {
-                ncurses_clear();
-                $lastClear = $time;
-            }
-            $error = '';
-            if (msg_receive($queue, 0, $msgtype, 1024 * 1024, $msg, true, MSG_IPC_NOWAIT, $errorCode)) {
-                if (strlen($msg['caption']) > strlen($caption)) {
-                    $caption = $msg['caption'];
-                }
-                $pid = $msg['pid'];
-                $isLast = $msg['isLast'];
-                unset($msg['pid'], $msg['isLast'], $msg['caption']);
-                $list[$pid] = $msg;
-                if (true === $isLast) {
-                    unset($list[$pid]);
-                    ncurses_clear();
-                    if (empty($list)) {
-                        break;
-                    }
-                }
-            } else {
-                if ($errorCode != MSG_ENOMSG) {
-                    $error = 'IPC receive error, errorCode=' . $errorCode;
-                }
-            }
-            $content = '';
-            $output = '';
-            foreach ($list as $k => $v) {
-                $content .= $v['content'] . "\n";
-                $output .= $v['output'] . "\n";
-            }
-            $str = trim($caption . "\n" . $content . "\n" . $output . "\n" . $error);
-            ncurses_move(0, 0);
-            ncurses_addstr($str);
-            ncurses_refresh();
-            if (isset($callback)) {
-                if (call_user_func($callback)) {
-                    break;
-                }
-            }
-            usleep(100 * 1000);
-        }
-        ncurses_end();
-        msg_remove_queue($queue);
-    }
-
-    /**
-     * get IPC message queue
-     *
-     * @return resource
-     */
-    private function getMessageQueue($remove = false)
-    {
-        static $queue;
-        if (! isset($queue)) {
-            $queue = array();
-            $key = ftok(__FILE__, 'C');
-            $queue[] = msg_get_queue($key);
-            $queue[] = $key;
-            if ($remove) {
-                while (msg_stat_queue($queue[0])['msg_qnum'] > 0) {
-                    $errorCode = null;
-                    if (! msg_receive($queue[0], 0, $msgtype, 1024 * 1024, $message, false, $errorCode)) {
-                        if ($errorCode === MSG_ENOMSG) {
-                            break;
-                        } else {
-                            user_error('IPC can not receive message, errorCode=' . $errorCode, E_USER_WARNING);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        return $queue;
-    }
-
-    /**
      * default CurlMulti_Core info callback
      *
      * @param array $info
      *            array('all'=>array(),'running'=>array())
-     * @param bool $isFirst            
-     * @param bool $isLast            
-     * @param bool $useOb            
      *
      */
-    function cbCurlInfo($info, $isFirst, $isLast, $useOb = true)
+    function cbCurlInfo($info)
     {
         static $meta = array(
             'downloadSpeed' => array(
@@ -286,21 +154,6 @@ class Base
         // meta running num of task type
         static $metaType = array();
         $all = $info['all'];
-        // meta prefix suffix
-        foreach ($this->cbInfoFix as $k => $v) {
-            foreach ($v as $v1) {
-                if (! array_key_exists($v1[0][1], $meta)) {
-                    if ($k === 'prefix') {
-                        $meta = array_merge(array(
-                            $v1[0][1] => $v1[0]
-                        ), $meta);
-                    } else {
-                        $meta[$v1[0][1]] = $v1[0];
-                    }
-                }
-                $all[$v1[0][1]] = $v1[1];
-            }
-        }
         $all['downloadSpeed'] = round($all['downloadSpeed'] / 1024) . 'KB';
         $all['downloadSize'] = round($all['downloadSize'] / 1024 / 1024) . "MB";
         if (! empty($all['taskRunningNumType'])) {
@@ -347,47 +200,29 @@ class Base
                 ${$name}[$k] = $v;
             }
         }
-        if ($useOb) {
-            $output = ob_get_clean();
-        } else {
-            $output = '';
-        }
+        $output = '';
         $pre = $output;
         if (PHP_OS == 'Linux') {
-            if (! empty($pre) && ! $isFirst) {
+            if (! empty($pre)) {
                 $pre .= "\n\n";
             }
             $str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim($content);
         } else {
-            if (! empty($pre) && ! $isFirst) {
+            if (! empty($pre)) {
                 $pre .= "\n";
             }
             $str = $pre . "\r" . rtrim($content);
         }
-        if ($isFirst) {
-            $str = "\n" . $str;
-        }
-        if ($isLast) {
-            $str .= "\n";
-        }
         echo $str;
-        if (! $isLast && $useOb) {
-            ob_start();
-        }
-        return array(
-            'caption' => $caption,
-            'content' => $content,
-            'output' => trim($output)
-        );
     }
 
     /**
      * html encoding transform
      *
-     * @param string $html            
-     * @param string $in            
-     * @param string $out            
-     * @param string $content            
+     * @param string $html
+     * @param string $in
+     * @param string $out
+     * @param string $content
      * @param string $mode
      *            auto|iconv|mb_convert_encoding
      * @return string
@@ -437,7 +272,7 @@ class Base
     /**
      * is a full url
      *
-     * @param string $str            
+     * @param string $str
      * @return boolean
      */
     function isUrl($str)
@@ -495,7 +330,7 @@ class Base
      * get relative uri of the current page.
      * urlCurrent should be redirected final url.Final url normally has '/' suffix.
      *
-     * @param string $url            
+     * @param string $url
      * @param string $urlCurrent
      *            redirected final url of the html page
      * @return string
