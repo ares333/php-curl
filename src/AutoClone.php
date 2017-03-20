@@ -308,7 +308,8 @@ class AutoClone extends Base
     {
         if ($this->logError) {
             $err = $error['error'];
-            file_put_contents($this->errorLog, "Curl error $err[0]: $err[1], url=" . $error['info']['url'] . "\n", FILE_APPEND);
+            $content = "Curl error $err[0]: $err[1], url=" . $error['info']['url'] . "\n";
+            file_put_contents($this->errorLog, $content, FILE_APPEND);
         } else {
             parent::cbCurlFail($error, $args);
         }
@@ -429,7 +430,8 @@ class AutoClone extends Base
         if (isset($parse['port'])) {
             $port = '_' . $parse['port'];
         }
-        $path = $parse['scheme'] . '_' . $parse['host'] . $port . $parse['path'] . $this->getQuery($url);
+        $path = $parse['scheme'] . '_' . $parse['host'] . $port;
+        $path .= $parse['path'] . $this->getQuery($url);
         return $path;
     }
 
@@ -466,7 +468,9 @@ class AutoClone extends Base
         $level1 = substr($md5, 0, 3);
         $level2 = substr($md5, 3, 3);
         if ($check) {
-            return ! empty($this->urlAdded[$level1][$level2]) && in_array($url, $this->urlAdded[$level1][$level2]);
+            $res = ! empty($this->urlAdded[$level1][$level2]);
+            $res = $res && in_array($url, $this->urlAdded[$level1][$level2]);
+            return $res;
         } else {
             if (! array_key_exists($level1, $this->urlAdded)) {
                 $this->urlAdded[$level1] = array(

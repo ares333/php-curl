@@ -195,7 +195,8 @@ class Base
                     $caption .= sprintf('%-' . ($v[0] + $lenPad) . 's', $v[1]);
                     $content .= sprintf('%-' . ($v[0] + $lenPad) . 's', $all[$k]);
                 } else {
-                    $content .= sprintf('%-' . ($v[0] + strlen($v[1]) + 1 + $lenPad) . 's', $v[1] . ':' . $all[$k]);
+                    $format = '%-' . ($v[0] + strlen($v[1]) + 1 + $lenPad) . 's';
+                    $content .= sprintf($format, $v[1] . ':' . $all[$k]);
                 }
                 ${$name}[$k] = $v;
             }
@@ -240,9 +241,11 @@ class Base
         if (! in_array($mode, $valid)) {
             throw new Exception('invalid mode, mode=' . $mode);
         }
+        $if = function_exists('mb_convert_encoding');
+        $if = $if && ($mode == 'auto' || $mode == 'mb_convert_encoding');
         if (function_exists('iconv') && ($mode == 'auto' || $mode == 'iconv')) {
             $func = 'iconv';
-        } elseif (function_exists('mb_convert_encoding') && ($mode == 'auto' || $mode == 'mb_convert_encoding')) {
+        } elseif ($if) {
             $func = 'mb_convert_encoding';
         } else {
             throw new Exception('charsetTrans failed, no function');
