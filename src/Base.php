@@ -44,7 +44,8 @@ class Base
         if ($level == 1) {} elseif ($level == 2) {
             $file = substr($file, 0, 3) . '/' . substr($file, 3);
         } elseif ($level == 3) {
-            $file = substr($file, 0, 3) . '/' . substr($file, 3, 3) . '/' . substr($file, 6);
+            $file = substr($file, 0, 3) . '/' . substr($file, 3, 3) . '/' .
+                 substr($file, 6);
         } else {
             throw new Exception('level is invalid, level=' . $level);
         }
@@ -193,7 +194,8 @@ class Base
                         $v[0] = mb_strlen($v[1]);
                     }
                     $caption .= sprintf('%-' . ($v[0] + $lenPad) . 's', $v[1]);
-                    $content .= sprintf('%-' . ($v[0] + $lenPad) . 's', $all[$k]);
+                    $content .= sprintf('%-' . ($v[0] + $lenPad) . 's',
+                        $all[$k]);
                 } else {
                     $format = '%-' . ($v[0] + strlen($v[1]) + 1 + $lenPad) . 's';
                     $content .= sprintf($format, $v[1] . ':' . $all[$k]);
@@ -207,7 +209,8 @@ class Base
             if (! empty($pre)) {
                 $pre .= "\n\n";
             }
-            $str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim($content);
+            $str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" .
+                 rtrim($content);
         } else {
             if (! empty($pre)) {
                 $pre .= "\n";
@@ -281,10 +284,11 @@ class Base
     function isUrl($str)
     {
         $str = ltrim($str);
-        return in_array(substr($str, 0, 7), array(
-            'http://',
-            'https:/'
-        ));
+        return in_array(substr($str, 0, 7),
+            array(
+                'http://',
+                'https:/'
+            ));
     }
 
     /**

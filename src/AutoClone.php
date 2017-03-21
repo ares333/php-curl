@@ -91,23 +91,26 @@ class AutoClone extends Base
     function start()
     {
         if (! empty($this->getCurl()->cache['dir'])) {
-            $this->errorLog = $this->getCurl()->cache['dir'] . '/autoCloneError.log';
+            $this->errorLog = $this->getCurl()->cache['dir'] .
+                 '/autoCloneError.log';
         } else {
             $this->errorLog = './autoCloneError.log';
         }
         foreach ($this->url as $k => $v) {
             if ('/' != substr($k, - 1)) {
-                $this->getCurl()->add(array(
-                    'url' => $k,
-                    'opt' => array(
-                        CURLOPT_NOBODY => true
-                    )
-                ), function ($r) use ($k, $v) {
-                    if ($k != $r['info']['url']) {
-                        $this->url[$r['info']['url']] = $v;
-                        unset($this->url[$k]);
-                    }
-                });
+                $this->getCurl()->add(
+                    array(
+                        'url' => $k,
+                        'opt' => array(
+                            CURLOPT_NOBODY => true
+                        )
+                    ),
+                    function ($r) use ($k, $v) {
+                        if ($k != $r['info']['url']) {
+                            $this->url[$r['info']['url']] = $v;
+                            unset($this->url[$k]);
+                        }
+                    });
             }
         }
         $this->getCurl()->start();
@@ -115,16 +118,18 @@ class AutoClone extends Base
             echo "\n";
         }
         foreach ($this->url as $k => $v) {
-            $this->getCurl()->add(array(
-                'url' => $k,
-                'args' => array(
+            $this->getCurl()->add(
+                array(
                     'url' => $k,
-                    'file' => $this->url2file($k)
-                )
-            ), array(
-                $this,
-                'cbProcess'
-            ));
+                    'args' => array(
+                        'url' => $k,
+                        'file' => $this->url2file($k)
+                    )
+                ),
+                array(
+                    $this,
+                    'cbProcess'
+                ));
             $this->urlAdd($k);
         }
         $this->getCurl()->start();
@@ -142,7 +147,8 @@ class AutoClone extends Base
         if (200 == $r['info']['http_code']) {
             $urlDownload = array();
             $urlParse = array();
-            if (isset($r['content']) && 0 === strpos($r['info']['content_type'], 'text')) {
+            if (isset($r['content']) &&
+                 0 === strpos($r['info']['content_type'], 'text')) {
                 $urlCurrent = $args['url'];
                 $pq = phpQuery::newDocumentHTML($r['content']);
                 // css
@@ -177,7 +183,8 @@ class AutoClone extends Base
                 } else {
                     foreach ($pic as $v) {
                         $v = pq($v);
-                        $v->attr('src', $this->uri2url($v->attr('src'), $urlCurrent));
+                        $v->attr('src',
+                            $this->uri2url($v->attr('src'), $urlCurrent));
                     }
                 }
                 // link xml
@@ -199,7 +206,8 @@ class AutoClone extends Base
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
-                    if ($this->download['zip']['enable'] && '.zip' == substr($href, - 4)) {
+                    if ($this->download['zip']['enable'] &&
+                         '.zip' == substr($href, - 4)) {
                         if ($this->download['zip']['withPrefix']) {
                             $isProcess = $this->isProcess($url);
                         } else {
@@ -226,8 +234,10 @@ class AutoClone extends Base
                     if ($this->isWin) {
                         $path = mb_convert_encoding($path, 'gbk', 'utf-8');
                     }
-                    if (false === file_put_contents($path, $r['content'], LOCK_EX)) {
-                        user_error('write file failed, file=' . $path, E_USER_WARNING);
+                    if (false ===
+                         file_put_contents($path, $r['content'], LOCK_EX)) {
+                        user_error('write file failed, file=' . $path,
+                            E_USER_WARNING);
                     }
                 }
                 phpQuery::unloadDocuments();
@@ -236,12 +246,14 @@ class AutoClone extends Base
                     $content = file_get_contents($args['file']);
                     $uri = array();
                     // import
-                    preg_match_all('/@import\s+url\s*\((.+)\);/iU', $content, $matches);
+                    preg_match_all('/@import\s+url\s*\((.+)\);/iU', $content,
+                        $matches);
                     if (! empty($matches[1])) {
                         $uri = array_merge($uri, $matches[1]);
                     }
                     // url in css
-                    preg_match_all('/:\s*url\((\'|")?(.+?)\\1?\)/i', $content, $matches);
+                    preg_match_all('/:\s*url\((\'|")?(.+?)\\1?\)/i', $content,
+                        $matches);
                     if (! empty($matches[2])) {
                         $uri = array_merge($uri, $matches[2]);
                     }
@@ -280,10 +292,11 @@ class AutoClone extends Base
                         if ($v == 'urlParse') {
                             unset($item['file']);
                         }
-                        $this->getCurl()->add($item, array(
-                            $this,
-                            'cbProcess'
-                        ));
+                        $this->getCurl()->add($item,
+                            array(
+                                $this,
+                                'cbProcess'
+                            ));
                         $this->urlAdd($k1);
                     }
                 }
@@ -308,7 +321,8 @@ class AutoClone extends Base
     {
         if ($this->logError) {
             $err = $error['error'];
-            $content = "Curl error $err[0]: $err[1], url=" . $error['info']['url'] . "\n";
+            $content = "Curl error $err[0]: $err[1], url=" .
+                 $error['info']['url'] . "\n";
             file_put_contents($this->errorLog, $content, FILE_APPEND);
         } else {
             parent::cbCurlFail($error, $args);
