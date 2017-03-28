@@ -10,7 +10,7 @@ use phpQuery;
  * @author 275244351@qq.com
  *
  */
-class AutoClone extends Base
+class AutoCloneDev extends Base
 {
     // overwrite local file
     public $overwrite = false;
