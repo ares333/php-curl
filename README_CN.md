@@ -174,7 +174,7 @@ function cbCurlFail($error, $args)
 全局默认错误回调。
 
 ```PHP
-function cbCurlInfo($info,$isFirst,$isLast)
+function cbCurlInfo($info)
 ```
 默认的信息回调，以标准形式输出运行信息。
 

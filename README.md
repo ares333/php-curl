@@ -38,7 +38,7 @@ Feature
 Mechanism
 ---------
 
-Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions CurlMulti_Core::add() and CurlMulti_Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of CurlMulti_Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use CurlMulti_Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than CurlMulti_Core::$maxThread and internal taskpool is empty.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
+Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions Core::add() and Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than Core::$maxThread and internal taskpool is empty.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
 
 Files
 -----
@@ -46,13 +46,12 @@ Files
 Kernel class
 
 **src/Base.php**<br>
-A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
+A wraper of Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
 
 **src/Exception.php**<br>
-CurlMulti_Exception
 
 **src/AutoClone.php**<br>
-A powerfull site clone tool.It's a perfect tool.
+A powerfull site clone tool.
 
 <sub>**Feature：**
 
@@ -158,7 +157,7 @@ API(Base)
 ```PHP
 function __construct($curlmulti = null)
 ```
-Set up use default CurlMulti_Core or your own instance.
+$curlmulti is instanceof Core.Default instance will be created if not set.
 
 ```PHP
 function hashpath($name, $level = 2)
@@ -176,9 +175,9 @@ function cbCurlFail($error, $args)
 Default fail callback.
 
 ```PHP
-function cbCurlInfo($info,$isFirst,$isLast)
+function cbCurlInfo($info)
 ```
-Default CurlMulti_Core::$cbInfo
+Running information callback.
 
 ```PHP
 function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
@@ -208,4 +207,4 @@ url should be redirected final url.Final url normally has '/' suffix.
 ```PHP
 function getCurl()
 ```
-Return CurlMulti_Core instance.
+Return Core instance.
