@@ -74,7 +74,7 @@ A powerfull site clone tool.
 
 <sub>Clone of site: http://manual.phpdr.net/
 
-API(Core)
+API(Core.php)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -152,7 +152,7 @@ public function start($persist=null)
 Start the loop.This is a blocked method.
 Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
 
-API(Base)
+API(Base.php)
 -----------------
 ```PHP
 function __construct($curlmulti = null)

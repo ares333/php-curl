@@ -73,7 +73,7 @@ QQ群:215348766
 
 <sub>结果展示：http://manual.phpdr.net/
 
-API(Core)
+API(Core.php)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -151,7 +151,7 @@ public function start($persist=null)
 开始回调循环，此方法是阻塞的。
 参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
 
-API(Base)
+API(Base.php)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
