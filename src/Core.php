@@ -282,13 +282,6 @@ class Core
             throw new Exception(__CLASS__ . ' __construct is not called');
         }
         $this->mh = curl_multi_init();
-        $this->info['all']['downloadSize'] = 0;
-        $this->info['all']['finishNum'] = 0;
-        $this->info['all']['cacheNum'] = 0;
-        $this->info['all']['failNum'] = 0;
-        $this->info['all']['taskNum'] = count($this->taskPool) +
-             count($this->taskPoolAhead);
-        $this->info['all']['taskRunningNumNoType'] = 0;
         $this->setThreadData();
         $this->isRunning = true;
         $this->addTask();
@@ -570,12 +563,12 @@ class Core
                     $this->callCbInfo();
                 } else {
                     $this->setThreadData();
-                    if (array_key_exists('type', $task[self::TASK_ITEM_CTL]) && ! array_key_exists(
-                        $task[self::TASK_ITEM_CTL]['type'], $this->maxThreadType)) {
+                    if (array_key_exists('type', $task[self::TASK_ITEM_CTL]) &&
+                         ! array_key_exists($task[self::TASK_ITEM_CTL]['type'],
+                            $this->maxThreadType)) {
                         user_error(
                             'task was set to notype because type was not set, type=' .
-                                 $task[self::TASK_ITEM_CTL]['type'],
-                                E_USER_WARNING);
+                             $task[self::TASK_ITEM_CTL]['type'], E_USER_WARNING);
                         unset($task[self::TASK_ITEM_CTL]['type']);
                     }
                     if (array_key_exists('type', $task[self::TASK_ITEM_CTL])) {
