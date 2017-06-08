@@ -146,21 +146,6 @@ class Core
 
     private $sizeProcessed = 0;
 
-    private static $instance;
-
-    /**
-     * get singleton instance
-     *
-     * @return self
-     */
-    static function getInstance()
-    {
-        if (! isset(static::$instance)) {
-            static::$instance = new static();
-        }
-        return static::$instance;
-    }
-
     /**
      * add a task to taskPool
      *
