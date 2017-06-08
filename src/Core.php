@@ -107,9 +107,6 @@ class Core
     // handle of multi-thread curl
     private $mh;
 
-    // if __construct called
-    private $isConstructCalled = false;
-
     // running info
     private $info = array(
         'all' => array(
@@ -152,18 +149,6 @@ class Core
     private static $instance;
 
     /**
-     *
-     * @throws Exception
-     */
-    function __construct()
-    {
-        $this->isConstructCalled = true;
-        if (version_compare(PHP_VERSION, '5.1.0') < 0) {
-            throw new Exception('PHP 5.1.0+ is needed');
-        }
-    }
-
-    /**
      * get singleton instance
      *
      * @return self
@@ -171,7 +156,7 @@ class Core
     static function getInstance()
     {
         if (! isset(static::$instance)) {
-            static::$instance = new self();
+            static::$instance = new static();
         }
         return static::$instance;
     }
@@ -277,9 +262,6 @@ class Core
     {
         if ($this->isRunning) {
             throw new Exception(__CLASS__ . ' is running !');
-        }
-        if (false == $this->isConstructCalled) {
-            throw new Exception(__CLASS__ . ' __construct is not called');
         }
         $this->mh = curl_multi_init();
         $this->setThreadData();
