@@ -7,29 +7,39 @@ namespace Ares333\CurlMulti;
  */
 class Core
 {
+
     // handler
     const TASK_CH = 0x01;
+
     // arguments
     const TASK_ITEM_ARGS = 0x02;
+
     // operation, task level
     const TASK_ITEM_OPT = 0x03;
+
     // control options
     const TASK_ITEM_CTL = 0x04;
+
     // success callback
     const TASK_PROCESS = 0x05;
+
     // curl fail callback
     const TASK_FAIL = 0x06;
+
     // tryed times
     const TASK_TRYED = 0x07;
 
     // global max thread num
     public $maxThread = 10;
+
     // Max thread by task type.Task type is specified in $item['ctl'] in add().
     // If task has no type,$this->maxThreadNoType is maxThread-sum(maxThreadType).
     // If less than 0 $this->maxThreadNoType is set to 0.
     public $maxThreadType = array();
+
     // retry time(s) when task failed
     public $maxTry = 3;
+
     // operation, class level curl opt
     public $opt = array(
         CURLINFO_HEADER_OUT => true,
@@ -44,6 +54,7 @@ class Core
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 5
     );
+
     // cache options,dirLevel values is less than 3
     public $cache = array(
         'enable' => false,
@@ -56,36 +67,49 @@ class Core
         'overwrite' => false,
         'overwriteExpire' => 86400
     );
+
     // stack or queue
     public $taskPoolType = 'queue';
+
     // eliminate duplicate for taskpool, will delete previous task and add new one
     public $taskOverride = false;
+
     // task callback
     public $cbTask;
+
     // status callback
     public $cbInfo;
+
     // user callback
     public $cbUser;
+
     // common fail callback, called if no one specified
     public $cbFail;
 
     // is the loop running
     protected $isRunning = false;
+
     // max thread num no type
     protected $maxThreadNoType;
+
     // all added task was saved here first
     protected $taskPool = array();
+
     // taskPool with high priority
     protected $taskPoolAhead = array();
+
     // running task(s)
     protected $taskRunning = array();
+
     // failed task need to retry
     protected $taskFail = array();
 
     // handle of multi-thread curl
     private $mh;
+
     // if __construct called
     private $isConstructCalled = false;
+
     // running info
     private $info = array(
         'all' => array(
@@ -262,7 +286,8 @@ class Core
         $this->info['all']['finishNum'] = 0;
         $this->info['all']['cacheNum'] = 0;
         $this->info['all']['failNum'] = 0;
-        $this->info['all']['taskNum'] = 0;
+        $this->info['all']['taskNum'] = count($this->taskPool) +
+             count($this->taskPoolAhead);
         $this->info['all']['taskRunningNumNoType'] = 0;
         $this->setThreadData();
         $this->isRunning = true;
@@ -545,12 +570,12 @@ class Core
                     $this->callCbInfo();
                 } else {
                     $this->setThreadData();
-                    if (array_key_exists('type', $task[self::TASK_ITEM_CTL]) &&
-                         ! array_key_exists($task[self::TASK_ITEM_CTL]['type'],
-                            $this->maxThreadType)) {
+                    if (array_key_exists('type', $task[self::TASK_ITEM_CTL]) && ! array_key_exists(
+                        $task[self::TASK_ITEM_CTL]['type'], $this->maxThreadType)) {
                         user_error(
                             'task was set to notype because type was not set, type=' .
-                             $task[self::TASK_ITEM_CTL]['type'], E_USER_WARNING);
+                                 $task[self::TASK_ITEM_CTL]['type'],
+                                E_USER_WARNING);
                         unset($task[self::TASK_ITEM_CTL]['type']);
                     }
                     if (array_key_exists('type', $task[self::TASK_ITEM_CTL])) {
@@ -610,13 +635,12 @@ class Core
                 $task[self::TASK_ITEM_ARGS]);
             if (! isset($userRes)) {
                 $userRes = array();
-            } else
-                if (! is_array($userRes)) {
-                    user_error(
-                        'return value from cbProcess is not array, type=' .
-                             gettype($userRes), E_USER_WARNING);
-                    $userRes = array();
-                }
+            } else if (! is_array($userRes)) {
+                user_error(
+                    'return value from cbProcess is not array, type=' .
+                         gettype($userRes), E_USER_WARNING);
+                $userRes = array();
+            }
         }
         if (is_array($userRes)) {
             if (! empty($userRes['cache'])) {
