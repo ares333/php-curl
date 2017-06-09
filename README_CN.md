@@ -104,7 +104,7 @@ public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' =
 ```PHP
 public $taskPoolType = 'queue'
 ```
-有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先，默认是stack深度优先。
+有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先。
 
 ```PHP
 public $cbTask = array(0=>'callback',1=>'callback param')

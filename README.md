@@ -105,7 +105,7 @@ The options is very easy to understand.Cache is identified by url.If cache finde
 ```PHP
 public $taskPoolType = 'queue'
 ```
-Values are 'stack' or 'queue'.This option decide depth-first or width-first.Default value is 'stack' depth-first.
+Values are 'stack' or 'queue'.This option decide depth-first or width-first.
 
 ```PHP
 public $cbTask = array(0=>'callback',1=>'callback param')
