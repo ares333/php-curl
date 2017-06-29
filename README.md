@@ -108,9 +108,9 @@ public $taskPoolType = 'queue'
 Values are 'stack' or 'queue'.This option decide depth-first or width-first.
 
 ```PHP
-public $cbTask = array(0=>'callback',1=>'callback param')
+public $cbTask = null
 ```
-When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.$cbTask[0] is callback itself.$cbTask[1] is parameters for the callback.
+When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.
 
 ```PHP
 public $cbInfo = null

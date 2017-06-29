@@ -107,9 +107,9 @@ public $taskPoolType = 'queue'
 有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先。
 
 ```PHP
-public $cbTask = array(0=>'callback',1=>'callback param')
+public $cbTask = null
 ```
-当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。$cbTask[0]是回调函数，$cbTask[1]是传递给回调函数的参数。
+当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。
 
 ```PHP
 public $cbInfo = null
