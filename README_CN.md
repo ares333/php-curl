@@ -89,7 +89,7 @@ public $maxThreadType = array ()
 ```PHP
 public $maxTry = 3
 ```
-触发curl错误或用户错误之前最大重试次数，超过次数$cbFail指定的回调会被调用。
+触发curl错误之前最大重试次数，超过次数$cbFail指定的回调会被调用。
 
 ```PHP
 public $opt = array ()
@@ -146,10 +146,9 @@ public function add(array $item, $process = null, $fail = null)
 **$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。
 
 ```PHP
-public function start($persist=null)
+public function start()
 ```
 开始回调循环，此方法是阻塞的。
-参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
 
 API(Base.php)
 -----------------

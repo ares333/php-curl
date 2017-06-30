@@ -239,11 +239,8 @@ class Core
 
     /**
      * Perform the actual task(s).
-     *
-     * @param
-     *            mixed callback control the persist
      */
-    function start($persist = null)
+    function start()
     {
         if ($this->isRunning) {
             throw new Exception(__CLASS__ . ' is running !');
@@ -291,32 +288,21 @@ class Core
                 // commpleted in process callback
                 curl_close($ch);
                 if ($curlInfo['result'] == CURLE_OK) {
-                    $userRes = $this->process($task, $param);
+                    $this->process($task, $param);
                     if (isset($task[self::TASK_ITEM_OPT][CURLOPT_FILE])) {
                         fclose($task[self::TASK_ITEM_OPT][CURLOPT_FILE]);
                     }
                 }
                 // error handle
                 $callFail = false;
-                if ($curlInfo['result'] !== CURLE_OK ||
-                     ! empty($userRes['error'])) {
+                if ($curlInfo['result'] !== CURLE_OK) {
                     if ($task[self::TASK_TRYED] >= $this->maxTry) {
-                        // user error
-                        if (! empty($userRes['error'])) {
-                            $err = array(
-                                'error' => array(
-                                    CURLE_OK,
-                                    $userRes['error']
-                                )
-                            );
-                        } else {
-                            $err = array(
-                                'error' => array(
-                                    $curlInfo['result'],
-                                    curl_error($ch)
-                                )
-                            );
-                        }
+                        $err = array(
+                            'error' => array(
+                                $curlInfo['result'],
+                                curl_error($ch)
+                            )
+                        );
                         $err['info'] = $info;
                         if (isset($task[self::TASK_FAIL]) || isset(
                             $this->cbFail)) {
@@ -364,8 +350,7 @@ class Core
             }
         } while ($this->info['all']['activeNum'] ||
              $this->info['all']['queueNum'] || ! empty($this->taskFail) ||
-             ! empty($this->taskRunning) || ! empty($this->taskPool) ||
-             (isset($persist) && true == call_user_func($persist, $this)));
+             ! empty($this->taskRunning) || ! empty($this->taskPool));
         $this->callCbInfo(true);
         curl_multi_close($this->mh);
         unset($this->mh);

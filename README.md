@@ -90,7 +90,7 @@ Set maxThread for specified task type.Key is type(specified in add()).Value is p
 ```PHP
 public $maxTry = 3
 ```
-Trigger curl error or user error before max try times reached.If reached $cbFail will be called.
+Trigger curl error before max try times reached.If reached $cbFail will be called.
 
 ```PHP
 public $opt = array ()
@@ -144,13 +144,12 @@ Add a task to taskpool.<br>
 *$item['ctl']['cache']=array()* Task cache.Override $this->cache and merged.<br />
 *$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allways add to parallel prioritized.<br />
 **$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.<br />
-**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].
+**$fail** Task fail callback.The first parameter has two keys of info and error.The info is http info.The error is full error infomation.The second parameter is $item['args'].
 
 ```PHP
 public function start($persist=null)
 ```
 Start the loop.This is a blocked method.
-Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
 
 API(Base.php)
 -----------------
