@@ -9,7 +9,9 @@ PHP 5.4 +
 
 安装
 ----
-composer require phpdr.net/php-curlmulti:2.*
+```
+composer require phpdr.net/php-curlmulti
+```
 
 联系我们
 --------
