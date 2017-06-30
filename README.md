@@ -11,7 +11,9 @@ PHP 5.4 +
 
 Install
 -------
-composer require phpdr.net/php-curlmulti:2.*
+```
+composer require phpdr.net/php-curlmulti
+```
 
 Contact Us
 ----------
