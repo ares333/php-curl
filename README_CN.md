@@ -9,7 +9,7 @@ PHP 5.4 +
 
 安装
 ----
-composer require phpdr.net/php-curlmulti:2.*
+composer require phpdr.net/php-curlmulti
 
 联系我们
 --------
@@ -46,9 +46,6 @@ QQ群:215348766
 **src/Base.php**<br>
 核心库的封装，包含非常有用的工具和一些规范。
 
-**src/Exception.php**<br>
-异常。
-
 **src/AutoClone.php**<br>
 一个完美的全自动网站克隆工具。
 
@@ -67,10 +64,6 @@ QQ群:215348766
 1. <sub>同一个目录下可以复制任意数量的站点并且不会发生任何可能的文件重复或覆盖。
 1. <sub>支持不同类型资源文件下载控制。
 
-<sub>**存在的问题：**
-
-<sub>1. 针对IE浏览器的注释性css不会处理，因为还没找到一种符合标准的处理方式，这个问题造成的影响可以忽略不计。
-
 <sub>结果展示：http://manual.phpdr.net/
 
 API(Core)
@@ -80,11 +73,6 @@ public $maxThread = 10
 ```
 最大并发数，这个值可以运行中动态改变。<br>
 最大数限制跟操作系统和libcurl有关，和本库无关。
-
-```PHP
-public $maxThreadType = array ()
-```
-为不同类型的任务设置单独的并发数，数组的键是类型(在add()中指定)，值是并发数。不同类型的的并发数综合可以超过$maxThread。无类型任务的并发数是$maxThread减去所有类型的综合。无类型任务并发数小于零的话会被设置为零，这意味着无类型任务不会被执行除非运行中动态改变设置。
 
 ```PHP
 public $maxTry = 3
@@ -97,7 +85,7 @@ public $opt = array ()
 全局CURLOPT_\*，可以被add()中设置的opt覆盖。
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1, 'verifyPost' => false, 'overwrite' => false, 'overwriteExpire' => 86400)
+public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false, 'overwrite' => false, 'overwriteExpire' => null)
 ```
 缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
 
@@ -107,9 +95,9 @@ public $taskPoolType = 'queue'
 有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先，默认是stack深度优先。
 
 ```PHP
-public $cbTask = array(0=>'callback',1=>'callback param')
+public $cbTask = null
 ```
-当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。$cbTask[0]是回调函数，$cbTask[1]是传递给回调函数的参数。
+当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。
 
 ```PHP
 public $cbInfo = null
@@ -119,7 +107,7 @@ public $cbInfo = null
 ```PHP
 public $cbUser = null
 ```
-用户自定义回调函数，这个函数调用非常频繁，用户函数可以执行任何操作。
+用户自定义回调函数，这个函数调用非常频繁，用户函数可以执行任何操作，有网络活动就会调用。
 
 ```PHP
 public $cbFail = null
@@ -127,41 +115,27 @@ public $cbFail = null
 失败任务回调，可以被add()中指定的错误回调覆盖。
 
 ```PHP
-public function __construct()
-```
-子类必须调用此函数。
-
-```PHP
-public function add(array $item, $process = null, $fail = null)
+public function add(array $item, $process = null, $fail = null, $ahead = null)
 ```
 添加一个任务到任务池<br>
-**$item['url']** 不能为空。<br>
 **$item['opt']=array()** 当前任务的CURLOPT_\*，覆盖全局的CURLOPT_\*。<br>
 **$item['args']** 成功和失败回调的第二个参数。<br>
-**$item['ctl']=array()** 一些额外的控制项<br />
-*$item['ctl']['type']* 任务类型，用在$maxThreadType属性。<br />
-*$item['ctl']['cache']=array()* 任务缓存配置，覆盖合并$cache属性。<br />
-*$item['ctl']['ahead']* 忽略$taskPoolType属性，此种类型的任务总是被优先加入并发中。<br />
-**$process** 任务成功完成调用此回调，回调的第一个参数是结果数组，第二个参数是$item['args']。<br />
-**$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。
+**$item['cache']=array()** 任务缓存配置，覆盖合并$cache属性。<br />
+**$process** 任务成功完成调用此回调，回调的第一个参数是结果数组，第二个参数是$item['args']。可以返回一个数组，键：cache（bool,控制是否缓存本次请求）<br />
+**$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。<br>
+**$ahead** bool,是否优先执行任务。
 
 ```PHP
-public function start($persist=null)
+public function start()
 ```
 开始回调循环，此方法是阻塞的。
-参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
 
 API(Base)
 -----------------
 ```PHP
-function __construct($curlmulti = null)
+function hashpath($name)
 ```
-使用默认的核心类或使用自行定义的子类或对象。
-
-```PHP
-function hashpath($name, $level = 2)
-```
-获得hash相对路径，每个目录最大文件数是4096。
+获得hash相对路径。
 
 ```PHP
 function substr($str, $start, $end = null, $mode = 'g')

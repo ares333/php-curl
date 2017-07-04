@@ -11,7 +11,7 @@ PHP 5.4 +
 
 Install
 -------
-composer require phpdr.net/php-curlmulti:2.*
+composer require phpdr.net/php-curlmulti
 
 Contact Us
 ----------
@@ -48,9 +48,6 @@ Kernel class
 **src/Base.php**<br>
 A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
 
-**src/Exception.php**<br>
-CurlMulti_Exception
-
 **src/AutoClone.php**<br>
 A powerfull site clone tool.It's a perfect tool.
 
@@ -69,10 +66,6 @@ A powerfull site clone tool.It's a perfect tool.
 1. <sub>In one dir arbitray number site can be located and no file will conflict.
 1. <sub>Download option support multitype control.
 
-<sub>**issue:**
-
-<sub>1. Css annotation for IE will not be processed,because a standard way is not founded by now.
-
 <sub>Clone of site: http://manual.phpdr.net/
 
 API(Core)
@@ -82,11 +75,6 @@ public $maxThread = 10
 ```
 Max concurrence num, can be changed in the fly.<br>
 The limit may be associated with OS or libcurl,but not the library.
-
-```PHP
-public $maxThreadType = array ()
-```
-Set maxThread for specified task type.Key is type(specified in add()).Value is parallel.The sum of values can exceed $maxThread.Parallel of notype task is value of $maxThread minus the sum.Parallel of notype less than zero will be set to zero.Zero represent no type task will never be excuted except the config changed in the fly.
 
 ```PHP
 public $maxTry = 3
@@ -99,7 +87,7 @@ public $opt = array ()
 Global CURLOPT_* for all tasks.Overrided by CURLOPT_* in add().
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'dirLevel' => 1, 'verifyPost' => false, 'overwrite' => false, 'overwriteExpire' => 86400)
+public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false, 'overwrite' => false, 'overwriteExpire' => null)
 ```
 The options is very easy to understand.Cache is identified by url.If cache finded,the class will not access the network,but return the cache directly.
 
@@ -109,9 +97,9 @@ public $taskPoolType = 'queue'
 Values are 'stack' or 'queue'.This option decide depth-first or width-first.Default value is 'stack' depth-first.
 
 ```PHP
-public $cbTask = array(0=>'callback',1=>'callback param')
+public $cbTask = null
 ```
-When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.$cbTask[0] is callback itself.$cbTask[1] is parameters for the callback.
+When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.
 
 ```PHP
 public $cbInfo = null
@@ -121,7 +109,7 @@ Callback for running info.Use print_r() to check the info in callback.The speed 
 ```PHP
 public $cbUser = null
 ```
-Callback for user operations very frequently.You can do anything there.
+Callback for user operations very frequently.You can do anything there.Is called when has network activity.
 
 ```PHP
 public $cbFail = null
@@ -129,41 +117,27 @@ public $cbFail = null
 Callback for failed tasks.Lower priority than 'fail callback' specified than add().
 
 ```PHP
-public function __construct()
-```
-Musted be called in subclass.
-
-```PHP
-public function add(array $item, $process = null, $fail = null)
+public function add(array $item, $process = null, $fail = null, $ahead = null)
 ```
 Add a task to taskpool.<br>
-**$item['url']** Must not be emtpy.<br>
 **$item['opt']=array()** CURLOPT_* for current task.Override the global $this->opt and merged.<br>
 **$item['args']** Second parameter for callbacks.Include $this->cbFail and $fail and $process.<br>
-**$item['ctl']=array()** do some additional control.type，cache，ahead。<br />
-*$item['ctl']['type']* Task type use for $this->maxThreadType。<br />
-*$item['ctl']['cache']=array()* Task cache.Override $this->cache and merged.<br />
-*$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allways add to parallel prioritized.<br />
-**$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.<br />
-**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].
+**$item['cache']=array()** Task cache.Override $this->cache and merged.<br />
+**$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.Callback can return array.key:cache(bool,controll caching the current request)<br />
+**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].<br>
+**$ahead** bool.Switch for higher priority.
 
 ```PHP
-public function start($persist=null)
+public function start()
 ```
 Start the loop.This is a blocked method.
-Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
 
 API(Base)
 -----------------
 ```PHP
-function __construct($curlmulti = null)
+function hashpath($name)
 ```
-Set up use default CurlMulti_Core or your own instance.
-
-```PHP
-function hashpath($name, $level = 2)
-```
-Get hashed path.Every directory has max 4096 files.
+Get hashed path
 
 ```PHP
 function substr($str, $start, $end = null, $mode = 'g')
