@@ -9,9 +9,7 @@ PHP 5.4 +
 
 安装
 ----
-```
-composer require phpdr.net/php-curlmulti
-```
+composer require phpdr.net/php-curlmulti:2.*
 
 联系我们
 --------
@@ -75,7 +73,7 @@ QQ群:215348766
 
 <sub>结果展示：http://manual.phpdr.net/
 
-API(Core.php)
+API(Core)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -91,7 +89,7 @@ public $maxThreadType = array ()
 ```PHP
 public $maxTry = 3
 ```
-触发curl错误之前最大重试次数，超过次数$cbFail指定的回调会被调用。
+触发curl错误或用户错误之前最大重试次数，超过次数$cbFail指定的回调会被调用。
 
 ```PHP
 public $opt = array ()
@@ -106,12 +104,12 @@ public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' =
 ```PHP
 public $taskPoolType = 'queue'
 ```
-有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先。
+有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先，默认是stack深度优先。
 
 ```PHP
-public $cbTask = null
+public $cbTask = array(0=>'callback',1=>'callback param')
 ```
-当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。
+当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。$cbTask[0]是回调函数，$cbTask[1]是传递给回调函数的参数。
 
 ```PHP
 public $cbInfo = null
@@ -148,11 +146,12 @@ public function add(array $item, $process = null, $fail = null)
 **$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。
 
 ```PHP
-public function start()
+public function start($persist=null)
 ```
 开始回调循环，此方法是阻塞的。
+参数$persist是一个回调函数，如果返回true表示当所有任务完成后继续保持start()为阻塞，如果需要sleep必须在回调中完成。
 
-API(Base.php)
+API(Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
@@ -175,7 +174,7 @@ function cbCurlFail($error, $args)
 全局默认错误回调。
 
 ```PHP
-function cbCurlInfo($info)
+function cbCurlInfo($info,$isFirst,$isLast)
 ```
 默认的信息回调，以标准形式输出运行信息。
 

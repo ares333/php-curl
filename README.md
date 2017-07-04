@@ -11,9 +11,7 @@ PHP 5.4 +
 
 Install
 -------
-```
-composer require phpdr.net/php-curlmulti
-```
+composer require phpdr.net/php-curlmulti:2.*
 
 Contact Us
 ----------
@@ -40,7 +38,7 @@ Feature
 Mechanism
 ---------
 
-Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions Core::add() and Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than Core::$maxThread and internal taskpool is empty.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
+Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions CurlMulti_Core::add() and CurlMulti_Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of CurlMulti_Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use CurlMulti_Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than CurlMulti_Core::$maxThread and internal taskpool is empty.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
 
 Files
 -----
@@ -48,12 +46,13 @@ Files
 Kernel class
 
 **src/Base.php**<br>
-A wraper of Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
+A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
 
 **src/Exception.php**<br>
+CurlMulti_Exception
 
 **src/AutoClone.php**<br>
-A powerfull site clone tool.
+A powerfull site clone tool.It's a perfect tool.
 
 <sub>**Feature：**
 
@@ -76,7 +75,7 @@ A powerfull site clone tool.
 
 <sub>Clone of site: http://manual.phpdr.net/
 
-API(Core.php)
+API(Core)
 -------------------
 ```PHP
 public $maxThread = 10
@@ -92,7 +91,7 @@ Set maxThread for specified task type.Key is type(specified in add()).Value is p
 ```PHP
 public $maxTry = 3
 ```
-Trigger curl error before max try times reached.If reached $cbFail will be called.
+Trigger curl error or user error before max try times reached.If reached $cbFail will be called.
 
 ```PHP
 public $opt = array ()
@@ -107,12 +106,12 @@ The options is very easy to understand.Cache is identified by url.If cache finde
 ```PHP
 public $taskPoolType = 'queue'
 ```
-Values are 'stack' or 'queue'.This option decide depth-first or width-first.
+Values are 'stack' or 'queue'.This option decide depth-first or width-first.Default value is 'stack' depth-first.
 
 ```PHP
-public $cbTask = null
+public $cbTask = array(0=>'callback',1=>'callback param')
 ```
-When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.
+When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.$cbTask[0] is callback itself.$cbTask[1] is parameters for the callback.
 
 ```PHP
 public $cbInfo = null
@@ -146,19 +145,20 @@ Add a task to taskpool.<br>
 *$item['ctl']['cache']=array()* Task cache.Override $this->cache and merged.<br />
 *$item['ctl']['ahead']* Regardless of $this->taskPoolType.The task will be allways add to parallel prioritized.<br />
 **$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.<br />
-**$fail** Task fail callback.The first parameter has two keys of info and error.The info is http info.The error is full error infomation.The second parameter is $item['args'].
+**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].
 
 ```PHP
 public function start($persist=null)
 ```
 Start the loop.This is a blocked method.
+Param $persist is a callback,if true returned and all tasks finished start() will still block.Sleep must be set in callback if needed.
 
-API(Base.php)
+API(Base)
 -----------------
 ```PHP
 function __construct($curlmulti = null)
 ```
-$curlmulti is instanceof Core.Default instance will be created if not set.
+Set up use default CurlMulti_Core or your own instance.
 
 ```PHP
 function hashpath($name, $level = 2)
@@ -176,9 +176,9 @@ function cbCurlFail($error, $args)
 Default fail callback.
 
 ```PHP
-function cbCurlInfo($info)
+function cbCurlInfo($info,$isFirst,$isLast)
 ```
-Running information callback.
+Default CurlMulti_Core::$cbInfo
 
 ```PHP
 function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
@@ -208,4 +208,4 @@ url should be redirected final url.Final url normally has '/' suffix.
 ```PHP
 function getCurl()
 ```
-Return Core instance.
+Return CurlMulti_Core instance.

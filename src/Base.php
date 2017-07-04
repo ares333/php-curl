@@ -28,22 +28,15 @@ class Base
     }
 
     /**
-     * 16^3=4096,4096^2=16777216,4096^3=68719476736
      *
      * @param string $name
-     * @param integer $level
      * @return string relative path
      */
-    function hashpath($name, $level = 2)
+    function hashpath($name)
     {
         $file = md5($name);
-        if ($level == 1) {} elseif ($level == 2) {
-            $file = substr($file, 0, 3) . '/' . substr($file, 3);
-        } elseif ($level == 3) {
-            $file = substr($file, 0, 3) . '/' . substr($file, 3, 3) . '/' . substr($file, 6);
-        } else {
-            throw new Exception('level is invalid, level=' . $level);
-        }
+        $file = substr($file, 0, 3) . '/' . substr($file, 3, 3) . '/' .
+             substr($file, 6);
         return $file;
     }
 
@@ -71,7 +64,7 @@ class Base
             } elseif ($mode == 'ng') {
                 $pos2 = strpos($str, $end, $pos1);
             } else {
-                throw new Exception('mode is invalid, mode=' . $mode);
+                user_error('mode is invalid, mode=' . $mode, E_USER_ERROR);
             }
         } else {
             $pos2 = strlen($str);
@@ -189,7 +182,8 @@ class Base
                         $v[0] = mb_strlen($v[1]);
                     }
                     $caption .= sprintf('%-' . ($v[0] + $lenPad) . 's', $v[1]);
-                    $content .= sprintf('%-' . ($v[0] + $lenPad) . 's', $all[$k]);
+                    $content .= sprintf('%-' . ($v[0] + $lenPad) . 's',
+                        $all[$k]);
                 } else {
                     $format = '%-' . ($v[0] + strlen($v[1]) + 1 + $lenPad) . 's';
                     $content .= sprintf($format, $v[1] . ':' . $all[$k]);
@@ -203,7 +197,8 @@ class Base
             if (! empty($pre)) {
                 $pre .= "\n\n";
             }
-            $str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim($content);
+            $str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" .
+                 rtrim($content);
         } else {
             if (! empty($pre)) {
                 $pre .= "\n";
@@ -235,7 +230,7 @@ class Base
             $out = 'UTF-8';
         }
         if (! in_array($mode, $valid)) {
-            throw new Exception('invalid mode, mode=' . $mode);
+            user_error('invalid mode, mode=' . $mode, E_USER_ERROR);
         }
         $if = function_exists('mb_convert_encoding');
         $if = $if && ($mode == 'auto' || $mode == 'mb_convert_encoding');
@@ -244,7 +239,7 @@ class Base
         } elseif ($if) {
             $func = 'mb_convert_encoding';
         } else {
-            throw new Exception('charsetTrans failed, no function');
+            user_error('charsetTrans failed, no function', E_USER_ERROR);
         }
         $pattern = '/(<meta[^>]*?charset=(["\']?))([a-z\d_\-]*)(\2[^>]*?>)/is';
         if (! isset($in)) {
@@ -277,10 +272,11 @@ class Base
     function isUrl($str)
     {
         $str = ltrim($str);
-        return in_array(substr($str, 0, 7), array(
-            'http://',
-            'https:/'
-        ));
+        return in_array(substr($str, 0, 7),
+            array(
+                'http://',
+                'https:/'
+            ));
     }
 
     /**
@@ -301,7 +297,7 @@ class Base
             return $uri;
         }
         if (! $this->isUrl($urlCurrent)) {
-            throw new Exception('url is invalid, url=' . $urlCurrent);
+            user_error('url is invalid, url=' . $urlCurrent, E_USER_ERROR);
         }
         // uri started with ?,#
         if (0 === strpos($uri, '#') || 0 === strpos($uri, '?')) {
@@ -337,7 +333,7 @@ class Base
     function url2uri($url, $urlCurrent)
     {
         if (! $this->isUrl($url)) {
-            throw new Exception('url is invalid, url=' . $url);
+            user_error('url is invalid, url=' . $url, E_USER_ERROR);
         }
         $urlDir = $this->urlDir($urlCurrent);
         $parse1 = parse_url($url);
@@ -399,7 +395,7 @@ class Base
     function urlDir($url)
     {
         if (! $this->isUrl($url)) {
-            throw new Exception('url is invalid, url=' . $url);
+            user_error('url is invalid, url=' . $url, E_USER_ERROR);
         }
         $parse = parse_url($url);
         $urlDir = $url;
