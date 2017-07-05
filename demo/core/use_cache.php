@@ -14,9 +14,12 @@ if (! file_exists($curl->cache['dir'])) {
     mkdir($curl->cache['dir']);
 }
 $url = 'http://www.baidu.com';
-for ($i = 0; $i < 100; $i ++) {
-    $curl->add(array(
-        'url' => $url
-    ));
+for ($i = 0; $i < 20; $i ++) {
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i
+            )
+        ));
 }
 $curl->start();

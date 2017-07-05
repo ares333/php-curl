@@ -7,12 +7,15 @@ $url = array(
 );
 $curl = new Core();
 foreach ($url as $v) {
-    $curl->add(array(
-        'url' => $v,
-        'args' => array(
-            'test' => 'this is user arg for ' . $v
-        )
-    ), 'cbProcess');
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $v
+            ),
+            'args' => array(
+                'test' => 'this is user arg for ' . $v
+            )
+        ), 'cbProcess');
 }
 // start spider
 $curl->start();

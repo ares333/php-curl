@@ -7,11 +7,14 @@ $curl->cbInfo = array(
     new Base(),
     'cbCurlInfo'
 );
-$curl->maxThread = 1;
+$curl->maxThread = 3;
 $url = 'http://www.baidu.com';
 for ($i = 0; $i < 100; $i ++) {
-    $curl->add(array(
-        'url' => $url . '?wd=' . $i
-    ));
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i
+            )
+        ));
 }
 $curl->start();
