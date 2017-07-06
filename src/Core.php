@@ -140,11 +140,11 @@ class Core
         }
         $item['opt'][CURLOPT_URL] = trim($item['opt'][CURLOPT_URL]);
         // replace space with + to avoid some curl problems
-        $item['opt'][CURLOPT_URL] = str_replace(' ', '+', 
+        $item['opt'][CURLOPT_URL] = str_replace(' ', '+',
             $item['opt'][CURLOPT_URL]);
         if (array_key_exists('fragment', parse_url($item['opt'][CURLOPT_URL]))) {
             $pos = strrpos($item['opt'][CURLOPT_URL], '#');
-            $item['opt'][CURLOPT_URL] = substr($item['opt'][CURLOPT_URL], 0, 
+            $item['opt'][CURLOPT_URL] = substr($item['opt'][CURLOPT_URL], 0,
                 $pos);
         }
         $task = array();
@@ -185,7 +185,7 @@ class Core
             if (isset($this->cbUser)) {
                 call_user_func($this->cbUser);
             }
-            while (false != ($curlInfo = curl_multi_info_read($this->mh, 
+            while (false != ($curlInfo = curl_multi_info_read($this->mh,
                 $this->info['all']['queueNum']))) {
                 $ch = $curlInfo['handle'];
                 $task = $this->taskRunning[(int) $ch];
@@ -198,7 +198,7 @@ class Core
                     if (! isset($task['opt'][CURLOPT_FILE])) {
                         $param['body'] = curl_multi_getcontent($ch);
                         if (isset($task['opt'][CURLOPT_HEADER])) {
-                            preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", 
+                            preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm",
                                 $param['body'], $param['header']);
                             $param['header'] = $param['header'][0];
                             $pos = 0;
@@ -308,7 +308,7 @@ class Core
                 $this->sizeProcessed = 0;
                 $downloadStartTime = $now;
             }
-            call_user_func_array($this->cbInfo, 
+            call_user_func_array($this->cbInfo,
                 array(
                     $this->info
                 ));
@@ -387,8 +387,8 @@ class Core
     /**
      * do process
      *
-     * @param array $task            
-     * @param array $param            
+     * @param array $task
+     * @param array $param
      */
     private function process($task, $param)
     {
@@ -409,8 +409,8 @@ class Core
     /**
      * set or get file cache
      *
-     * @param string $url            
-     * @param array|null $data            
+     * @param string $url
+     * @param array|null $data
      * @return mixed
      */
     private function cache($task, $data = null)
@@ -478,7 +478,7 @@ class Core
     /**
      * get curl handle
      *
-     * @param array $task            
+     * @param array $task
      * @return array
      */
     private function curlInit($task)

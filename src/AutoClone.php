@@ -4,81 +4,49 @@ namespace Ares333\CurlMulti;
 use phpQuery;
 
 /**
- * Website copy, keep original directory structure
- * phpQuery needed
+ * Website copy, keep original structure
  *
  * @author admin@phpdr.net
  *
  */
 class AutoClone extends Base
 {
-    // overwrite local file
-    public $overwrite = false;
-    // if download resource
+
+    // local file expire time
+    public $expire = null;
+
+    public $downloadPic = true;
+
+    // suffix for href
     public $download = array(
-        'pic' => array(
-            'enable' => true
-        ),
-        'zip' => array(
-            'enable' => true,
-            'withPrefix' => false
-        )
+        'zip',
+        'rar'
     );
 
-    public $logError = true;
-
-    private $errorLog;
-
-    private $startTime;
     // init url
     private $url;
+
     // absolute local dir
     private $dir;
+
     // processed url
     private $urlAdded = array();
-    // all site
-    private $site = array();
+
     // windows system flag
     private $isWin;
 
     /**
      *
-     * @param Core $curlmulti
      * @param string $url
+     *            array( 'http://www.xxx.com/abc' => array( 'def/' => array('depth'=>2) )
      * @param string $dir
      */
     function __construct($url, $dir)
     {
         parent::__construct();
-        $this->startTime = time() - 1;
-        if (is_array($url)) {
-            $urlNew = array();
-            foreach ($url as $k => $v) {
-                if (is_array($v)) {
-                    foreach ($v as $k1 => $v1) {
-                        $path = '';
-                        if ('/' != $v1) {
-                            $path = '/' . ltrim($k1, '/');
-                        }
-                        $urlNew[rtrim($k, '/') . $path] = $v1;
-                    }
-                } elseif (is_string($v)) {
-                    $urlNew[] = $v;
-                } else {
-                    user_error('url is invalid', E_USER_ERROR);
-                }
-            }
-            $url = $urlNew;
-        } else {
-            user_error('url is invalid', E_USER_ERROR);
-        }
-        foreach ($url as $k => $v) {
-            if (! $this->isUrl($k)) {
-                user_error('url is invalid, url=' . $k, E_USER_ERROR);
-            }
-        }
+        $this->curl->opt[CURLOPT_HEADER] = false;
         if (! is_dir($dir)) {
-            user_error('dir not found, dir=' . $dir, E_USER_ERROR);
+            user_error('dir not exists, dir=' . $dir, E_USER_ERROR);
         }
         $this->url = $url;
         $this->dir = $dir;
@@ -90,49 +58,30 @@ class AutoClone extends Base
      */
     function start()
     {
-        if (! empty($this->getCurl()->cache['dir'])) {
-            $this->errorLog = $this->getCurl()->cache['dir'] .
-                 '/autoCloneError.log';
-        } else {
-            $this->errorLog = './autoCloneError.log';
-        }
         foreach ($this->url as $k => $v) {
-            if ('/' != substr($k, - 1)) {
+            foreach ($v as $k1 => $v1) {
+                $url = $k . $k1;
                 $this->getCurl()->add(
                     array(
-                        'url' => $k,
                         'opt' => array(
-                            CURLOPT_NOBODY => true
+                            CURLOPT_URL => $url
+                        ),
+                        'args' => array(
+                            'url' => $url,
+                            'file' => $this->url2file($url)
                         )
                     ),
-                    function ($r) use ($k, $v) {
-                        if ($k != $r['info']['url']) {
-                            $this->url[$r['info']['url']] = $v;
-                            unset($this->url[$k]);
-                        }
-                    });
+                    array(
+                        $this,
+                        'cbProcess'
+                    ));
+                $this->urlAdd($url);
             }
         }
         $this->getCurl()->start();
-        if (isset($this->getCurl()->cbInfo) && PHP_OS == 'Linux') {
+        if (isset($this->getCurl()->cbInfo)) {
             echo "\n";
         }
-        foreach ($this->url as $k => $v) {
-            $this->getCurl()->add(
-                array(
-                    'url' => $k,
-                    'args' => array(
-                        'url' => $k,
-                        'file' => $this->url2file($k)
-                    )
-                ),
-                array(
-                    $this,
-                    'cbProcess'
-                ));
-            $this->urlAdd($k);
-        }
-        $this->getCurl()->start();
     }
 
     /**
@@ -147,10 +96,10 @@ class AutoClone extends Base
         if (200 == $r['info']['http_code']) {
             $urlDownload = array();
             $urlParse = array();
-            if (isset($r['content']) &&
+            if (isset($r['body']) &&
                  0 === strpos($r['info']['content_type'], 'text')) {
                 $urlCurrent = $args['url'];
-                $pq = phpQuery::newDocumentHTML($r['content']);
+                $pq = phpQuery::newDocumentHTML($r['body']);
                 // css
                 $list = $pq['link[type$=css]'];
                 foreach ($list as $v) {
@@ -173,7 +122,7 @@ class AutoClone extends Base
                 }
                 // pic
                 $pic = $pq['img,image'];
-                if ($this->download['pic']['enable']) {
+                if ($this->downloadPic) {
                     foreach ($pic as $v) {
                         $v = pq($v);
                         $url = $this->uri2url($v->attr('src'), $urlCurrent);
@@ -206,13 +155,9 @@ class AutoClone extends Base
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
-                    if ($this->download['zip']['enable'] &&
-                         '.zip' == substr($href, - 4)) {
-                        if ($this->download['zip']['withPrefix']) {
-                            $isProcess = $this->isProcess($url);
-                        } else {
-                            $isProcess = true;
-                        }
+                    $ext = pathinfo($href, PATHINFO_EXTENSION);
+                    if (in_array($ext, $this->download)) {
+                        $isProcess = $this->isProcess($url);
                         if ($isProcess) {
                             $urlDownload[$url] = array();
                         }
@@ -228,17 +173,13 @@ class AutoClone extends Base
                         $v->attr('href', $url);
                     }
                 }
-                $r['content'] = $pq->html();
+                $r['body'] = $pq->html();
                 $path = $args['file'];
                 if (isset($path)) {
                     if ($this->isWin) {
                         $path = mb_convert_encoding($path, 'gbk', 'utf-8');
                     }
-                    if (false ===
-                         file_put_contents($path, $r['content'], LOCK_EX)) {
-                        user_error('write file failed, file=' . $path,
-                            E_USER_WARNING);
-                    }
+                    file_put_contents($path, $r['body'], LOCK_EX);
                 }
                 phpQuery::unloadDocuments();
             } elseif ($args['isDownload']) {
@@ -279,9 +220,14 @@ class AutoClone extends Base
                         if (isset($v1['type'])) {
                             $type = $v1['type'];
                         }
+                        $opt = array(
+                            CURLOPT_URL => $k1
+                        );
+                        if ($v === 'urlDownload') {
+                            $opt[CURLOPT_FILE] = fopen($file, 'w');
+                        }
                         $item = array(
-                            'url' => $k1,
-                            'file' => $file,
+                            'opt' => $opt,
                             'args' => array(
                                 'url' => $k1,
                                 'file' => $file,
@@ -289,9 +235,6 @@ class AutoClone extends Base
                                 'isDownload' => $v == 'urlDownload'
                             )
                         );
-                        if ($v == 'urlParse') {
-                            unset($item['file']);
-                        }
                         $this->getCurl()->add($item,
                             array(
                                 $this,
@@ -312,24 +255,6 @@ class AutoClone extends Base
     }
 
     /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \Ares333\CurlMulti\Base::cbCurlFail()
-     */
-    function cbCurlFail($error, $args)
-    {
-        if ($this->logError) {
-            $err = $error['error'];
-            $content = "Curl error $err[0]: $err[1], url=" .
-                 $error['info']['url'] . "\n";
-            file_put_contents($this->errorLog, $content, FILE_APPEND);
-        } else {
-            parent::cbCurlFail($error, $args);
-        }
-    }
-
-    /**
      * is needed to process
      *
      * @param unknown $url
@@ -337,11 +262,11 @@ class AutoClone extends Base
     private function isProcess($url)
     {
         $doProcess = false;
-        foreach ($this->url as $k1 => $v1) {
-            if (0 === strpos($url, $k1) || $url . '/' == $k1) {
-                if (! empty($v1['depth'])) {
-                    $temp = $this->urlDepth($url, $k1);
-                    if (isset($temp) && $temp > $v1['depth']) {
+        foreach ($this->url as $k => $v) {
+            if (0 === strpos($url, $k) || $url . '/' == $k) {
+                if (! empty($v['depth'])) {
+                    $temp = $this->urlDepth($url, $k);
+                    if (isset($temp) && $temp > $v['depth']) {
                         continue;
                     }
                 }
@@ -419,8 +344,8 @@ class AutoClone extends Base
             mkdir($dir, 0755, true);
         }
         if (file_exists($file)) {
-            $mtime = filemtime($file);
-            if ($mtime > $this->startTime || ! $this->overwrite) {
+            if (! isset($this->expire) ||
+                 time() - filemtime($file) < $this->expire) {
                 $file = null;
             }
         }
@@ -446,6 +371,47 @@ class AutoClone extends Base
         }
         $path = $parse['scheme'] . '_' . $parse['host'] . $port;
         $path .= $parse['path'] . $this->getQuery($url);
+        $invalid = array(
+            '?',
+            '*',
+            ':',
+            '|',
+            '\\',
+            '<',
+            '>'
+        );
+        $invalidName = array(
+            "con",
+            "aux",
+            "nul",
+            "prn",
+            "com0",
+            "com1",
+            "com2",
+            "com3",
+            "com4",
+            "com5",
+            "com6",
+            "com7",
+            "com8",
+            "com9",
+            "lpt0",
+            "lpt1",
+            "lpt2",
+            "lpt3",
+            "lpt4",
+            "lpt5",
+            "lpt6",
+            "lpt7",
+            "lpt8",
+            "lpt9"
+        );
+        $invalidNameReplace = array_map(
+            function ($v) {
+                return '_' . $v;
+            }, $invalidName);
+        $path = str_replace($invalid, '-', $path);
+        $path = str_replace($invalidName, $invalidNameReplace, $path);
         return $path;
     }
 
@@ -463,9 +429,9 @@ class AutoClone extends Base
             sort($query);
             $query = http_build_query($query);
             if (strlen($query) >= 250) {
-                $query = md5($query) . '.html';
+                $query = md5($query);
             }
-            $query = '？/' . $query;
+            $query = '？' . $query;
         }
         return $query;
     }
@@ -513,7 +479,7 @@ class AutoClone extends Base
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         if (empty($ext)) {
             if (substr($path, - 1) === '/') {
-                $path = rtrim($path, '/') . '/index.html';
+                $path .= 'index.html';
             } else {
                 $path .= '.html';
             }

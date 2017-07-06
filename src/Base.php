@@ -86,7 +86,8 @@ class Base
     function cbCurlFail($error, $args)
     {
         $err = $error['error'];
-        echo "\nCurl error $err[0]: $err[1], url=" . $error['info']['url'];
+        echo "\nCurl error $err[0]: $err[1], url=" . $error['info']['url'] .
+             "\n\n";
     }
 
     /**
@@ -135,28 +136,15 @@ class Base
                 0,
                 'TSK'
             ),
-            'taskFailNum' => array(
+            'failNum' => array(
                 0,
-                'TKF'
+                'FNU'
             )
         );
-        // meta running num of task type
-        static $metaType = array();
+        static $isFirst = true;
         $all = $info['all'];
         $all['downloadSpeed'] = round($all['downloadSpeed'] / 1024) . 'KB';
         $all['downloadSize'] = round($all['downloadSize'] / 1024 / 1024) . "MB";
-        if (! empty($all['taskRunningNumType'])) {
-            foreach ($all['taskRunningNumType'] as $k => $v) {
-                $key = 'T(' . $k . ')';
-                $all[$key] = $v;
-                if (! array_key_exists($key, $metaType)) {
-                    $metaType[$key] = array(
-                        0,
-                        $key
-                    );
-                }
-            }
-        }
         // clean
         foreach (array_keys($meta) as $v) {
             if (! array_key_exists($v, $all)) {
@@ -167,8 +155,7 @@ class Base
         $lenPad = 2;
         $caption = '';
         foreach (array(
-            'meta',
-            'metaType'
+            'meta'
         ) as $name) {
             foreach ($$name as $k => $v) {
                 if (! isset($all[$k])) {
@@ -191,19 +178,14 @@ class Base
                 ${$name}[$k] = $v;
             }
         }
-        $output = '';
-        $pre = $output;
         if (PHP_OS == 'Linux') {
-            if (! empty($pre)) {
-                $pre .= "\n\n";
+            if ($isFirst) {
+                echo "\n";
+                $isFirst = false;
             }
-            $str = $pre . "\33[A\r\33[K" . $caption . "\n\r\33[K" .
-                 rtrim($content);
+            $str = "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim($content);
         } else {
-            if (! empty($pre)) {
-                $pre .= "\n";
-            }
-            $str = $pre . "\r" . rtrim($content);
+            $str = "\r" . rtrim($content);
         }
         echo $str;
     }
