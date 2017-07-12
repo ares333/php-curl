@@ -138,7 +138,7 @@ class Base
             ),
             'failNum' => array(
                 0,
-                'FNU'
+                'FAN'
             )
         );
         static $isFirst = true;
