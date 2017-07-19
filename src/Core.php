@@ -30,13 +30,10 @@ class Core
 
     public $cache = array(
         'enable' => false,
-        'enableDownload' => false,
         'compress' => false,
         'dir' => null,
         'expire' => 86400,
-        'verifyPost' => false,
-        'overwrite' => false,
-        'overwriteExpire' => null
+        'verifyPost' => false
     );
 
     // stack or queue
