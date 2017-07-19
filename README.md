@@ -87,7 +87,7 @@ public $opt = array ()
 Global CURLOPT_* for all tasks.Overrided by CURLOPT_* in add().
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false, 'overwrite' => false, 'overwriteExpire' => null)
+public $cache = array ('enable' => false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false)
 ```
 The options is very easy to understand.Cache is identified by url.If cache finded,the class will not access the network,but return the cache directly.
 

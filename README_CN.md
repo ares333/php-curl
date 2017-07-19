@@ -85,7 +85,7 @@ public $opt = array ()
 全局CURLOPT_\*，可以被add()中设置的opt覆盖。
 
 ```PHP
-public $cache = array ('enable' => false, 'enableDownload'=> false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false, 'overwrite' => false, 'overwriteExpire' => null)
+public $cache = array ('enable' => false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false)
 ```
 缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
 
