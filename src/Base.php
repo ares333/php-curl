@@ -281,6 +281,9 @@ class Base
         if (! $this->isUrl($urlCurrent)) {
             user_error('url is invalid, url=' . $urlCurrent, E_USER_ERROR);
         }
+        if(0 === strpos($uri, '//')) {
+            return strstr($urlCurrent, '//', true). $uri;
+        }
         // uri started with ?,#
         if (0 === strpos($uri, '#') || 0 === strpos($uri, '?')) {
             if (false !== ($pos = strpos($urlCurrent, '#'))) {
