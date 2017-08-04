@@ -426,7 +426,7 @@ class AutoClone extends Base
         $query = parse_url($url, PHP_URL_QUERY);
         if (! empty($query)) {
             parse_str($query, $query);
-            sort($query);
+            asort($query);
             $query = http_build_query($query);
             if (strlen($query) >= 250) {
                 $query = md5($query);
