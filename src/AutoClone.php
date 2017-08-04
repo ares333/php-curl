@@ -337,7 +337,7 @@ class AutoClone extends Base
      * @param string $url
      * @return string
      */
-    private function url2file($url)
+    public function url2file($url)
     {
         $file = $this->dir . '/' . $this->getPath($url);
         $dir = dirname($file);

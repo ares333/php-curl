@@ -366,6 +366,20 @@ class Base
                 $path .= '../';
             }
             $path .= implode('/', $arr1);
+        } else {
+            //外链处理
+            $path = $this->url2file($url);
+            $pathCurrent = $this->url2file($urlCurrent);
+
+            $pre = './';
+            while (1) {
+                $pathCurrent = dirname($pathCurrent);
+                if (strpos($path, $pathCurrent) === 0) {
+                    $path = $pre.substr($path, strlen($pathCurrent) + 1);
+                    break;
+                }
+                $pre .= '../';
+            }
         }
         return $path;
     }
