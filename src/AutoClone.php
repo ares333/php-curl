@@ -35,13 +35,15 @@ class AutoClone extends Base
     // windows system flag
     private $isWin;
 
+    // html encoding
+    private $encoding;
     /**
      *
      * @param string $url
      *            array( 'http://www.xxx.com/abc' => array( 'def/' => array('depth'=>2) )
      * @param string $dir
      */
-    function __construct($url, $dir)
+    function __construct($url, $dir, $encoding = 'UTF8')
     {
         parent::__construct();
         $this->curl->opt[CURLOPT_HEADER] = false;
@@ -51,6 +53,7 @@ class AutoClone extends Base
         $this->url = $url;
         $this->dir = $dir;
         $this->isWin = (0 === strpos(PHP_OS, 'WIN'));
+        $this->encoding = $encoding;
     }
 
     /**
@@ -99,7 +102,7 @@ class AutoClone extends Base
             if (isset($r['body']) &&
                  0 === strpos($r['info']['content_type'], 'text')) {
                 $urlCurrent = $args['url'];
-                $pq = phpQuery::newDocumentHTML($r['body']);
+                $pq = phpQuery::newDocumentHTML($r['body'], $this->encoding);
                 // css
                 $list = $pq['link[type$=css]'];
                 foreach ($list as $v) {
@@ -324,6 +327,7 @@ class AutoClone extends Base
             }
             $path .= $path1;
         }
+        $path = str_replace('?', '？', $path);
         return $path;
     }
 
