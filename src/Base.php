@@ -320,66 +320,18 @@ class Base
         if (! $this->isUrl($url)) {
             user_error('url is invalid, url=' . $url, E_USER_ERROR);
         }
-        $urlDir = $this->urlDir($urlCurrent);
-        $parse1 = parse_url($url);
-        $parse2 = parse_url($urlDir);
-        if (! array_key_exists('port', $parse1)) {
-            $parse1['port'] = null;
-        }
-        if (! array_key_exists('port', $parse2)) {
-            $parse2['port'] = null;
-        }
-        $eq = true;
-        foreach (array(
-            'scheme',
-            'host',
-            'port'
-        ) as $v) {
-            if (isset($parse1[$v]) && isset($parse2[$v])) {
-                if ($parse1[$v] != $parse2[$v]) {
-                    $eq = false;
-                    break;
-                }
-            }
-        }
-        $path = null;
-        if ($eq) {
-            $len = strlen($urlDir) - strlen(parse_url($urlDir, PHP_URL_PATH));
-            $path1 = substr($url, $len + 1);
-            $path2 = substr($urlDir, $len + 1);
-            $arr1 = $arr2 = array();
-            if (! empty($path1)) {
-                $arr1 = explode('/', rtrim($path1, '/'));
-            }
-            if (! empty($path2)) {
-                $arr2 = explode('/', rtrim($path2, '/'));
-            }
-            foreach ($arr1 as $k => $v) {
-                if (array_key_exists($k, $arr2) && $v == $arr2[$k]) {
-                    unset($arr1[$k], $arr2[$k]);
-                } else {
-                    break;
-                }
-            }
-            $path = '';
-            foreach ($arr2 as $v) {
-                $path .= '../';
-            }
-            $path .= implode('/', $arr1);
-        } else {
-            //外链处理
-            $path = $this->url2file($url);
-            $pathCurrent = $this->url2file($urlCurrent);
 
-            $pre = './';
-            while (1) {
-                $pathCurrent = dirname($pathCurrent);
-                if (strpos($path, $pathCurrent) === 0) {
-                    $path = $pre.substr($path, strlen($pathCurrent) + 1);
-                    break;
-                }
-                $pre .= '../';
+        $path = $this->url2file($url);
+        $pathCurrent = $this->url2file($urlCurrent);
+
+        $pre = './';
+        while (1) {
+            $pathCurrent = dirname($pathCurrent);
+            if (strpos($path, $pathCurrent) === 0) {
+                $path = $pre.substr($path, strlen($pathCurrent) + 1);
+                break;
             }
+            $pre .= '../';
         }
         return $path;
     }
