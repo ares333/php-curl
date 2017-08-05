@@ -16,7 +16,8 @@ if (! file_exists($dir)) {
 if (! file_exists($cacheDir)) {
     mkdir($cacheDir);
 }
-$clone = new AutoClone($url, $dir);
+$encoding = 'UTF8';
+$clone = new AutoClone($url, $dir, $encoding);
 $clone->getCurl()->maxThread = 3;
 $clone->getCurl()->opt[CURLOPT_ENCODING] = 'gzip,deflate';
 $clone->getCurl()->cache['enable'] = true;
