@@ -99,9 +99,9 @@ class AutoClone extends Base
         if (200 == $r['info']['http_code']) {
             $urlDownload = array();
             $urlParse = array();
+            $urlCurrent = $args['url'];
             if (isset($r['body']) &&
                  0 === strpos($r['info']['content_type'], 'text')) {
-                $urlCurrent = $args['url'];
                 $pq = phpQuery::newDocumentHTML($r['body'], $this->encoding);
                 // css
                 $list = $pq['link[type$=css]'];
@@ -202,7 +202,11 @@ class AutoClone extends Base
                         $uri = array_merge($uri, $matches[2]);
                     }
                     foreach ($uri as $v) {
-                        $urlDownload[$this->urlDir($r['info']['url']) . $v] = array(
+                        $url = $this->uri2url($v, $urlCurrent);
+                        $content = str_replace($v, $this->url2uriClone($url, $urlCurrent), $content);
+                        file_put_contents($args['file'], $content);
+
+                        $urlDownload[$url] = array(
                             'type' => 'css'
                         );
                     }
@@ -347,12 +351,6 @@ class AutoClone extends Base
         if (! file_exists($dir)) {
             mkdir($dir, 0755, true);
         }
-        if (file_exists($file)) {
-            if (! isset($this->expire) ||
-                 time() - filemtime($file) < $this->expire) {
-                $file = null;
-            }
-        }
         return $file;
     }
 
@@ -430,7 +428,7 @@ class AutoClone extends Base
         $query = parse_url($url, PHP_URL_QUERY);
         if (! empty($query)) {
             parse_str($query, $query);
-            asort($query);
+            //asort($query);
             $query = http_build_query($query);
             if (strlen($query) >= 250) {
                 $query = md5($query);
