@@ -17,6 +17,7 @@
 			"Ares333\\CurlMulti\\" : "src"
 		}
 	},
+	"minimum-stability": "stable",
 	"authors" : [{
 			"name" : "Ares",
 			"email" : "admin@phpdr.net"
