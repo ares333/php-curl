@@ -328,7 +328,6 @@ class Core
         private function addTask()
         {
             $c = $this->maxThread - count($this->taskRunning);
-        $isCbTaskCalled = false;
         while ($c > 0) {
             $task = array();
             // search failed first
@@ -337,9 +336,8 @@ class Core
             } else {
                 // cbTask
                 if (empty($this->taskPool) && empty($this->taskPoolAhead) &&
-                     false === $isCbTaskCalled && isset($this->cbTask)) {
+                     isset($this->cbTask)) {
                     call_user_func($this->cbTask);
-                    $isCbTaskCalled = true;
                 }
                 if (! empty($this->taskPoolAhead)) {
                     $task = array_pop($this->taskPoolAhead);
