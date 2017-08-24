@@ -2,10 +2,7 @@
 namespace Ares333\CurlMulti;
 
 /**
- * CurlMulti_Core wrapper, more easy to use
- *
- * @author admin@phpdr.net
- *
+ * Core wrapper, more easy to use
  */
 class Base
 {

@@ -2,8 +2,7 @@
 namespace Ares333\CurlMulti;
 
 /**
- *
- * @author admin@phpdr.net
+ * curlmulti core class
  */
 class Core
 {

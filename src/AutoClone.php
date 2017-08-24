@@ -5,9 +5,6 @@ use phpQuery;
 
 /**
  * Website copy, keep original structure
- *
- * @author admin@phpdr.net
- *
  */
 class AutoClone extends Base
 {
