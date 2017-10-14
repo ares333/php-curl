@@ -1,6 +1,6 @@
 {
 	"name" : "phpdr.net/php-curlmulti",
-	"description" : "Beyond all doubts,It is the best php curl library.",
+	"description" : "Best php curl library.",
 	"require" : {
 		"php" : ">=5.4.0",
 		"ext-curl" : "*"
