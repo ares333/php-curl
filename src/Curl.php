@@ -234,10 +234,6 @@ class Curl
                 curl_close($ch);
                 if ($curlInfo['result'] == CURLE_OK) {
                     $this->onProcess($task, $param);
-                    if (isset($task['opt'][CURLOPT_FILE]) &&
-                         is_resource($task['opt'][CURLOPT_FILE])) {
-                        fclose($task['opt'][CURLOPT_FILE]);
-                    }
                 }
                 // error handle
                 $callFail = false;
