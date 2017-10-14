@@ -32,13 +32,15 @@ class AutoClone extends Base
     // windows system flag
     private $isWin;
 
+    // html encoding
+    private $encoding;
     /**
      *
      * @param string $url
      *            array( 'http://www.xxx.com/abc' => array( 'def/' => array('depth'=>2) )
      * @param string $dir
      */
-    function __construct($url, $dir)
+    function __construct($url, $dir, $encoding = 'UTF8')
     {
         parent::__construct();
         $this->curl->opt[CURLOPT_HEADER] = false;
@@ -48,6 +50,7 @@ class AutoClone extends Base
         $this->url = $url;
         $this->dir = $dir;
         $this->isWin = (0 === strpos(PHP_OS, 'WIN'));
+        $this->encoding = $encoding;
     }
 
     /**
@@ -93,10 +96,10 @@ class AutoClone extends Base
         if (200 == $r['info']['http_code']) {
             $urlDownload = array();
             $urlParse = array();
+            $urlCurrent = $args['url'];
             if (isset($r['body']) &&
                  0 === strpos($r['info']['content_type'], 'text')) {
-                $urlCurrent = $args['url'];
-                $pq = phpQuery::newDocumentHTML($r['body']);
+                $pq = phpQuery::newDocumentHTML($r['body'], $this->encoding);
                 // css
                 $list = $pq['link[type$=css]'];
                 foreach ($list as $v) {
@@ -196,7 +199,11 @@ class AutoClone extends Base
                         $uri = array_merge($uri, $matches[2]);
                     }
                     foreach ($uri as $v) {
-                        $urlDownload[$this->urlDir($r['info']['url']) . $v] = array(
+                        $url = $this->uri2url($v, $urlCurrent);
+                        $content = str_replace($v, $this->url2uriClone($url, $urlCurrent), $content);
+                        file_put_contents($args['file'], $content);
+
+                        $urlDownload[$url] = array(
                             'type' => 'css'
                         );
                     }
@@ -321,6 +328,7 @@ class AutoClone extends Base
             }
             $path .= $path1;
         }
+        $path = str_replace('?', '？', $path);
         return $path;
     }
 
@@ -330,7 +338,7 @@ class AutoClone extends Base
      * @param string $url
      * @return string
      */
-    private function url2file($url)
+    public function url2file($url)
     {
         $file = $this->dir . '/' . $this->getPath($url);
         $dir = dirname($file);
@@ -339,12 +347,6 @@ class AutoClone extends Base
         }
         if (! file_exists($dir)) {
             mkdir($dir, 0755, true);
-        }
-        if (file_exists($file)) {
-            if (! isset($this->expire) ||
-                 time() - filemtime($file) < $this->expire) {
-                $file = null;
-            }
         }
         return $file;
     }
@@ -423,7 +425,7 @@ class AutoClone extends Base
         $query = parse_url($url, PHP_URL_QUERY);
         if (! empty($query)) {
             parse_str($query, $query);
-            sort($query);
+            //asort($query);
             $query = http_build_query($query);
             if (strlen($query) >= 250) {
                 $query = md5($query);
