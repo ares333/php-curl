@@ -204,10 +204,10 @@ class AutoClone extends Base
             }
             // add
             foreach (array(
-                'urlDownload',
-                'urlParse'
+                $urlDownload,
+                $urlParse
             ) as $v) {
-                foreach ($$v as $k1 => $v1) {
+                foreach ($v as $k1 => $v1) {
                     if (! $this->urlAdd($k1, true)) {
                         $file = $this->url2file($k1);
                         if (null == $file) {

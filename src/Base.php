@@ -259,12 +259,10 @@ class Base
     }
 
     /**
-     * urlCurrent should be redirected final url.Final url normally has '/' suffix.
+     * $urlCurrent should be final url which was redirected by 3xx http code.
      *
      * @param string $uri
-     *            uri in the html
      * @param string $urlCurrent
-     *            redirected final url of the page
      * @return string
      */
     function uri2url($uri, $urlCurrent)
@@ -276,7 +274,8 @@ class Base
             return $uri;
         }
         if (! $this->isUrl($urlCurrent)) {
-            user_error('url is invalid, url=' . $urlCurrent, E_USER_ERROR);
+            user_error('url is invalid, url=' . $urlCurrent, E_USER_WARNING);
+            return;
         }
         // uri started with ?,#
         if (0 === strpos($uri, '#') || 0 === strpos($uri, '?')) {
@@ -293,8 +292,13 @@ class Base
         }
         $urlDir = $this->urlDir($urlCurrent);
         if (0 === strpos($uri, '/')) {
-            $len = strlen(parse_url($urlDir, PHP_URL_PATH));
-            return substr($urlDir, 0, 0 - $len) . $uri;
+            $path = parse_url($urlDir, PHP_URL_PATH);
+            if (isset($path)) {
+                $len = 0 - strlen($path);
+            } else {
+                $len = strlen($urlDir);
+            }
+            return substr($urlDir, 0, $len) . $uri;
         } else {
             return $urlDir . $uri;
         }
@@ -312,7 +316,8 @@ class Base
     function url2uri($url, $urlCurrent)
     {
         if (! $this->isUrl($url)) {
-            user_error('url is invalid, url=' . $url, E_USER_ERROR);
+            user_error('url is invalid, url=' . $url, E_USER_WARNING);
+            return;
         }
         $urlDir = $this->urlDir($urlCurrent);
         $parse1 = parse_url($url);
