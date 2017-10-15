@@ -5,3 +5,4 @@
 /vendor/*
 /demo/output/*
 /composer.lock
+.DS_Store
