@@ -1,122 +1,135 @@
 <?php
 namespace Ares333\Curlmulti;
 
+/**
+ * The best curlmulti library.
+ *
+ * @author Ares
+ */
 class Curl
 {
 
-    // max parallel num
     public $maxThread = 10;
 
-    // retry time(s) when curl error happend
-    public $maxTry = 3;
+    // Max try times on curl error
+    public $maxTry = 0;
 
-    // class level curl opt
+    // Global CURLOPT_*
     public $opt = array(
         CURLINFO_HEADER_OUT => true,
         CURLOPT_HEADER => true,
         CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_TIMEOUT => 30,
         CURLOPT_AUTOREFERER => true,
-        // more useragent http://www.useragentstring.com/
         CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS => 5
     );
 
+    // Global config.
     public $cache = array(
         'enable' => false,
-        'compress' => false,
+        /**
+         * The level of compression.
+         * Can be given as 0 for no compression up to 9 for maximum compression.
+         * 6 is a good choice.
+         */
+        'compress' => 0,
         'dir' => null,
         'expire' => 86400,
+        // Different post data different cache file when enabled.
         'verifyPost' => false
     );
 
     // stack or queue
     public $taskPoolType = 'queue';
 
-    // task callback
+    // Close CURLOPT_FILE automaticlly?
+    public $closeFile = true;
+
+    // Close curl handler automacticlly?
+    public $closeCh = true;
+
+    // Emmited when new tasks are needed.
     public $onTask;
 
-    // status callback
+    // Emmited on IO event.At least 1 second interval.
     public $onInfo;
 
-    // user callback
+    // Emitted on IO event.
     public $onUser;
 
-    // common fail callback, called if no one specified
+    // Emitted on curl error.
     public $onFail;
 
-    // is the loop running
-    protected $isRunning = false;
-
-    // all tasks are saved here first
     protected $taskPool = array();
 
-    // taskPool with high priority
+    // Task pool with higher priority.
     protected $taskPoolAhead = array();
 
-    // running task(s)
     protected $taskRunning = array();
 
-    // failed task(s) needed to retry
+    // Failed task(s) retrying.
     protected $taskFail = array();
 
-    // main handler
+    // 0:idle 1:running 2:stoping 3:wakeup
+    private static $status = 0;
+
     private $mh;
 
-    // running info
+    // Running info.
     private $info = array(
         'all' => array(
-            // the real running parallel num
+            // Active connections number
             'activeNum' => 0,
-            // finished task needed to process
+            // Finished requests on the queue
             'queueNum' => 0,
-            // network speed, byte
             'downloadSpeed' => 0,
-            // body size, byte
             'bodySize' => 0,
-            // header size, byte
             'headerSize' => 0,
-            // all finished task number,include failed task and cache
+            // All finished task number including failed and cache hitted
             'finishNum' => 0,
-            // The number of cache used
+            // The number of cache hitted
             'cacheNum' => 0,
-            // completely failed task number
+            // Failed task number after retry
             'failNum' => 0,
-            // task num has been added to the poll
+            // Task number added to the poll
             'taskNum' => 0,
-            // running task(s) count
+            // $this->taskRunning count.taskRunningNum >= activeNum + queueNum
             'taskRunningNum' => 0,
-            // task pool count
+            // $this->taskPool count
             'taskPoolNum' => 0,
-            // task(s) failed and waiting to retry count
+            // $this->taskFail count
             'taskFailNum' => 0
         ),
         'running' => array()
     );
 
-    // used for calculate download speed
+    // Used for calculate download speed
     private $sizeDownloaded = 0;
 
     /**
      * Add a task to the taskPool
      *
      * @param array $item
-     *            array('opt'=>array(),['args'=>null],['cache'=>array()])
+     *            array $item[opt] CURLOPT_* for current task
+     *            mixed $item[args] Args for callbacks
+     *            array $item[cache]
+     *            bool $item[closeFile]
+     *            bool $item[closeCh]
      * @param mixed $onProcess
-     *            first arg: array('info'=>array(),'body'=>'','header'=>array(),['cache'=>array('file'=>'')])
-     *            second arg: $item[args]
-     *            [return array('cache'=>array())]
+     *            Callback for response
      * @param mixed $onFail
-     *            first arg: array('error'=>array(0=>code,1=>msg),'info'=>array())
-     *            second arg: $item[args];
+     *            Callback for curl error
      * @param bool $ahead
-     *            higher priority
      * @return self
      */
-    function add(array $item, $onProcess = null, $onFail = null, $ahead = null)
+    public function add(array $item, $onProcess = null, $onFail = null, $ahead = null)
     {
+        if (3 === self::$status) {
+            return $this;
+        }
         if (! isset($ahead)) {
             $ahead = false;
         }
@@ -124,7 +137,7 @@ class Curl
             $item['opt'] = array();
         }
         if (! isset($item['args'])) {
-            $item['args'] = array();
+            $item['args'] = null;
         }
         if (! isset($item['cache'])) {
             $item['cache'] = array();
@@ -168,15 +181,21 @@ class Curl
              $parse['pass'] . $parse['host'] . $parse['port'] . $parse['path'] .
              $parse['query'];
         $task = array();
-        $task['args'] = array(
-            $item['args']
-        );
+        $task['args'] = $item['args'];
         $task['opt'] = $item['opt'];
         $task['cache'] = $item['cache'];
         $task['process'] = $onProcess;
         $task['fail'] = $onFail;
         $task['tried'] = 0;
         $task['ch'] = null;
+        $task['closeFile'] = isset($item['closeFile']) ? (bool) $item['closeFile'] : (bool) $this->closeFile;
+        $task['closeCh'] = isset($item['closeCh']) ? (bool) $item['closeCh'] : (bool) $this->closeCh;
+        // $task['fileMeta'] is used for download cache and __wakeup
+        if (isset($task['opt'][CURLOPT_FILE])) {
+            $task['fileMeta'] = stream_get_meta_data($task['opt'][CURLOPT_FILE]);
+        } else {
+            $task['fileMeta'] = null;
+        }
         // add
         if (true == $ahead) {
             $this->taskPoolAhead[] = $task;
@@ -188,20 +207,92 @@ class Curl
     }
 
     /**
-     * start loop
+     *
+     * @return array
      */
-    function start()
+    public function __sleep()
     {
-        if ($this->isRunning) {
+        foreach (array(
+            $this->taskFail,
+            $this->taskRunning,
+            $this->taskPool,
+            $this->taskPoolAhead
+        ) as $v) {
+            foreach ($v as $v1) {
+                if (isset($v1['fileMeta'])) {
+                    fclose($v1['opt'][CURLOPT_FILE]);
+                    if (is_file($v1['fileMeta']['uri'])) {
+                        unlink($v1['fileMeta']['uri']);
+                    }
+                }
+            }
+        }
+        foreach (array(
+            &$this->taskRunning
+        ) as $k => &$v) {
+            foreach ($v as $k1 => $v1) {
+                if (is_resource($v1['ch'])) {
+                    curl_multi_remove_handle($this->mh, $v1['ch']);
+                    curl_close($v1['ch']);
+                }
+                unset($v[$k1]);
+                $this->taskPoolAhead[] = $v1;
+            }
+        }
+        unset($v);
+        self::$status = 2;
+        return array_diff(
+            array_keys((new \ReflectionObject($this))->getDefaultProperties()),
+            $this->getSleepExclude());
+    }
+
+    protected function getSleepExclude()
+    {
+        return array(
+            'status',
+            'sizeDownloaded',
+            'onFail',
+            'onInfo',
+            'onTask',
+            'onUser',
+            'mh'
+        );
+    }
+
+    public function __wakeup()
+    {
+        foreach (array(
+            &$this->taskFail,
+            &$this->taskPoolAhead,
+            &$this->taskPool
+        ) as &$v) {
+            foreach ($v as &$v1) {
+                if (isset($v1['fileMeta'])) {
+                    $v1['opt'][CURLOPT_FILE] = fopen($v1['fileMeta']['uri'],
+                        $v1['fileMeta']['mode']);
+                    $v1['fileMeta'] = stream_get_meta_data(
+                        $v1['opt'][CURLOPT_FILE]);
+                }
+            }
+        }
+    }
+
+    public function start()
+    {
+        if (1 === self::$status) {
             user_error(__CLASS__ . ' is running !', E_USER_ERROR);
         }
         $this->mh = curl_multi_init();
-        $this->isRunning = true;
-        $this->addTask();
+        self::$status = 1;
+        $this->runTask();
         do {
             $this->exec();
-            curl_multi_select($this->mh);
             $this->onInfo();
+            curl_multi_select($this->mh);
+            pcntl_signal_dispatch();
+            if (2 === self::$status) {
+                break;
+            }
             if (isset($this->onUser)) {
                 call_user_func($this->onUser);
             }
@@ -212,9 +303,14 @@ class Curl
                 $info = curl_getinfo($ch);
                 $this->info['all']['bodySize'] += $info['size_download'];
                 $this->info['all']['headerSize'] += $info['header_size'];
+                $param = array();
+                $param['info'] = $info;
+                $param['ch'] = $ch;
+                if (isset($task['opt'][CURLOPT_FILE]) &&
+                     is_resource($task['opt'][CURLOPT_FILE])) {
+                    $param['fp'] = $task['opt'][CURLOPT_FILE];
+                }
                 if ($curlInfo['result'] == CURLE_OK) {
-                    $param = array();
-                    $param['info'] = $info;
                     if (! isset($task['opt'][CURLOPT_FILE])) {
                         $param['body'] = curl_multi_getcontent($ch);
                         if (isset($task['opt'][CURLOPT_HEADER])) {
@@ -231,28 +327,36 @@ class Curl
                 }
                 curl_multi_remove_handle($this->mh, $ch);
                 $curlError = curl_error($ch);
-                curl_close($ch);
-                if ($curlInfo['result'] == CURLE_OK) {
-                    $this->onProcess($task, $param);
+                if ($task['closeCh']) {
+                    curl_close($ch);
                 }
-                // error handle
-                $callFail = false;
+                if ($curlInfo['result'] == CURLE_OK) {
+                    $userRes = $this->onProcess($task, $param);
+                    if (isset($userRes['closeFile'])) {
+                        $task['closeFile'] = $userRes['closeFile'];
+                    }
+                    if ($task['closeFile'] && isset($task['opt'][CURLOPT_FILE]) &&
+                         is_resource($task['opt'][CURLOPT_FILE])) {
+                        fclose($task['opt'][CURLOPT_FILE]);
+                    }
+                }
+                // Handle error
                 if ($curlInfo['result'] !== CURLE_OK) {
                     if ($task['tried'] >= $this->maxTry) {
-                        $err = array(
-                            'error' => array(
-                                $curlInfo['result'],
-                                $curlError
-                            )
-                        );
-                        $err['info'] = $info;
+                        $param['errorCode'] = $curlInfo['result'];
+                        $param['errorMsg'] = $curlError;
                         if (isset($task['fail']) || isset($this->onFail)) {
-                            array_unshift($task['args'], $err);
-                            $callFail = true;
+                            if (isset($task['fail'])) {
+                                call_user_func($task['fail'], $param,
+                                    $task['args']);
+                            } elseif (isset($this->onFail)) {
+                                call_user_func($this->onFail, $param,
+                                    $task['args']);
+                            }
                         } else {
                             user_error(
-                                "Error " . implode(', ', $err['error']) .
-                                     ", url=$info[url]", E_USER_WARNING);
+                                "Curl error($curlInfo[result]) $info[url]",
+                                E_USER_WARNING);
                         }
                         $this->info['all']['failNum'] ++;
                     } else {
@@ -262,18 +366,11 @@ class Curl
                         $this->info['all']['taskNum'] ++;
                     }
                 }
-                if ($callFail) {
-                    if (isset($task['fail'])) {
-                        call_user_func_array($task['fail'], $task['args']);
-                    } elseif (isset($this->onFail)) {
-                        call_user_func_array($this->onFail, $task['args']);
-                    }
-                }
                 unset($this->taskRunning[(int) $ch]);
                 $this->info['all']['finishNum'] ++;
                 $this->sizeDownloaded += $info['size_download'] +
                      $info['header_size'];
-                $this->addTask();
+                $this->runTask();
                 $this->exec();
                 $this->onInfo();
                 if (isset($this->onUser)) {
@@ -286,7 +383,7 @@ class Curl
         $this->onInfo(true);
         curl_multi_close($this->mh);
         unset($this->mh);
-        $this->isRunning = false;
+        self::$status = 0;
     }
 
     /**
@@ -335,9 +432,6 @@ class Curl
         }
     }
 
-    /**
-     * curl_multi_exec()
-     */
     private function exec()
     {
         while (curl_multi_exec($this->mh, $this->info['all']['activeNum']) ===
@@ -346,14 +440,11 @@ class Curl
         }
     }
 
-    /**
-     * Add a task to curl, keep $this->maxThread num automatically
-     */
-    private function addTask()
+    private function runTask()
     {
         $c = $this->maxThread - count($this->taskRunning);
         while ($c > 0) {
-            $task = array();
+            $task = null;
             // search failed first
             if (! empty($this->taskFail)) {
                 $task = array_pop($this->taskFail);
@@ -374,7 +465,7 @@ class Curl
                 }
             }
             $cache = null;
-            if (! empty($task)) {
+            if (isset($task)) {
                 $cache = $this->cache($task);
                 if (null !== $cache) {
                     // download task
@@ -408,13 +499,13 @@ class Curl
      *
      * @param array $task
      * @param array $param
+     * @return array
      */
     private function onProcess($task, $param)
     {
-        array_unshift($task['args'], $param);
         $userRes = array();
         if (isset($task['process'])) {
-            $userRes = call_user_func_array($task['process'], $task['args']);
+            $userRes = call_user_func($task['process'], $param, $task['args']);
         }
         if (isset($userRes['cache'])) {
             $task['cache'] = array_merge($task['cache'], $userRes['cache']);
@@ -423,10 +514,11 @@ class Curl
         if (! isset($param['cache'])) {
             $this->cache($task, $param);
         }
+        return $userRes;
     }
 
     /**
-     * Set or get file cache
+     * Set or get file cache.
      *
      * @param string $url
      * @param array|null $data
@@ -438,8 +530,10 @@ class Curl
         if (! $config['enable']) {
             return;
         }
-        if (! isset($config['dir']))
-            user_error('cache dir is not defined', E_USER_ERROR);
+        if (! isset($config['dir'])) {
+            user_error('cache dir is not defined', E_USER_WARNING);
+            return;
+        }
         $url = $task['opt'][CURLOPT_URL];
         // verify post
         $suffix = '';
@@ -452,7 +546,6 @@ class Curl
             $suffix .= $post;
         }
         $key = md5($url . $suffix);
-        // calculate file
         $file = rtrim($config['dir'], '/') . '/';
         $file .= substr($key, 0, 3) . '/' . substr($key, 3, 3) . '/' .
              substr($key, 6);
@@ -461,12 +554,7 @@ class Curl
                 $time = time();
                 $mtime = filemtime($file);
                 if ($time - $mtime < $config['expire']) {
-                    $r = file_get_contents($file);
-                    if ($config['compress']) {
-                        $r = gzuncompress($r);
-                    }
-                    $r = unserialize($r);
-                    return $r;
+                    return unserialize(gzuncompress(file_get_contents($file)));
                 }
             }
         } else {
@@ -482,15 +570,12 @@ class Curl
             if (! is_dir($dir)) {
                 mkdir($dir);
             }
-            if (isset($task['opt'][CURLOPT_FILE])) {
-                $data['body'] = file_get_contents(
-                    stream_get_meta_data($task['opt'][CURLOPT_FILE])['uri']);
+            // Cache response from downloaded file.
+            if (isset($task['fileMeta'])) {
+                $data['body'] = file_get_contents($task['fileMeta']['uri']);
             }
-            $data = serialize($data);
-            if ($config['compress']) {
-                $data = gzcompress($data);
-            }
-            file_put_contents($file, $data, LOCK_EX);
+            file_put_contents($file,
+                gzcompress(serialize($data), $config['compress']), LOCK_EX);
         }
     }
 

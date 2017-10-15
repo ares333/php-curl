@@ -1,12 +1,12 @@
 <?php
-namespace Ares333\CurlMulti;
+namespace Ares333\Curlmulti;
 
 use phpQuery;
 
 /**
- * Website copy, keep original structure
+ * Automatic website copy tool whick keeping original structure.
  */
-class AutoClone extends Base
+class HttpClone extends Toolkit
 {
 
     // local file expire time
@@ -14,98 +14,144 @@ class AutoClone extends Base
 
     public $downloadPic = true;
 
-    // suffix for href
-    public $download = array(
-        'zip',
-        'rar'
+    // zip,rar ...
+    public $downloadExtension = array();
+
+    // valid http code
+    public $validHttpCode = array(
+        200
     );
 
-    // init url
-    private $url;
+    public $defaultSuffix = 'html';
 
-    // absolute local dir
+    private $dumpFile = null;
+
+    private $task = array();
+
+    // absolute path of local dir
     private $dir;
 
     // processed url
-    private $urlAdded = array();
+    private $urlRequested = array();
 
     // windows system flag
     private $isWin;
 
     /**
      *
-     * @param string $url
-     *            array( 'http://www.xxx.com/abc' => array( 'def/' => array('depth'=>2) )
      * @param string $dir
+     * @param string $dumpFile
      */
-    function __construct($url, $dir)
+    function __construct($dir, $dumpFile = null)
     {
-        parent::__construct();
-        $this->curl->opt[CURLOPT_HEADER] = false;
-        if (! is_dir($dir)) {
-            user_error('dir not exists, dir=' . $dir, E_USER_ERROR);
+        if (! is_dir($dir) || ! is_writable($dir)) {
+            user_error('dir(' . $dir . ') is invalid');
         }
-        $this->url = $url;
         $this->dir = $dir;
+        parent::__construct($dumpFile);
         $this->isWin = (0 === strpos(PHP_OS, 'WIN'));
     }
 
     /**
-     * start clone
+     *
+     * @param string $url
+     * @param int $depth
+     * @return self
+     */
+    function add($url, $depth = null)
+    {
+        $url = $this->formatUrl($url);
+        if (! isset($url)) {
+            user_error('invalid url(' . $url . ')', E_USER_ERROR);
+        }
+        foreach (array_keys($this->task) as $v) {
+            if (0 === strpos($url, $v) || 0 === strpos($v, $url)) {
+                user_error("url($url) conflict with $v", E_USER_ERROR);
+            }
+        }
+        $this->task[$url] = array(
+            'depth' => $depth
+        );
+        return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \Ares333\Curlmulti\Toolkit::formatUrl()
+     */
+    function formatUrl($url)
+    {
+        $url = parent::formatUrl($url);
+        $parse = parse_url($url);
+        if (! isset($parse['path'])) {
+            $parse['path'] = '/';
+        }
+        return $this->buildUrl($parse);
+    }
+
+    /**
+     * Start loop.
      */
     function start()
     {
-        foreach ($this->url as $k => $v) {
-            foreach ($v as $k1 => $v1) {
-                $url = $k . $k1;
+        foreach (array_keys($this->task) as $v) {
+            if ($this->checkUrl($v)) {
                 $this->getCurl()->add(
                     array(
                         'opt' => array(
-                            CURLOPT_URL => $url
+                            CURLOPT_URL => $v
                         ),
                         'args' => array(
-                            'url' => $url,
-                            'file' => $this->url2file($url)
+                            'url' => $v,
+                            'file' => $this->url2file($v)
                         )
                     ),
                     array(
                         $this,
-                        'cbProcess'
+                        'onProcess'
                     ));
-                $this->urlAdd($url);
             }
         }
         $this->getCurl()->start();
-        if (isset($this->getCurl()->cbInfo)) {
+        if (isset($this->getCurl()->onInfo)) {
             echo "\n";
         }
     }
 
     /**
-     * download and html callback
+     * Process response.
      *
      * @param array $r
      * @param mixed $args
      *
      */
-    function cbProcess($r, $args)
+    function onProcess($r, $args)
     {
-        if (200 == $r['info']['http_code']) {
+        if (in_array($r['info']['http_code'], $this->validHttpCode)) {
             $urlDownload = array();
             $urlParse = array();
             if (isset($r['body']) &&
                  0 === strpos($r['info']['content_type'], 'text')) {
+                $r['body'] = $this->htmlEncode($r['body']);
                 $urlCurrent = $args['url'];
                 $pq = phpQuery::newDocumentHTML($r['body']);
-                // css
-                $list = $pq['link[type$=css]'];
+                // link
+                $list = $pq['link'];
                 foreach ($list as $v) {
                     $v = pq($v);
+                    $type = $v->attr('type');
+                    if (! empty($type) && 'css' === substr($type, - 3)) {
+                        $isCss = true;
+                    } else {
+                        $isCss = false;
+                    }
                     $url = $this->uri2url($v->attr('href'), $urlCurrent);
                     $v->attr('href', $this->url2uriClone($url, $urlCurrent));
-                    $urlDownload[$url] = array(
+                    $urlDownload[$url] = $isCss ? array(
                         'type' => 'css'
-                    );
+                    ) : array();
                 }
                 // script
                 $script = $pq['script[type$=script]'];
@@ -133,38 +179,23 @@ class AutoClone extends Base
                             $this->uri2url($v->attr('src'), $urlCurrent));
                     }
                 }
-                // link xml
-                $list = $pq['link[type$=xml]'];
-                foreach ($list as $v) {
-                    $v = pq($v);
-                    $url = $this->uri2url($v->attr('href'), $urlCurrent);
-                    if ($this->isProcess($url)) {
-                        $v->attr('href', $this->url2uriClone($url, $urlCurrent));
-                        $urlDownload[$url] = array();
-                    }
-                }
                 // href
                 $a = $pq['a[href]'];
                 foreach ($a as $v) {
                     $v = pq($v);
                     $href = $v->attr('href');
-                    if (strtolower(substr(ltrim($href), 0, 11)) == 'javascript:') {
+                    if (empty($href) ||
+                         strtolower(substr(ltrim($href), 0, 11)) == 'javascript:') {
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
                     $ext = pathinfo($href, PATHINFO_EXTENSION);
-                    if (in_array($ext, $this->download)) {
-                        $isProcess = $this->isProcess($url);
-                        if ($isProcess) {
+                    if ($this->isProcess($url)) {
+                        if (in_array($ext, $this->downloadExtension)) {
                             $urlDownload[$url] = array();
-                        }
-                    } else {
-                        $isProcess = $this->isProcess($url);
-                        if ($isProcess) {
+                        } else {
                             $urlParse[$url] = array();
                         }
-                    }
-                    if ($isProcess) {
                         $v->attr('href', $this->url2uriClone($url, $urlCurrent));
                     } else {
                         $v->attr('href', $url);
@@ -206,9 +237,10 @@ class AutoClone extends Base
             foreach (array(
                 $urlDownload,
                 $urlParse
-            ) as $v) {
+            ) as $k => $v) {
                 foreach ($v as $k1 => $v1) {
-                    if (! $this->urlAdd($k1, true)) {
+                    $k1 = $this->formatUrl($k1);
+                    if ($this->checkUrl($k1)) {
                         $file = $this->url2file($k1);
                         if (null == $file) {
                             continue;
@@ -220,7 +252,9 @@ class AutoClone extends Base
                         $opt = array(
                             CURLOPT_URL => $k1
                         );
-                        if ($v === 'urlDownload') {
+                        $isDownload = $k === 0;
+                        if ($isDownload) {
+                            $opt[CURLOPT_HEADER] = false;
                             $opt[CURLOPT_FILE] = fopen($file, 'w');
                         }
                         $item = array(
@@ -229,21 +263,21 @@ class AutoClone extends Base
                                 'url' => $k1,
                                 'file' => $file,
                                 'type' => $type,
-                                'isDownload' => $v == 'urlDownload'
+                                'isDownload' => $isDownload
                             )
                         );
                         $this->getCurl()->add($item,
                             array(
                                 $this,
-                                'cbProcess'
+                                'onProcess'
                             ));
-                        $this->urlAdd($k1);
                     }
                 }
             }
         } else {
+            $this->onInfo(
+                '(' . $r['info']['http_code'] . ') ' . $r['info']['url'] . "\n");
             return array(
-                'error' => 'http error ' . $r['info']['http_code'],
                 'cache' => array(
                     'enable' => false
                 )
@@ -252,18 +286,18 @@ class AutoClone extends Base
     }
 
     /**
-     * is needed to process
+     * Process or not.
      *
-     * @param unknown $url
+     * @param string $url
      */
     private function isProcess($url)
     {
         $doProcess = false;
-        foreach ($this->url as $k => $v) {
-            if (0 === strpos($url, $k) || $url . '/' == $k) {
-                if (! empty($v['depth'])) {
-                    $temp = $this->urlDepth($url, $k);
-                    if (isset($temp) && $temp > $v['depth']) {
+        foreach ($this->task as $k => $v) {
+            if (0 === strpos($url, $k)) {
+                if (isset($v['depth'])) {
+                    $depth = $this->urlDepth($url, $k);
+                    if (isset($depth) && $depth > $v['depth']) {
                         continue;
                     }
                 }
@@ -275,14 +309,14 @@ class AutoClone extends Base
     }
 
     /**
-     * calculate relative depth
+     * Calculate relative depth.
      *
      * @param string $url
      * @param string $urlBase
      */
     private function urlDepth($url, $urlBase)
     {
-        if ($this->isUrl($url) && $this->isUrl($urlBase)) {
+        if ($this->isUrl($urlBase)) {
             if (0 === strpos($url, $urlBase)) {
                 $path = ltrim(substr($url, strlen($urlBase)), '/');
                 if (false !== $path) {
@@ -297,7 +331,6 @@ class AutoClone extends Base
     }
 
     /**
-     * url2uri for this class
      *
      * @param string $url
      * @param string $urlCurrent
@@ -325,7 +358,7 @@ class AutoClone extends Base
     }
 
     /**
-     * compute local absolute path
+     * Calculate local absolute path.
      *
      * @param string $url
      * @return string
@@ -350,17 +383,14 @@ class AutoClone extends Base
     }
 
     /**
-     * relative local file path
+     * Get relative local file path.
      *
      * @param string $url
      * @return string
      */
     private function getPath($url)
     {
-        $parse = parse_url(trim($url));
-        if (! isset($parse['path'])) {
-            $parse['path'] = '';
-        }
+        $parse = parse_url($url);
         $parse['path'] = $this->fixPath($parse['path']);
         $port = '';
         if (isset($parse['port'])) {
@@ -368,41 +398,49 @@ class AutoClone extends Base
         }
         $path = $parse['scheme'] . '_' . $parse['host'] . $port;
         $path .= $parse['path'] . $this->getQuery($url);
+        // [?#] is for brower
         $invalid = array(
             '?',
-            '*',
-            ':',
-            '|',
-            '\\',
-            '<',
-            '>'
+            '#'
         );
-        $invalidName = array(
-            "con",
-            "aux",
-            "nul",
-            "prn",
-            "com0",
-            "com1",
-            "com2",
-            "com3",
-            "com4",
-            "com5",
-            "com6",
-            "com7",
-            "com8",
-            "com9",
-            "lpt0",
-            "lpt1",
-            "lpt2",
-            "lpt3",
-            "lpt4",
-            "lpt5",
-            "lpt6",
-            "lpt7",
-            "lpt8",
-            "lpt9"
-        );
+        $invalidName = array();
+        if ($this->isWin) {
+            $invalid = array_merge($invalid,
+                array(
+                    '*',
+                    ':',
+                    '|',
+                    '\\',
+                    '<',
+                    '>'
+                ));
+            $invalidName = array(
+                "con",
+                "aux",
+                "nul",
+                "prn",
+                "com0",
+                "com1",
+                "com2",
+                "com3",
+                "com4",
+                "com5",
+                "com6",
+                "com7",
+                "com8",
+                "com9",
+                "lpt0",
+                "lpt1",
+                "lpt2",
+                "lpt3",
+                "lpt4",
+                "lpt5",
+                "lpt6",
+                "lpt7",
+                "lpt8",
+                "lpt9"
+            );
+        }
         $invalidNameReplace = array_map(
             function ($v) {
                 return '_' . $v;
@@ -413,7 +451,7 @@ class AutoClone extends Base
     }
 
     /**
-     * calculate query
+     * Calculate query.
      *
      * @param string $url
      * @return string
@@ -423,7 +461,7 @@ class AutoClone extends Base
         $query = parse_url($url, PHP_URL_QUERY);
         if (! empty($query)) {
             parse_str($query, $query);
-            sort($query);
+            asort($query);
             $query = http_build_query($query);
             if (strlen($query) >= 250) {
                 $query = md5($query);
@@ -434,39 +472,40 @@ class AutoClone extends Base
     }
 
     /**
-     * add processed url or check
+     *
+     * {@inheritdoc}
+     *
+     * @see \Ares333\Curlmulti\Toolkit::isUrl()
+     */
+    function isUrl($url)
+    {
+        if (parent::isUrl($url)) {
+            return true;
+        }
+        return 0 === strpos($url, '//');
+    }
+
+    /**
+     * Prevent same url download twice.
      *
      * @param string $url
-     * @param bool $check
      */
-    private function urlAdd($url, $check = false)
+    private function checkUrl($url)
     {
-        $md5 = md5($url);
-        $level1 = substr($md5, 0, 3);
-        $level2 = substr($md5, 3, 3);
-        if ($check) {
-            $res = ! empty($this->urlAdded[$level1][$level2]);
-            $res = $res && in_array($url, $this->urlAdded[$level1][$level2]);
-            return $res;
+        if (! $this->isUrl($url)) {
+            return false;
+        }
+        $md5 = md5($url, true);
+        if (in_array($md5, $this->urlRequested)) {
+            return false;
         } else {
-            if (! array_key_exists($level1, $this->urlAdded)) {
-                $this->urlAdded[$level1] = array(
-                    $level2 => array(
-                        $url
-                    )
-                );
-            } elseif (! array_key_exists($level2, $this->urlAdded[$level1])) {
-                $this->urlAdded[$level1][$level2] = array(
-                    $url
-                );
-            } elseif (! in_array($url, $this->urlAdded[$level1][$level2])) {
-                $this->urlAdded[$level1][$level2][] = $url;
-            }
+            $this->urlRequested[] = $md5;
+            return true;
         }
     }
 
     /**
-     * fix uri and file path
+     * Fix uri and file path.
      *
      * @param string $path
      * @return string
@@ -478,9 +517,24 @@ class AutoClone extends Base
             if (substr($path, - 1) === '/') {
                 $path .= 'index.html';
             } else {
-                $path .= '.html';
+                $path .= empty($this->defaultSuffix) ? '' : '.html';
             }
         }
         return $path;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     *
+     * @see \Ares333\Curlmulti\Toolkit::getSleepExclude()
+     */
+    protected function getSleepExclude()
+    {
+        return array_merge(parent::getSleepExclude(),
+            array(
+                'task',
+                'dumpFile'
+            ));
     }
 }

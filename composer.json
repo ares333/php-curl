@@ -1,6 +1,6 @@
 {
 	"name" : "ares333/php-curlmulti",
-	"description" : "Best php curl library.",
+	"description" : "The best php curlmulti library.",
 	"require" : {
 		"php" : ">=5.3.0",
 		"ext-curl" : "*"

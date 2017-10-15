@@ -1,10 +1,10 @@
 <?php
-require_once '../vendor/autoload.php';
-use Ares333\CurlMulti\Core;
-$curl = new Core();
+require '_inc.php';
+use Ares333\Curlmulti\Curl;
+$curl = new Curl();
 $url = 'http://www.baidu.com/img/bd_logo1.png';
-$file = __DIR__ . '/baidu.png';
-// $fp will auto closed by curl after cbProcess
+$file = __DIR__ . '/output/download.png';
+// $fp must be closed in onProcess()
 $fp = fopen($file, 'w');
 $curl->add(
     array(
@@ -14,11 +14,13 @@ $curl->add(
             CURLOPT_HEADER => false
         ),
         'args' => array(
-            'file' => $file
+            'file' => $file,
+            'fp' => $fp
         )
-    ), 'cbProcess')->start();
+    ), 'onProcess')->start();
 
-function cbProcess($r, $args)
+function onProcess($r, $args)
 {
+    fclose($args['fp']);
     echo "download finished successfully, file=$args[file]\n";
 }

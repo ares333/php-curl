@@ -1,11 +1,11 @@
 <?php
-require_once '../vendor/autoload.php';
-use Ares333\CurlMulti\Core;
+require_once '_inc.php';
+use Ares333\Curlmulti\Curl;
 $url = array(
     'http://baidu.com',
-    'http://bing.com'
+    'http://cn.bing.com'
 );
-$curl = new Core();
+$curl = new Curl();
 foreach ($url as $v) {
     $curl->add(
         array(
@@ -23,6 +23,8 @@ $curl->start();
 function cbProcess($r, $args)
 {
     echo "success, url=" . $r['info']['url'] . "\n";
-    print_r(array_keys($r));
+    unset($r['body']);
+    print_r($r);
+    echo "args:\n";
     print_r($args);
 }

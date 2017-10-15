@@ -2,16 +2,62 @@
 namespace Ares333\Curlmulti;
 
 /**
- * Core wrapper, more easy to use
+ * Toolkit for Curl
  */
 class Toolkit
 {
 
+    // Emitted when signal catched
+    public $onSignal;
+
+    // Curl instance
     protected $curl;
 
-    function __construct()
+    private $dumpFile;
+
+    /**
+     *
+     * @param string $dumpFile
+     */
+    function __construct($dumpFile = null)
     {
-        $this->curl = new Curl();
+        $this->onSignal = function ($signal) {
+            if (SIGINT === $signal) {
+                exit(0);
+            }
+        };
+        $this->dumpFile = $dumpFile;
+        if (isset($dumpFile)) {
+            pcntl_signal(SIGINT,
+                function ($signal) {
+                    $this->dump();
+                    if (isset($this->onSignal)) {
+                        call_user_func($this->onSignal, $signal);
+                    }
+                }, false);
+            if (is_file($dumpFile)) {
+                $obj = unserialize(file_get_contents($dumpFile));
+                $ref = (new \ReflectionObject($this));
+                $properties = (new \ReflectionObject($obj))->getProperties();
+                $exclude = $this->getSleepExclude();
+                foreach ($properties as $v) {
+                    $v->setAccessible(true);
+                    $vName = $v->getName();
+                    $vValue = $v->getValue($obj);
+                    if (in_array($vName, $exclude)) {
+                        continue;
+                    }
+                    if ($ref->hasProperty($vName)) {
+                        $vProperty = $ref->getProperty($vName);
+                        $vProperty->setAccessible(true);
+                        $vProperty->setValue($this, $vValue);
+                    }
+                }
+            }
+        }
+        if (! isset($this->curl)) {
+            $this->curl = new Curl();
+        }
         // default fail callback
         $this->curl->onFail = array(
             $this,
@@ -25,21 +71,38 @@ class Toolkit
     }
 
     /**
-     * Output curl error infomation
-     *
-     * @param array $error
-     * @param mixed $args
-     *            passed in Curl::add()
+     * Dump current state manually
      */
-    function onFail($error, $args)
+    function dump()
     {
-        $err = $error['error'];
-        echo "\nCurl error $err[0]: $err[1], url=" . $error['info']['url'] .
-             "\n\n";
+        if (isset($this->dumpFile)) {
+            file_put_contents($this->dumpFile, serialize($this), LOCK_EX);
+        }
     }
 
     /**
-     * Output running information
+     * Output curl error infomation
+     *
+     * @param array $r
+     * @param mixed $args
+     *            passed in Curl::add()
+     */
+    function onFail($r, $args)
+    {
+        $msg = "Curl error ($r[errorCode])$r[errorMsg], url=" . $r['info']['url'];
+        if ($this->curl->onInfo == array(
+            $this,
+            'onInfo'
+        )) {
+            $this->onInfo($msg . "\n");
+        } else {
+            echo "\n$msg\n\n";
+        }
+    }
+
+    /**
+     *
+     * Add delayed and formated output or output with running information.
      *
      * @param array|string $info
      *            array('all'=>array(),'running'=>array())
@@ -143,7 +206,7 @@ class Toolkit
         }
         echo $str;
         if ('' !== $buffer) {
-            echo "\n" . $buffer;
+            echo "\n" . trim($buffer) . "\n\n";
             $buffer = '';
         }
     }
@@ -235,6 +298,18 @@ class Toolkit
         $url = trim($url);
         $url = str_replace(' ', '+', $url);
         $parse = parse_url($url);
+        strtolower($parse['scheme']);
+        strtolower($parse['host']);
+        unset($parse['fragment']);
+        return $this->buildUrl($parse);
+    }
+
+    /**
+     *
+     * @param array $parse
+     */
+    function buildUrl($parse)
+    {
         $keys = array(
             'scheme',
             'host',
@@ -264,10 +339,12 @@ class Toolkit
             asort($query);
             $parse['query'] = http_build_query($query);
         }
-        strtolower($parse['scheme']);
-        strtolower($parse['host']);
+        if ('' !== $parse['fragment']) {
+            $parse['query'] .= '#';
+        }
         return $parse['scheme'] . '://' . $parse['user'] . $parse['pass'] .
-             $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'];
+             $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'] .
+             $parse['fragment'];
     }
 
     /**
@@ -406,5 +483,27 @@ class Toolkit
     function getCurl()
     {
         return $this->curl;
+    }
+
+    /**
+     *
+     * @return string
+     */
+    function __sleep()
+    {
+        return array_diff(
+            array_keys((new \ReflectionObject($this))->getDefaultProperties()),
+            $this->getSleepExclude());
+    }
+
+    /**
+     *
+     * @return string[]
+     */
+    protected function getSleepExclude()
+    {
+        return array(
+            'onSignal'
+        );
     }
 }
