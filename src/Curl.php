@@ -6,7 +6,7 @@ namespace Ares333\Curlmulti;
  *
  * @author Ares
  */
-class Curl implements \Serializable
+class Curl
 {
 
     public $maxThread = 10;
@@ -57,11 +57,13 @@ class Curl implements \Serializable
     // Emmited on IO event.At least 1 second interval.
     public $onInfo;
 
-    // Emitted on IO event.
-    public $onMessage;
-
     // Emitted on curl error.
     public $onFail;
+
+    // Emitted on IO event.
+    public $onEvent;
+
+    protected $mh;
 
     protected $taskPool = array();
 
@@ -70,33 +72,34 @@ class Curl implements \Serializable
 
     protected $taskRunning = array();
 
-    // Failed task(s) retrying.
-    protected $taskFail = array();
+    // Failed tasks retrying.
+    protected $taskFailed = array();
 
-    // 0:idle 1:running 2:stoping 3:wakeup
-    private static $status = 0;
+    protected $serializing = false;
 
-    private $mh;
+    protected $onSerialize = null;
+
+    protected static $running = false;
 
     // Running info.
-    private $info = array(
+    protected $info = array(
         'all' => array(
-            // Active connections number
-            'activeNum' => 0,
-            // Finished requests on the queue
-            'queueNum' => 0,
             'downloadSpeed' => 0,
             'bodySize' => 0,
             'headerSize' => 0,
-            // All finished task number including failed and cache hitted
+            // Active requests count
+            'activeNum' => 0,
+            // Finished requests count on the queue
+            'queueNum' => 0,
+            // Finished tasks count including failed tasks and tasks using cache.
             'finishNum' => 0,
-            // The number of cache hitted
+            // Cache used count
             'cacheNum' => 0,
-            // Failed task number after retry
+            // Count of tasks failed after retry
             'failNum' => 0,
-            // Task number added to the poll
+            // Count of tasks added to the poll
             'taskNum' => 0,
-            // $this->taskRunning count.taskRunningNum >= activeNum + queueNum
+            // $this->taskRunning count.taskRunning >= active + queue
             'taskRunningNum' => 0,
             // $this->taskPool count
             'taskPoolNum' => 0,
@@ -106,8 +109,13 @@ class Curl implements \Serializable
         'running' => array()
     );
 
-    // Used for calculate download speed
-    private $sizeDownloaded = 0;
+    protected $downloadSpeedStartTime;
+
+    protected $downloadSpeedLastTime = 0;
+
+    protected $downloadSpeedTotalSize = 0;
+
+    protected $downloadSpeedList = array();
 
     /**
      * Add a task to the taskPool
@@ -127,9 +135,6 @@ class Curl implements \Serializable
      */
     public function add(array $item, $onProcess = null, $onFail = null, $ahead = null)
     {
-        if (3 === self::$status) {
-            return $this;
-        }
         if (! isset($ahead)) {
             $ahead = false;
         }
@@ -188,13 +193,13 @@ class Curl implements \Serializable
         $task['fail'] = $onFail;
         $task['tried'] = 0;
         $task['ch'] = null;
-        $task['closeFile'] = isset($item['closeFile']) ? (bool) $item['closeFile'] : (bool) $this->closeFile;
-        $task['closeCh'] = isset($item['closeCh']) ? (bool) $item['closeCh'] : (bool) $this->closeCh;
+        $task['closeFile'] = isset($item['closeFile']) ? (bool) $item['closeFile'] : null;
+        $task['closeCh'] = isset($item['closeCh']) ? (bool) $item['closeCh'] : null;
         // $task['fileMeta'] is used for download cache and __wakeup
         if (isset($task['opt'][CURLOPT_FILE])) {
             $task['fileMeta'] = stream_get_meta_data($task['opt'][CURLOPT_FILE]);
         } else {
-            $task['fileMeta'] = null;
+            $task['fileMeta'] = array();
         }
         // add
         if (true == $ahead) {
@@ -207,23 +212,66 @@ class Curl implements \Serializable
     }
 
     /**
-     *
-     * @return array
+     * Method must be overloaded in child class.
      */
-    public function serialize()
+    public function __sleep()
+    {
+        $keys = array();
+        $prop = (new \ReflectionObject($this))->getProperties();
+        foreach ($prop as $v) {
+            $v->setAccessible(true);
+            if ($v->getValue($this) instanceof \Closure) {
+                continue;
+            }
+            $keys[] = $v->getName();
+        }
+        print_r($keys);exit;
+    }
+
+    public function __wakeup()
     {
         foreach (array(
-            $this->taskFail,
+            &$this->taskFailed,
+            &$this->taskPoolAhead,
+            &$this->taskPool
+        ) as &$v) {
+            foreach ($v as &$v1) {
+                if (isset($v1['fileMeta']['uri'])) {
+                    $v1['opt'][CURLOPT_FILE] = fopen($v1['fileMeta']['uri'],
+                        $v1['fileMeta']['mode']);
+                    $v1['fileMeta'] = stream_get_meta_data(
+                        $v1['opt'][CURLOPT_FILE]);
+                }
+            }
+        }
+        unset($v, $v1);
+    }
+
+    public function serialize($onSerialize)
+    {
+        if (! self::$running || $this->serializing) {
+            return;
+        }
+        $this->serializing = true;
+        $this->onSerialize = $onSerialize;
+    }
+
+    protected function onSerialize()
+    {
+        foreach (array(
+            $this->taskFailed,
             $this->taskRunning,
             $this->taskPool,
             $this->taskPoolAhead
         ) as $v) {
             foreach ($v as $v1) {
-                if (isset($v1['fileMeta'])) {
+                if (isset($v1['opt'][CURLOPT_FILE]) &&
+                     is_resource($v1['opt'][CURLOPT_FILE])) {
                     fclose($v1['opt'][CURLOPT_FILE]);
-                    if (is_file($v1['fileMeta']['uri'])) {
-                        unlink($v1['fileMeta']['uri']);
-                    }
+                }
+                if (isset($v1['fileMeta']['uri']) && is_file(
+                    $v1['fileMeta']['uri'])) {
+                    unlink($v1['fileMeta']['uri']);
                 }
             }
         }
@@ -236,72 +284,44 @@ class Curl implements \Serializable
                     curl_close($v1['ch']);
                 }
                 unset($v[$k1]);
-                $this->taskPoolAhead[] = $v1;
+                array_unshift($this->taskPoolAhead[], $v1);
             }
         }
+        unset($this->downloadSpeedStartTime);
+        $this->downloadSpeedLastTime = 0;
+        $this->downloadSpeedTotalSize = 0;
+        $this->downloadSpeedList = array();
+        $this->info['all']['activeNum'] = 0;
+        $this->info['all']['queueNum'] = 0;
         unset($v);
-        self::$status = 2;
-        $this->onInfo();
-        $keys = array();
-        $prop = (new \ReflectionObject($this))->getProperties();
-        foreach ($prop as $v) {
-            $v->setAccessible(true);
-            if ($v->getValue($this) instanceof \Closure) {
-                continue;
-            }
-            $keys[] = $v->getName();
-        }
-        return array_diff($keys, $this->getSleepExclude());
-    }
-
-    protected function getSleepExclude()
-    {
-        return array(
-            'status',
-            'sizeDownloaded',
-            'mh'
-        );
-    }
-
-    public function unserialize($serialized)
-    {
-        $data=unserialize($serialized);
-        foreach (array(
-            &$this->taskFail,
-            &$this->taskPoolAhead,
-            &$this->taskPool
-        ) as &$v) {
-            foreach ($v as &$v1) {
-                if (isset($v1['fileMeta'])) {
-                    $v1['opt'][CURLOPT_FILE] = fopen($v1['fileMeta']['uri'],
-                        $v1['fileMeta']['mode']);
-                    $v1['fileMeta'] = stream_get_meta_data(
-                        $v1['opt'][CURLOPT_FILE]);
-                }
-            }
-        }
-        unset($v, $v1);
+        call_user_func($this->onSerialize);
     }
 
     public function start()
     {
-        if (1 === self::$status) {
+        if (self::$running) {
             user_error(__CLASS__ . ' is running !', E_USER_ERROR);
         }
+        self::$running = true;
         $this->mh = curl_multi_init();
-        self::$status = 1;
         $this->runTask();
         do {
             $this->exec();
             $this->onInfo();
+            if ($this->serializing) {
+                $this->onSerialize();
+                break;
+            }
             curl_multi_select($this->mh);
-            if (isset($this->onMessage)) {
-                if(false===call_user_func($this->onMessage)){
-                    break;
-                }
+            if (isset($this->onEvent)) {
+                call_user_func($this->onEvent, $this);
             }
             while (false != ($curlInfo = curl_multi_info_read($this->mh,
                 $this->info['all']['queueNum']))) {
+                if ($this->serializing) {
+                    $this->onSerialize();
+                    break 2;
+                }
                 $ch = $curlInfo['handle'];
                 $task = $this->taskRunning[(int) $ch];
                 $info = curl_getinfo($ch);
@@ -310,6 +330,7 @@ class Curl implements \Serializable
                 $param = array();
                 $param['info'] = $info;
                 $param['ch'] = $ch;
+                $param['curl'] = $this;
                 if (isset($task['opt'][CURLOPT_FILE]) &&
                      is_resource($task['opt'][CURLOPT_FILE])) {
                     $param['fp'] = $task['opt'][CURLOPT_FILE];
@@ -331,17 +352,20 @@ class Curl implements \Serializable
                 }
                 curl_multi_remove_handle($this->mh, $ch);
                 $curlError = curl_error($ch);
-                if ($task['closeCh']) {
-                    curl_close($ch);
+                if (isset($task['closeCh'])) {
+                    $closeCh = $task['closeCh'];
+                } else {
+                    $closeCh = $this->closeCh;
+                }
+                if (isset($task['closeFile'])) {
+                    $closeFile = $task['closeFile'];
+                } else {
+                    $closeFile = $this->closeFile;
                 }
                 if ($curlInfo['result'] == CURLE_OK) {
                     $userRes = $this->onProcess($task, $param);
                     if (isset($userRes['closeFile'])) {
-                        $task['closeFile'] = $userRes['closeFile'];
-                    }
-                    if ($task['closeFile'] && isset($task['opt'][CURLOPT_FILE]) &&
-                         is_resource($task['opt'][CURLOPT_FILE])) {
-                        fclose($task['opt'][CURLOPT_FILE]);
+                        $closeFile = $userRes['closeFile'];
                     }
                 }
                 // Handle error
@@ -365,78 +389,82 @@ class Curl implements \Serializable
                         $this->info['all']['failNum'] ++;
                     } else {
                         $task['tried'] ++;
-                        $task['cache']['enable'] = false;
-                        $this->taskFail[] = $task;
+                        $this->taskFailed[] = $task;
                         $this->info['all']['taskNum'] ++;
                     }
                 }
+                if ($closeCh) {
+                    curl_close($ch);
+                }
+                if ($closeFile && isset($task['opt'][CURLOPT_FILE]) &&
+                     is_resource($task['opt'][CURLOPT_FILE])) {
+                    fclose($task['opt'][CURLOPT_FILE]);
+                }
                 unset($this->taskRunning[(int) $ch]);
                 $this->info['all']['finishNum'] ++;
-                $this->sizeDownloaded += $info['size_download'] +
+                $this->downloadSpeedTotalSize += $info['size_download'] +
                      $info['header_size'];
                 $this->runTask();
                 $this->exec();
                 $this->onInfo();
-                if (isset($this->onMessage)) {
-                    call_user_func($this->onMessage);
+                if (isset($this->onEvent)) {
+                    call_user_func($this->onEvent, $this);
                 }
             }
         } while ($this->info['all']['activeNum'] ||
-             $this->info['all']['queueNum'] || ! empty($this->taskFail) ||
+             $this->info['all']['queueNum'] || ! empty($this->taskFailed) ||
              ! empty($this->taskRunning) || ! empty($this->taskPool));
         $this->onInfo(true);
         curl_multi_close($this->mh);
         unset($this->mh);
-        self::$status = 0;
+        self::$running = false;
+        self::$serializing = false;
     }
 
     /**
      * Call $this->onInfo
      *
      * @param bool $isLast
-     *            is last output
+     *            Is last output?
      */
-    private function onInfo($isLast = false)
+    protected function onInfo($isLast = false)
     {
-        static $downloadStartTime;
-        static $downloadSpeed = array();
-        static $lastTime = 0;
         $downloadSpeedRefreshTime = 3;
-        if (! isset($downloadStartTime)) {
-            $downloadStartTime = time();
-        }
         $now = time();
-        if (($isLast || $now - $lastTime > 0) && isset($this->onInfo)) {
+        if (! isset($this->downloadSpeedStartTime)) {
+            $this->downloadSpeedStartTime = $now;
+        }
+        if (($isLast || $now - $this->downloadSpeedLastTime > 0) &&
+             isset($this->onInfo)) {
             $this->info['all']['taskPoolNum'] = count($this->taskPool);
             $this->info['all']['taskRunningNum'] = count($this->taskRunning);
-            $this->info['all']['taskFailNum'] = count($this->taskFail);
+            $this->info['all']['taskFailNum'] = count($this->taskFailed);
             // running
             $this->info['running'] = array();
             foreach ($this->taskRunning as $k => $v) {
                 $this->info['running'][$k] = curl_getinfo($v['ch']);
             }
-            if ($now - $downloadStartTime > 0) {
-                if (count($downloadSpeed) > $downloadSpeedRefreshTime) {
-                    array_shift($downloadSpeed);
+            if ($now - $this->downloadSpeedStartTime > 0) {
+                if (count($this->downloadSpeedList) > $downloadSpeedRefreshTime) {
+                    array_shift($this->downloadSpeedList);
                 }
-                $downloadSpeed[] = round(
-                    $this->sizeDownloaded / ($now - $downloadStartTime));
+                $this->downloadSpeedList[] = round(
+                    $this->downloadSpeedTotalSize /
+                         ($now - $this->downloadSpeedStartTime));
                 $this->info['all']['downloadSpeed'] = round(
-                    array_sum($downloadSpeed) / count($downloadSpeed));
+                    array_sum($this->downloadSpeedList) /
+                         count($this->downloadSpeedList));
             }
-            if ($now - $downloadStartTime > $downloadSpeedRefreshTime) {
-                $this->sizeDownloaded = 0;
-                $downloadStartTime = $now;
+            if ($now - $this->downloadSpeedStartTime > $downloadSpeedRefreshTime) {
+                $this->downloadSpeedTotalSize = 0;
+                $this->downloadSpeedStartTime = $now;
             }
-            call_user_func_array($this->onInfo,
-                array(
-                    $this->info
-                ));
-            $lastTime = $now;
+            call_user_func($this->onInfo, $this->info, $this);
+            $this->downloadSpeedLastTime = $now;
         }
     }
 
-    private function exec()
+    protected function exec()
     {
         while (curl_multi_exec($this->mh, $this->info['all']['activeNum']) ===
              CURLM_CALL_MULTI_PERFORM) {
@@ -444,22 +472,22 @@ class Curl implements \Serializable
         }
     }
 
-    private function runTask()
+    protected function runTask()
     {
         $c = $this->maxThread - count($this->taskRunning);
         while ($c > 0) {
             $task = null;
             // search failed first
-            if (! empty($this->taskFail)) {
-                $task = array_pop($this->taskFail);
+            if (! empty($this->taskFailed)) {
+                $task = array_pop($this->taskFailed);
             } else {
                 // onTask
                 if (empty($this->taskPool) && empty($this->taskPoolAhead) &&
                      isset($this->onTask)) {
-                    call_user_func($this->onTask);
+                    call_user_func($this->onTask, $this);
                 }
                 if (! empty($this->taskPoolAhead)) {
-                    $task = array_pop($this->taskPoolAhead);
+                    $task = array_shift($this->taskPoolAhead);
                 } elseif (! empty($this->taskPool)) {
                     if ($this->taskPoolType == 'stack') {
                         $task = array_pop($this->taskPool);
@@ -505,7 +533,7 @@ class Curl implements \Serializable
      * @param array $param
      * @return array
      */
-    private function onProcess($task, $param)
+    protected function onProcess($task, $param)
     {
         $userRes = array();
         if (isset($task['process'])) {
@@ -528,7 +556,7 @@ class Curl implements \Serializable
      * @param array|null $data
      * @return mixed
      */
-    private function cache($task, $data = null)
+    protected function cache($task, $data = null)
     {
         $config = array_merge($this->cache, $task['cache']);
         if (! $config['enable']) {
@@ -575,7 +603,7 @@ class Curl implements \Serializable
                 mkdir($dir);
             }
             // Cache response from downloaded file.
-            if (isset($task['fileMeta'])) {
+            if (isset($task['fileMeta']['uri'])) {
                 $data['body'] = file_get_contents($task['fileMeta']['uri']);
             }
             file_put_contents($file,
@@ -588,7 +616,7 @@ class Curl implements \Serializable
      * @param array $task
      * @return array
      */
-    private function initTask($task)
+    protected function initTask($task)
     {
         $task['ch'] = curl_init();
         $opt = $this->opt;

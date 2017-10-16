@@ -24,25 +24,24 @@ class HttpClone extends Toolkit
 
     public $defaultSuffix = 'html';
 
-    private $task = array();
+    protected $task = array();
 
     // absolute path of local dir
-    private $dir;
+    protected $dir;
 
     // processed url
-    private $urlRequested = array();
+    protected $urlRequested = array();
 
     // windows system flag
-    private $isWin;
+    protected $isWin;
 
     /**
      *
      * @param string $dir
-     * @param string $dumpFile
      */
-    function __construct($dir, $dumpFile = null)
+    function __construct($dir)
     {
-        parent::__construct($dumpFile);
+        parent::__construct();
         if (! is_dir($dir) || ! is_writable($dir)) {
             user_error('dir(' . $dir . ') is invalid');
         }
@@ -288,7 +287,7 @@ class HttpClone extends Toolkit
      *
      * @param string $url
      */
-    private function isProcess($url)
+    protected function isProcess($url)
     {
         $doProcess = false;
         foreach ($this->task as $k => $v) {
@@ -312,7 +311,7 @@ class HttpClone extends Toolkit
      * @param string $url
      * @param string $urlBase
      */
-    private function urlDepth($url, $urlBase)
+    protected function urlDepth($url, $urlBase)
     {
         if ($this->isUrl($urlBase)) {
             if (0 === strpos($url, $urlBase)) {
@@ -334,7 +333,7 @@ class HttpClone extends Toolkit
      * @param string $urlCurrent
      * @return string
      */
-    private function url2uriClone($url, $urlCurrent)
+    protected function url2uriClone($url, $urlCurrent)
     {
         $path = $this->url2uri($url, $urlCurrent);
         $path = $this->fixPath($path);
@@ -361,7 +360,7 @@ class HttpClone extends Toolkit
      * @param string $url
      * @return string
      */
-    private function url2file($url)
+    protected function url2file($url)
     {
         $file = $this->dir . '/' . $this->getPath($url);
         $dir = dirname($file);
@@ -386,7 +385,7 @@ class HttpClone extends Toolkit
      * @param string $url
      * @return string
      */
-    private function getPath($url)
+    protected function getPath($url)
     {
         $parse = parse_url($url);
         $parse['path'] = $this->fixPath($parse['path']);
@@ -454,7 +453,7 @@ class HttpClone extends Toolkit
      * @param string $url
      * @return string
      */
-    private function getQuery($url)
+    protected function getQuery($url)
     {
         $query = parse_url($url, PHP_URL_QUERY);
         if (! empty($query)) {
@@ -488,7 +487,7 @@ class HttpClone extends Toolkit
      *
      * @param string $url
      */
-    private function checkUrl($url)
+    protected function checkUrl($url)
     {
         if (! $this->isUrl($url)) {
             return false;
@@ -508,7 +507,7 @@ class HttpClone extends Toolkit
      * @param string $path
      * @return string
      */
-    private function fixPath($path)
+    protected function fixPath($path)
     {
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         if (empty($ext)) {
@@ -519,19 +518,5 @@ class HttpClone extends Toolkit
             }
         }
         return $path;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     *
-     * @see \Ares333\Curlmulti\Toolkit::getSleepExclude()
-     */
-    protected function getSleepExclude()
-    {
-        return array_merge(parent::getSleepExclude(),
-            array(
-                'task'
-            ));
     }
 }

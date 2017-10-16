@@ -7,56 +7,12 @@ namespace Ares333\Curlmulti;
 class Toolkit
 {
 
-    // Emitted when signal catched
-    public $onSignal;
-
     // Curl instance
     protected $curl;
 
-    private $dumpFile;
-
-    /**
-     *
-     * @param string $dumpFile
-     */
-    function __construct($dumpFile = null)
+    function __construct()
     {
-        $this->onSignal = function ($signal) {
-            if (SIGINT === $signal) {
-                exit(0);
-            }
-        };
-        $this->dumpFile = $dumpFile;
-        if (isset($dumpFile)) {
-            pcntl_signal(SIGINT,
-                function ($signal) {
-                    $this->dump();
-                    if (isset($this->onSignal)) {
-                        call_user_func($this->onSignal, $signal);
-                    }
-                }, false);
-            if (is_file($dumpFile)) {
-                $obj = unserialize(file_get_contents($dumpFile));
-                $ref = (new \ReflectionObject($this));
-                $properties = (new \ReflectionObject($obj))->getProperties();
-                foreach ($properties as $v) {
-                    $v->setAccessible(true);
-                    $vName = $v->getName();
-                    $vValue = $v->getValue($obj);
-                    if ($vValue instanceof \Closure) {
-                        continue;
-                    }
-                    if ($ref->hasProperty($vName)) {
-                        $vProperty = $ref->getProperty($vName);
-                        $vProperty->setAccessible(true);
-                        $vProperty->setValue($this, $vValue);
-                    }
-                }
-            }
-        }
-        if (! isset($this->curl)) {
-            $this->curl = new Curl();
-        }
+        $this->curl = new Curl();
         // default fail callback
         $this->curl->onFail = array(
             $this,
@@ -67,16 +23,6 @@ class Toolkit
             $this,
             'onInfo'
         );
-    }
-
-    /**
-     * Dump current state manually
-     */
-    function dump()
-    {
-        if (isset($this->dumpFile)) {
-            file_put_contents($this->dumpFile, serialize($this), LOCK_EX);
-        }
     }
 
     /**
@@ -482,34 +428,5 @@ class Toolkit
     function getCurl()
     {
         return $this->curl;
-    }
-
-    /**
-     *
-     * @return string
-     */
-    function __sleep()
-    {
-        $keys = array();
-        $prop = (new \ReflectionObject($this))->getProperties();
-        foreach ($prop as $v) {
-            $v->setAccessible(true);
-            if ($v->getValue($this) instanceof \Closure) {
-                continue;
-            }
-            $keys[] = $v->getName();
-        }
-        return array_diff($keys, $this->getSleepExclude());
-    }
-
-    /**
-     *
-     * @return string[]
-     */
-    protected function getSleepExclude()
-    {
-        return array(
-            'dumpFile'
-        );
     }
 }
