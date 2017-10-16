@@ -211,23 +211,6 @@ class Curl
         return $this;
     }
 
-    /**
-     * Method must be overloaded in child class.
-     */
-    public function __sleep()
-    {
-        $keys = array();
-        $prop = (new \ReflectionObject($this))->getProperties();
-        foreach ($prop as $v) {
-            $v->setAccessible(true);
-            if ($v->getValue($this) instanceof \Closure) {
-                continue;
-            }
-            $keys[] = $v->getName();
-        }
-        print_r($keys);exit;
-    }
-
     public function __wakeup()
     {
         foreach (array(
@@ -284,17 +267,28 @@ class Curl
                     curl_close($v1['ch']);
                 }
                 unset($v[$k1]);
-                array_unshift($this->taskPoolAhead[], $v1);
+                array_unshift($this->taskPoolAhead, $v1);
             }
         }
-        unset($this->downloadSpeedStartTime);
+        unset($v);
+        $this->downloadSpeedStartTime = null;
         $this->downloadSpeedLastTime = 0;
         $this->downloadSpeedTotalSize = 0;
         $this->downloadSpeedList = array();
+        $this->info['all']['downloadSpeed'] = 0;
         $this->info['all']['activeNum'] = 0;
         $this->info['all']['queueNum'] = 0;
-        unset($v);
-        call_user_func($this->onSerialize);
+        $onSerialize = $this->onSerialize;
+        // Serialization of 'Closure' is not allowed
+        $prop = (new \ReflectionClass(__CLASS__))->getProperties();
+        foreach ($prop as $v) {
+            $v->setAccessible(true);
+            if ($v->getValue($this) instanceof \Closure) {
+                $this->{$v->getName()} = null;
+            }
+        }
+        $this->serializing = false;
+        call_user_func($onSerialize);
     }
 
     public function start()
@@ -416,9 +410,8 @@ class Curl
              ! empty($this->taskRunning) || ! empty($this->taskPool));
         $this->onInfo(true);
         curl_multi_close($this->mh);
-        unset($this->mh);
+        $this->mh = null;
         self::$running = false;
-        self::$serializing = false;
     }
 
     /**
@@ -437,6 +430,7 @@ class Curl
         if (($isLast || $now - $this->downloadSpeedLastTime > 0) &&
              isset($this->onInfo)) {
             $this->info['all']['taskPoolNum'] = count($this->taskPool);
+            $this->info['all']['taskPoolNum'] += count($this->taskPoolAhead);
             $this->info['all']['taskRunningNum'] = count($this->taskRunning);
             $this->info['all']['taskFailNum'] = count($this->taskFailed);
             // running
@@ -593,7 +587,8 @@ class Curl
             if (! isset($data['cache'])) {
                 $data['cache'] = array();
             }
-            $data['cache']['file'] = $file;
+            $data['cacheFile'] = $file;
+            unset($data['ch'], $data['curl'], $data['fp']);
             $dir = dirname($file);
             $dir1 = dirname($dir);
             if (! is_dir($dir1)) {
