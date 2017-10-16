@@ -39,12 +39,11 @@ class Toolkit
                 $obj = unserialize(file_get_contents($dumpFile));
                 $ref = (new \ReflectionObject($this));
                 $properties = (new \ReflectionObject($obj))->getProperties();
-                $exclude = $this->getSleepExclude();
                 foreach ($properties as $v) {
                     $v->setAccessible(true);
                     $vName = $v->getName();
                     $vValue = $v->getValue($obj);
-                    if (in_array($vName, $exclude)) {
+                    if ($vValue instanceof \Closure) {
                         continue;
                     }
                     if ($ref->hasProperty($vName)) {
@@ -491,9 +490,16 @@ class Toolkit
      */
     function __sleep()
     {
-        return array_diff(
-            array_keys((new \ReflectionObject($this))->getDefaultProperties()),
-            $this->getSleepExclude());
+        $keys = array();
+        $prop = (new \ReflectionObject($this))->getProperties();
+        foreach ($prop as $v) {
+            $v->setAccessible(true);
+            if ($v->getValue($this) instanceof \Closure) {
+                continue;
+            }
+            $keys[] = $v->getName();
+        }
+        return array_diff($keys, $this->getSleepExclude());
     }
 
     /**
@@ -503,7 +509,7 @@ class Toolkit
     protected function getSleepExclude()
     {
         return array(
-            'onSignal'
+            'dumpFile'
         );
     }
 }

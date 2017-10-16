@@ -24,8 +24,6 @@ class HttpClone extends Toolkit
 
     public $defaultSuffix = 'html';
 
-    private $dumpFile = null;
-
     private $task = array();
 
     // absolute path of local dir
@@ -44,11 +42,11 @@ class HttpClone extends Toolkit
      */
     function __construct($dir, $dumpFile = null)
     {
+        parent::__construct($dumpFile);
         if (! is_dir($dir) || ! is_writable($dir)) {
             user_error('dir(' . $dir . ') is invalid');
         }
         $this->dir = $dir;
-        parent::__construct($dumpFile);
         $this->isWin = (0 === strpos(PHP_OS, 'WIN'));
     }
 
@@ -533,8 +531,7 @@ class HttpClone extends Toolkit
     {
         return array_merge(parent::getSleepExclude(),
             array(
-                'task',
-                'dumpFile'
+                'task'
             ));
     }
 }

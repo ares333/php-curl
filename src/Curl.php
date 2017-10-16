@@ -6,7 +6,7 @@ namespace Ares333\Curlmulti;
  *
  * @author Ares
  */
-class Curl
+class Curl implements \Serializable
 {
 
     public $maxThread = 10;
@@ -58,7 +58,7 @@ class Curl
     public $onInfo;
 
     // Emitted on IO event.
-    public $onUser;
+    public $onMessage;
 
     // Emitted on curl error.
     public $onFail;
@@ -210,7 +210,7 @@ class Curl
      *
      * @return array
      */
-    public function __sleep()
+    public function serialize()
     {
         foreach (array(
             $this->taskFail,
@@ -241,9 +241,17 @@ class Curl
         }
         unset($v);
         self::$status = 2;
-        return array_diff(
-            array_keys((new \ReflectionObject($this))->getDefaultProperties()),
-            $this->getSleepExclude());
+        $this->onInfo();
+        $keys = array();
+        $prop = (new \ReflectionObject($this))->getProperties();
+        foreach ($prop as $v) {
+            $v->setAccessible(true);
+            if ($v->getValue($this) instanceof \Closure) {
+                continue;
+            }
+            $keys[] = $v->getName();
+        }
+        return array_diff($keys, $this->getSleepExclude());
     }
 
     protected function getSleepExclude()
@@ -251,16 +259,13 @@ class Curl
         return array(
             'status',
             'sizeDownloaded',
-            'onFail',
-            'onInfo',
-            'onTask',
-            'onUser',
             'mh'
         );
     }
 
-    public function __wakeup()
+    public function unserialize($serialized)
     {
+        $data=unserialize($serialized);
         foreach (array(
             &$this->taskFail,
             &$this->taskPoolAhead,
@@ -275,6 +280,7 @@ class Curl
                 }
             }
         }
+        unset($v, $v1);
     }
 
     public function start()
@@ -289,12 +295,10 @@ class Curl
             $this->exec();
             $this->onInfo();
             curl_multi_select($this->mh);
-            pcntl_signal_dispatch();
-            if (2 === self::$status) {
-                break;
-            }
-            if (isset($this->onUser)) {
-                call_user_func($this->onUser);
+            if (isset($this->onMessage)) {
+                if(false===call_user_func($this->onMessage)){
+                    break;
+                }
             }
             while (false != ($curlInfo = curl_multi_info_read($this->mh,
                 $this->info['all']['queueNum']))) {
@@ -373,8 +377,8 @@ class Curl
                 $this->runTask();
                 $this->exec();
                 $this->onInfo();
-                if (isset($this->onUser)) {
-                    call_user_func($this->onUser);
+                if (isset($this->onMessage)) {
+                    call_user_func($this->onMessage);
                 }
             }
         } while ($this->info['all']['activeNum'] ||
