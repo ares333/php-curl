@@ -64,7 +64,7 @@ class HttpClone extends Toolkit
      */
     function add($url, $depth = null)
     {
-        $url = $this->urlFormat($url);
+        $url = $this->urlFormater($url);
         if (! isset($url)) {
             user_error('invalid url(' . $url . ')', E_USER_ERROR);
         }
@@ -85,9 +85,9 @@ class HttpClone extends Toolkit
      *
      * @see \Ares333\Curlmulti\Toolkit::formatUrl()
      */
-    function urlFormat($url)
+    function urlFormater($url)
     {
-        $url = parent::urlFormat($url);
+        $url = parent::urlFormater($url);
         $parse = parse_url($url);
         if (! isset($parse['path'])) {
             $parse['path'] = '/';
@@ -101,7 +101,7 @@ class HttpClone extends Toolkit
     function start()
     {
         foreach ($this->blacklist as $k => $v) {
-            $this->blacklist[$k] = $this->urlFormat($v);
+            $this->blacklist[$k] = $this->urlFormater($v);
         }
         foreach (array_keys($this->task) as $v) {
             if ($this->checkUrl($v)) {
@@ -111,7 +111,8 @@ class HttpClone extends Toolkit
                             CURLOPT_URL => $v
                         ),
                         'args' => array(
-                            'file' => $this->url2file($v)
+                            'file' => $this->url2file($v),
+                            'isDownload' => false
                         )
                     ),
                     array(
@@ -134,7 +135,7 @@ class HttpClone extends Toolkit
      */
     protected function url2src($url, $urlCurrent, $isLocal)
     {
-        $url = $this->urlFormat($url);
+        $url = $this->urlFormater($url);
         if (in_array($url, $this->blacklist)) {
             return '';
         }
@@ -156,8 +157,15 @@ class HttpClone extends Toolkit
         if (in_array($r['info']['http_code'], $this->httpCode)) {
             $urlDownload = array();
             $urlParse = array();
-            if (isset($r['body']) &&
-                 0 === strpos($r['info']['content_type'], 'text')) {
+            // Explicit parse
+            $doParse = ! $args['isDownload'];
+            // Download file may need to be parsed.
+            if (! $doParse && ! isset($args['type']) &&
+                 false !== strpos($r['info']['content_type'], 'text/html')) {
+                $r['body'] = file_get_contents($args['file']);
+                $doParse = true;
+            }
+            if ($doParse) {
                 $r['body'] = $this->htmlEncode($r['body']);
                 $urlCurrent = $r['info']['url'];
                 $pq = phpQuery::newDocumentHTML($r['body']);
@@ -166,16 +174,30 @@ class HttpClone extends Toolkit
                 foreach ($list as $v) {
                     $v = pq($v);
                     $type = $v->attr('type');
-                    if (! empty($type) && 'css' === substr($type, - 3)) {
+                    if ('css' === substr($type, - 3)) {
                         $isCss = true;
                     } else {
                         $isCss = false;
+                    }
+                    if (! $isCss) {
+                        if ($v->attr('rel') == 'stylesheet') {
+                            $isCss = true;
+                        }
                     }
                     $url = $this->uri2url($v->attr('href'), $urlCurrent);
                     $v->attr('href', $this->url2src($url, $urlCurrent, true));
                     $urlDownload[$url] = $isCss ? array(
                         'type' => 'css'
                     ) : array();
+                }
+                // inline css
+                $css = $pq['style'];
+                foreach ($css as $k => $v) {
+                    $v = pq($v);
+                    $vContent = $v->html();
+                    $vList = $this->parseLinks($vContent, $urlCurrent);
+                    $v->html($vContent);
+                    $urlDownload = array_merge($urlDownload, $vList);
                 }
                 // script
                 $script = $pq['script'];
@@ -242,6 +264,15 @@ class HttpClone extends Toolkit
                                 $urlCurrent, false));
                     }
                 }
+                // remote form
+                $form = $pq['form'];
+                foreach ($form as $v) {
+                    $v = pq($v);
+                    $v->attr('action',
+                        $this->url2src(
+                            $this->uri2url($v->attr('action'), $urlCurrent),
+                            $urlCurrent, false));
+                }
                 // href
                 $a = $pq['a[href]'];
                 foreach ($a as $v) {
@@ -252,8 +283,8 @@ class HttpClone extends Toolkit
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
-                    if ($this->isProcess($url)) {
-                        if (in_array(pathinfo($href, PATHINFO_EXTENSION),
+                    if ($this->isProcess($this->urlFormater($url))) {
+                        if (in_array(pathinfo($url, PATHINFO_EXTENSION),
                             $this->downloadExtension)) {
                             $urlDownload[$url] = array();
                         } else {
@@ -276,26 +307,12 @@ class HttpClone extends Toolkit
                 }
                 phpQuery::unloadDocuments();
             } elseif ($args['isDownload']) {
+                // Has explicit type
                 if ('css' == $args['type']) {
                     $content = file_get_contents($args['file']);
-                    $uri = array();
-                    // import
-                    preg_match_all('/@import\s+url\s*\((.+)\);/iU', $content,
-                        $matches);
-                    if (! empty($matches[1])) {
-                        $uri = array_merge($uri, $matches[1]);
-                    }
-                    // url in css
-                    preg_match_all('/:\s*url\((\'|")?(.+?)\\1?\)/i', $content,
-                        $matches);
-                    if (! empty($matches[2])) {
-                        $uri = array_merge($uri, $matches[2]);
-                    }
-                    foreach ($uri as $v) {
-                        $urlDownload[$this->url2dir($r['info']['url']) . $v] = array(
-                            'type' => 'css'
-                        );
-                    }
+                    $vList = $this->parseLinks($content, $r['info']['url']);
+                    file_put_contents($args['file'], $content);
+                    $urlDownload = array_merge($urlDownload, $vList);
                 }
             }
             // add
@@ -304,7 +321,7 @@ class HttpClone extends Toolkit
                 $urlParse
             ) as $k => $v) {
                 foreach ($v as $k1 => $v1) {
-                    $k1 = $this->urlFormat($k1);
+                    $k1 = $this->urlFormater($k1);
                     if ($this->checkUrl($k1)) {
                         $file = $this->url2file($k1);
                         if (null == $file) {
@@ -350,7 +367,63 @@ class HttpClone extends Toolkit
     }
 
     /**
-     * Process or not.
+     *
+     * @param string $content
+     * @param string $urlCurrent
+     * @return string[]
+     */
+    protected function parseLinks(&$content, $urlCurrent)
+    {
+        $url = array();
+        $patterns = array(
+            '/@(import)\s+url\s*\((.+)\);/iU',
+            '/\s*url\((\'|")?(.+?)\\1?\)/i'
+        );
+        foreach ($patterns as $pattern) {
+            preg_match_all($pattern, $content, $matches);
+            if (! empty($matches[2])) {
+                if (! is_array($matches[2])) {
+                    $matches[2] = array(
+                        $matches[2]
+                    );
+                }
+                foreach ($matches[2] as $v) {
+                    // base64
+                    if (0 === strpos(ltrim($v), 'data:')) {
+                        continue;
+                    }
+                    $ext = pathinfo(parse_url($v, PHP_URL_PATH),
+                        PATHINFO_EXTENSION);
+                    if (in_array($ext,
+                        array(
+                            'css'
+                        ))) {
+                        $vUrl = array(
+                            'type' => 'css'
+                        );
+                    } else {
+                        $vUrl = array();
+                    }
+                    $url[$this->uri2url($v, $urlCurrent)] = $vUrl;
+                }
+                $content = preg_replace_callback($patterns,
+                    function ($matches) use ($urlCurrent) {
+                        // base64
+                        if (0 === strpos(ltrim($matches[2]), 'data:')) {
+                            return $matches[0];
+                        }
+                        return str_replace($matches[2],
+                            $this->url2src(
+                                $this->uri2url($matches[2], $urlCurrent),
+                                $urlCurrent, true), $matches[0]);
+                    }, $content);
+            }
+        }
+        return $url;
+    }
+
+    /**
+     * Is valid task page.
      *
      * @param string $url
      */

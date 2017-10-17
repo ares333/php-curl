@@ -119,8 +119,6 @@ class Curl
      *            array $item[opt] CURLOPT_* for current task
      *            mixed $item[args] Args for callbacks
      *            array $item[cache]
-     *            bool $item[closeFile]
-     *            bool $item[closeCh]
      * @param mixed $onProcess
      *            Callback for response
      * @param mixed $onFail
@@ -311,12 +309,7 @@ class Curl
                 $this->info['all']['headerSize'] += $info['header_size'];
                 $param = array();
                 $param['info'] = $info;
-                $param['ch'] = $ch;
                 $param['curl'] = $this;
-                if (isset($task['opt'][CURLOPT_FILE]) &&
-                     is_resource($task['opt'][CURLOPT_FILE])) {
-                    $param['fp'] = $task['opt'][CURLOPT_FILE];
-                }
                 if ($curlInfo['result'] == CURLE_OK) {
                     if (! isset($task['opt'][CURLOPT_FILE])) {
                         $param['body'] = curl_multi_getcontent($ch);
@@ -560,7 +553,7 @@ class Curl
                 $data['cache'] = array();
             }
             $data['cacheFile'] = $file;
-            unset($data['ch'], $data['curl'], $data['fp']);
+            unset($data['curl']);
             $dir = dirname($file);
             $dir1 = dirname($dir);
             if (! is_dir($dir1)) {

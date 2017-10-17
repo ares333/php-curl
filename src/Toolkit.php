@@ -237,7 +237,7 @@ class Toolkit
      * @param string $url
      * @return string
      */
-    function urlFormat($url)
+    function urlFormater($url)
     {
         if (! $this->isUrl($url)) {
             return;
@@ -380,14 +380,12 @@ class Toolkit
             // relative path
             $path1 = substr($url, $len + 1);
             $path2 = substr($urlDir, $len + 1);
-            $arr1 = $arr2 = array();
-            if (! empty($path1)) {
-                $arr1 = explode('/', $path1);
-            }
-            if (! empty($path2)) {
-                $arr2 = explode('/', $path2);
-            }
+            $arr1 = explode('/', $path1);
+            $arr2 = explode('/', $path2);
             foreach ($arr1 as $k => $v) {
+                if (empty($v)) {
+                    continue;
+                }
                 if (array_key_exists($k, $arr2) && $v == $arr2[$k]) {
                     unset($arr1[$k], $arr2[$k]);
                 } else {
@@ -396,6 +394,9 @@ class Toolkit
             }
             $path = '';
             foreach ($arr2 as $v) {
+                if (empty($v)) {
+                    continue;
+                }
                 $path .= '../';
             }
             $path .= implode('/', $arr1);

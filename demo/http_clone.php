@@ -11,7 +11,7 @@ if (! isset($argv[1])) {
 class HttpCloneDemo extends HttpClone
 {
 
-    public $skipBlockedFile = true;
+    public $blockedFileRemoveCache = true;
 
     function onProcess($r, $args)
     {
@@ -19,10 +19,9 @@ class HttpCloneDemo extends HttpClone
         $checkExt = array(
             'jpg',
             'gif',
-            'js',
             'png'
         );
-        if (! $this->skipBlockedFile && in_array(
+        if ($this->blockedFileRemoveCache && in_array(
             pathinfo($r['info']['url'], PATHINFO_EXTENSION), $checkExt)) {
             if (false !== strpos($r['info']['content_type'], 'text')) {
                 $r['info']['http_code'] = 403;
@@ -60,8 +59,8 @@ if (is_file($dumpFile)) {
             break;
         case '2':
             $clone->getCurl()->maxThread = 2;
-            $clone->getCurl()->opt[CURLOPT_TIMEOUT] = 10;
-            $clone->download['video'] = false;
+            $clone->getCurl()->opt[CURLOPT_TIMEOUT] = 30;
+            $clone->download['video'] = true;
             $clone->add('http://www.handubaby.com', 5);
             break;
     }
