@@ -45,12 +45,6 @@ class Curl
     // stack or queue
     public $taskPoolType = 'queue';
 
-    // Close CURLOPT_FILE automaticlly?
-    public $closeFile = true;
-
-    // Close curl handler automacticlly?
-    public $closeCh = true;
-
     // Emmited when new tasks are needed.
     public $onTask;
 
@@ -77,6 +71,7 @@ class Curl
 
     protected $serializing = false;
 
+    // Handle serialization callback temporarily
     protected $onSerialize = null;
 
     protected static $running = false;
@@ -180,6 +175,7 @@ class Curl
         if ('' !== $parse['query']) {
             $parse['path'] .= '?';
         }
+        $parse['path'] = preg_replace('/\/+/', '/', $parse['path']);
         strtolower($parse['scheme']);
         strtolower($parse['host']);
         $item['opt'][CURLOPT_URL] = $parse['scheme'] . '://' . $parse['user'] .
@@ -193,8 +189,6 @@ class Curl
         $task['fail'] = $onFail;
         $task['tried'] = 0;
         $task['ch'] = null;
-        $task['closeFile'] = isset($item['closeFile']) ? (bool) $item['closeFile'] : null;
-        $task['closeCh'] = isset($item['closeCh']) ? (bool) $item['closeCh'] : null;
         // $task['fileMeta'] is used for download cache and __wakeup
         if (isset($task['opt'][CURLOPT_FILE])) {
             $task['fileMeta'] = stream_get_meta_data($task['opt'][CURLOPT_FILE]);
@@ -278,15 +272,9 @@ class Curl
         $this->info['all']['downloadSpeed'] = 0;
         $this->info['all']['activeNum'] = 0;
         $this->info['all']['queueNum'] = 0;
-        $onSerialize = $this->onSerialize;
         // Serialization of 'Closure' is not allowed
-        $prop = (new \ReflectionClass(__CLASS__))->getProperties();
-        foreach ($prop as $v) {
-            $v->setAccessible(true);
-            if ($v->getValue($this) instanceof \Closure) {
-                $this->{$v->getName()} = null;
-            }
-        }
+        $onSerialize = $this->onSerialize;
+        unset($this->onSerialize);
         $this->serializing = false;
         call_user_func($onSerialize);
     }
@@ -344,23 +332,14 @@ class Curl
                         }
                     }
                 }
-                curl_multi_remove_handle($this->mh, $ch);
                 $curlError = curl_error($ch);
-                if (isset($task['closeCh'])) {
-                    $closeCh = $task['closeCh'];
-                } else {
-                    $closeCh = $this->closeCh;
-                }
-                if (isset($task['closeFile'])) {
-                    $closeFile = $task['closeFile'];
-                } else {
-                    $closeFile = $this->closeFile;
+                curl_multi_remove_handle($this->mh, $ch);
+                curl_close($ch);
+                if (isset($task['opt'][CURLOPT_FILE])) {
+                    fclose($task['opt'][CURLOPT_FILE]);
                 }
                 if ($curlInfo['result'] == CURLE_OK) {
-                    $userRes = $this->onProcess($task, $param);
-                    if (isset($userRes['closeFile'])) {
-                        $closeFile = $userRes['closeFile'];
-                    }
+                    $this->onProcess($task, $param);
                 }
                 // Handle error
                 if ($curlInfo['result'] !== CURLE_OK) {
@@ -386,13 +365,6 @@ class Curl
                         $this->taskFailed[] = $task;
                         $this->info['all']['taskNum'] ++;
                     }
-                }
-                if ($closeCh) {
-                    curl_close($ch);
-                }
-                if ($closeFile && isset($task['opt'][CURLOPT_FILE]) &&
-                     is_resource($task['opt'][CURLOPT_FILE])) {
-                    fclose($task['opt'][CURLOPT_FILE]);
                 }
                 unset($this->taskRunning[(int) $ch]);
                 $this->info['all']['finishNum'] ++;
@@ -500,8 +472,10 @@ class Curl
                             fwrite($task['opt'][CURLOPT_FILE], $cache['body']);
                             flock($task['opt'][CURLOPT_FILE], LOCK_UN);
                         }
+                        fclose($task['opt'][CURLOPT_FILE]);
                         unset($cache['body']);
                     }
+                    $cache['curl'] = $this;
                     $this->onProcess($task, $cache);
                     $this->info['all']['cacheNum'] ++;
                     $this->info['all']['finishNum'] ++;
@@ -525,7 +499,6 @@ class Curl
      *
      * @param array $task
      * @param array $param
-     * @return array
      */
     protected function onProcess($task, $param)
     {
@@ -540,7 +513,6 @@ class Curl
         if (! isset($param['cache'])) {
             $this->cache($task, $param);
         }
-        return $userRes;
     }
 
     /**

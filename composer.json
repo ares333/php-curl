@@ -1,6 +1,6 @@
 {
 	"name" : "ares333/php-curlmulti",
-	"description" : "The best php curlmulti library.",
+	"description" : "The best php curl library.",
 	"require" : {
 		"php" : ">=5.3.0",
 		"ext-curl" : "*"
@@ -8,9 +8,9 @@
 	"license" : "Apache-2.0",
 	"keywords" : [
 		"curl",
-		"phpcurl",
 		"curlmulti",
-		"php-curlmulti"
+		"aysnc http",
+		"php curl"
 	],
 	"autoload" : {
 		"psr-4" : {

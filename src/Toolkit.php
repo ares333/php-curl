@@ -12,17 +12,19 @@ class Toolkit
 
     function __construct()
     {
-        $this->curl = new Curl();
-        // default fail callback
-        $this->curl->onFail = array(
-            $this,
-            'onFail'
-        );
-        // default info callback
-        $this->curl->onInfo = array(
-            $this,
-            'onInfo'
-        );
+        if (! isset($this->curl)) {
+            $this->curl = new Curl();
+            // default fail callback
+            $this->curl->onFail = array(
+                $this,
+                'onFail'
+            );
+            // default info callback
+            $this->curl->onInfo = array(
+                $this,
+                'onInfo'
+            );
+        }
     }
 
     /**
@@ -235,7 +237,7 @@ class Toolkit
      * @param string $url
      * @return string
      */
-    function formatUrl($url)
+    function urlFormat($url)
     {
         if (! $this->isUrl($url)) {
             return;
@@ -287,6 +289,7 @@ class Toolkit
         if ('' !== $parse['fragment']) {
             $parse['query'] .= '#';
         }
+        $parse['path'] = preg_replace('/\/+/', '/', $parse['path']);
         return $parse['scheme'] . '://' . $parse['user'] . $parse['pass'] .
              $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'] .
              $parse['fragment'];
@@ -323,7 +326,7 @@ class Toolkit
         if (0 === strpos($uri, './')) {
             $uri = substr($uri, 2);
         }
-        $urlDir = $this->urlDir($urlCurrent);
+        $urlDir = $this->url2dir($urlCurrent);
         if (0 === strpos($uri, '/')) {
             $path = parse_url($urlDir, PHP_URL_PATH);
             if (isset($path)) {
@@ -349,7 +352,7 @@ class Toolkit
         if (! $this->isUrl($url)) {
             return;
         }
-        $urlDir = $this->urlDir($urlCurrent);
+        $urlDir = $this->url2dir($urlCurrent);
         $parse1 = parse_url($url);
         $parse2 = parse_url($urlDir);
         if (! array_key_exists('port', $parse1)) {
@@ -374,14 +377,15 @@ class Toolkit
         $path = null;
         if ($eq) {
             $len = strlen($urlDir) - strlen(parse_url($urlDir, PHP_URL_PATH));
+            // relative path
             $path1 = substr($url, $len + 1);
             $path2 = substr($urlDir, $len + 1);
             $arr1 = $arr2 = array();
             if (! empty($path1)) {
-                $arr1 = explode('/', rtrim($path1, '/'));
+                $arr1 = explode('/', $path1);
             }
             if (! empty($path2)) {
-                $arr2 = explode('/', rtrim($path2, '/'));
+                $arr2 = explode('/', $path2);
             }
             foreach ($arr1 as $k => $v) {
                 if (array_key_exists($k, $arr2) && $v == $arr2[$k]) {
@@ -405,7 +409,7 @@ class Toolkit
      *            Should be final url which was redirected by 3xx http code.
      * @return string
      */
-    function urlDir($url)
+    function url2dir($url)
     {
         if (! $this->isUrl($url)) {
             return;
@@ -413,9 +417,12 @@ class Toolkit
         $parse = parse_url($url);
         $urlDir = $url;
         if (isset($parse['path'])) {
-            // none / end url should be finally redirected to / ended url
             if ('/' != substr($urlDir, - 1)) {
                 $urlDir = dirname($urlDir) . '/';
+            }
+        } else {
+            if ('/' != substr($urlDir, - 1)) {
+                $urlDir .= '/';
             }
         }
         return $urlDir;

@@ -12,17 +12,24 @@ class HttpClone extends Toolkit
     // local file expire time
     public $expire = null;
 
-    public $downloadPic = true;
+    public $download = array(
+        'pic' => true,
+        'video' => false
+    );
+
+    public $blacklist = array();
 
     // zip,rar ...
     public $downloadExtension = array();
 
     // valid http code
-    public $validHttpCode = array(
+    public $httpCode = array(
         200
     );
 
-    public $defaultSuffix = 'html';
+    protected $suffix = 'html';
+
+    protected $index = 'index.html';
 
     protected $task = array();
 
@@ -57,7 +64,7 @@ class HttpClone extends Toolkit
      */
     function add($url, $depth = null)
     {
-        $url = $this->formatUrl($url);
+        $url = $this->urlFormat($url);
         if (! isset($url)) {
             user_error('invalid url(' . $url . ')', E_USER_ERROR);
         }
@@ -78,9 +85,9 @@ class HttpClone extends Toolkit
      *
      * @see \Ares333\Curlmulti\Toolkit::formatUrl()
      */
-    function formatUrl($url)
+    function urlFormat($url)
     {
-        $url = parent::formatUrl($url);
+        $url = parent::urlFormat($url);
         $parse = parse_url($url);
         if (! isset($parse['path'])) {
             $parse['path'] = '/';
@@ -93,6 +100,9 @@ class HttpClone extends Toolkit
      */
     function start()
     {
+        foreach ($this->blacklist as $k => $v) {
+            $this->blacklist[$k] = $this->urlFormat($v);
+        }
         foreach (array_keys($this->task) as $v) {
             if ($this->checkUrl($v)) {
                 $this->getCurl()->add(
@@ -101,7 +111,6 @@ class HttpClone extends Toolkit
                             CURLOPT_URL => $v
                         ),
                         'args' => array(
-                            'url' => $v,
                             'file' => $this->url2file($v)
                         )
                     ),
@@ -118,6 +127,24 @@ class HttpClone extends Toolkit
     }
 
     /**
+     *
+     * @param string $url
+     * @param bool $isLocal
+     * @return string
+     */
+    protected function url2src($url, $urlCurrent, $isLocal)
+    {
+        $url = $this->urlFormat($url);
+        if (in_array($url, $this->blacklist)) {
+            return '';
+        }
+        if ($isLocal) {
+            $url = $this->url2uri($url, $urlCurrent);
+        }
+        return $url;
+    }
+
+    /**
      * Process response.
      *
      * @param array $r
@@ -126,13 +153,13 @@ class HttpClone extends Toolkit
      */
     function onProcess($r, $args)
     {
-        if (in_array($r['info']['http_code'], $this->validHttpCode)) {
+        if (in_array($r['info']['http_code'], $this->httpCode)) {
             $urlDownload = array();
             $urlParse = array();
             if (isset($r['body']) &&
                  0 === strpos($r['info']['content_type'], 'text')) {
                 $r['body'] = $this->htmlEncode($r['body']);
-                $urlCurrent = $args['url'];
+                $urlCurrent = $r['info']['url'];
                 $pq = phpQuery::newDocumentHTML($r['body']);
                 // link
                 $list = $pq['link'];
@@ -145,35 +172,74 @@ class HttpClone extends Toolkit
                         $isCss = false;
                     }
                     $url = $this->uri2url($v->attr('href'), $urlCurrent);
-                    $v->attr('href', $this->url2uriClone($url, $urlCurrent));
+                    $v->attr('href', $this->url2src($url, $urlCurrent, true));
                     $urlDownload[$url] = $isCss ? array(
                         'type' => 'css'
                     ) : array();
                 }
                 // script
-                $script = $pq['script[type$=script]'];
+                $script = $pq['script'];
                 foreach ($script as $v) {
                     $v = pq($v);
                     if (null != $v->attr('src')) {
                         $url = $this->uri2url($v->attr('src'), $urlCurrent);
-                        $v->attr('src', $this->url2uriClone($url, $urlCurrent));
+                        $v->attr('src', $this->url2src($url, $urlCurrent, true));
                         $urlDownload[$url] = array();
                     }
                 }
                 // pic
                 $pic = $pq['img,image'];
-                if ($this->downloadPic) {
+                if ($this->download['pic']) {
                     foreach ($pic as $v) {
                         $v = pq($v);
                         $url = $this->uri2url($v->attr('src'), $urlCurrent);
-                        $v->attr('src', $this->url2uriClone($url, $urlCurrent));
+                        $v->attr('src', $this->url2src($url, $urlCurrent, true));
                         $urlDownload[$url] = array();
                     }
                 } else {
                     foreach ($pic as $v) {
                         $v = pq($v);
                         $v->attr('src',
-                            $this->uri2url($v->attr('src'), $urlCurrent));
+                            $this->url2src(
+                                $this->uri2url($v->attr('src'), $urlCurrent),
+                                $urlCurrent, false));
+                    }
+                }
+                // pic for video poster
+                $pic = $pq['video[poster]'];
+                if ($this->download['pic']) {
+                    foreach ($pic as $v) {
+                        $v = pq($v);
+                        $url = $this->uri2url($v->attr('poster'), $urlCurrent);
+                        $v->attr('poster',
+                            $this->url2src($url, $urlCurrent, true));
+                        $urlDownload[$url] = array();
+                    }
+                } else {
+                    foreach ($pic as $v) {
+                        $v = pq($v);
+                        $v->attr('poster',
+                            $this->url2src(
+                                $this->uri2url($v->attr('src'), $urlCurrent),
+                                $urlCurrent, false));
+                    }
+                }
+                // video
+                $video = $pq['video source'];
+                if ($this->download['video']) {
+                    foreach ($video as $v) {
+                        $v = pq($v);
+                        $url = $this->uri2url($v->attr('src'), $urlCurrent);
+                        $v->attr('src', $this->url2src($url, $urlCurrent, true));
+                        $urlDownload[$url] = array();
+                    }
+                } else {
+                    foreach ($video as $v) {
+                        $v = pq($v);
+                        $v->attr('src',
+                            $this->url2src(
+                                $this->uri2url($v->attr('src'), $urlCurrent),
+                                $urlCurrent, false));
                     }
                 }
                 // href
@@ -186,16 +252,18 @@ class HttpClone extends Toolkit
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
-                    $ext = pathinfo($href, PATHINFO_EXTENSION);
                     if ($this->isProcess($url)) {
-                        if (in_array($ext, $this->downloadExtension)) {
+                        if (in_array(pathinfo($href, PATHINFO_EXTENSION),
+                            $this->downloadExtension)) {
                             $urlDownload[$url] = array();
                         } else {
                             $urlParse[$url] = array();
                         }
-                        $v->attr('href', $this->url2uriClone($url, $urlCurrent));
+                        $v->attr('href',
+                            $this->url2src($url, $urlCurrent, true));
                     } else {
-                        $v->attr('href', $url);
+                        $v->attr('href',
+                            $this->url2src($url, $urlCurrent, false));
                     }
                 }
                 $r['body'] = $pq->html();
@@ -224,7 +292,7 @@ class HttpClone extends Toolkit
                         $uri = array_merge($uri, $matches[2]);
                     }
                     foreach ($uri as $v) {
-                        $urlDownload[$this->urlDir($r['info']['url']) . $v] = array(
+                        $urlDownload[$this->url2dir($r['info']['url']) . $v] = array(
                             'type' => 'css'
                         );
                     }
@@ -236,7 +304,7 @@ class HttpClone extends Toolkit
                 $urlParse
             ) as $k => $v) {
                 foreach ($v as $k1 => $v1) {
-                    $k1 = $this->formatUrl($k1);
+                    $k1 = $this->urlFormat($k1);
                     if ($this->checkUrl($k1)) {
                         $file = $this->url2file($k1);
                         if (null == $file) {
@@ -257,7 +325,6 @@ class HttpClone extends Toolkit
                         $item = array(
                             'opt' => $opt,
                             'args' => array(
-                                'url' => $k1,
                                 'file' => $file,
                                 'type' => $type,
                                 'isDownload' => $isDownload
@@ -333,12 +400,12 @@ class HttpClone extends Toolkit
      * @param string $urlCurrent
      * @return string
      */
-    protected function url2uriClone($url, $urlCurrent)
+    public function url2uri($url, $urlCurrent)
     {
-        $path = $this->url2uri($url, $urlCurrent);
+        $path = parent::url2uri($url, $urlCurrent);
         $path = $this->fixPath($path);
         if (! isset($path)) {
-            $dir2 = $this->urlDir($urlCurrent);
+            $dir2 = $this->url2dir($urlCurrent);
             $path1 = $this->getPath($url);
             $path2 = ltrim(parse_url($dir2, PHP_URL_PATH), '/');
             $arr2 = array();
@@ -492,6 +559,9 @@ class HttpClone extends Toolkit
         if (! $this->isUrl($url)) {
             return false;
         }
+        if (in_array($url, $this->blacklist)) {
+            return false;
+        }
         $md5 = md5($url, true);
         if (in_array($md5, $this->urlRequested)) {
             return false;
@@ -509,12 +579,15 @@ class HttpClone extends Toolkit
      */
     protected function fixPath($path)
     {
+        if (! isset($path)) {
+            return;
+        }
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         if (empty($ext)) {
             if (substr($path, - 1) === '/') {
-                $path .= 'index.html';
+                $path .= $this->index;
             } else {
-                $path .= empty($this->defaultSuffix) ? '' : '.html';
+                $path .= empty($this->suffix) ? '' : '.' . $this->suffix;
             }
         }
         return $path;
