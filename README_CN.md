@@ -180,6 +180,15 @@ finish http://cn.bing.com/
 完成的url比添加时多了结尾的/，因为Curl内部做了3xx跳转（Curl::$opt[CURLOPT_FOLLOWLOCATION]=true)。
 如果有大量任务需要执行可以设置Curl::onTask回调。
 
+## Http网站克隆
+基于Curl和Toolkit，继承Curl强大能力的同时有一些自身的特性：
+1. 所有重复页面只会精确下载一次，智能处理3xx跳转和不规范url。
+2. 全自动处理任意格式url的相对路径绝对路径。
+3. style标签和css文件中引入的背景图等资源全自动处理，@import全自动处理，支持任意深度。
+4. 支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
+5. 多站本地资源共享，保持原站结构，从底层逻辑上保证了数据完整性。
+6. 支持拷贝过程精确控制和扩展。
+
 ## Curl (src/Curl.php 核心类) 
 ```PHP
 public $maxThread = 10
@@ -274,6 +283,8 @@ public function add(array $item, $process = null, $fail = null, $ahead = null)
 + $onFail 覆盖Curl::$onFail。
 + $ahead 是否加入优先队列，优先队列取完才回取普通任务池中的任务。
 
+返回值：自身的引用。
+
 ```PHP
 public function start()
 ```
@@ -348,23 +359,55 @@ function getCurl()
 ```
 返回核心类的实例句柄。
 
+## HttpClone (src/HttpClone.php 网站克隆) 
+```PHP
+public $expire = null
+```
+本地文件过期时间，克隆过程中发现过期文件会重新下载覆盖，否则不下载。
 
+```PHP
+public $download = array(
+	'pic' => true,
+	'video' => false
+);
+```
+下载类型配置，false代表使用远程文件，目前可配置类型只有pic和video。
 
-<sub>**特性：**
+```PHP
+public $blacklist = array();
+```
+强制跳过的url列表，一般添加目标网站已经失效的url。
 
-1. <sub>软件工程，面向对象和编程技巧的完美结晶，和php-curlmulti一样非常具有艺术性。
-2. <sub>使用方便，只有一个无参方法start()。
-3. <sub>低耦合，扩展极其容易，配合php-curlmulti的强大能力可以分分钟拷贝一个站。
-4. <sub>所有页面的重复的url只会精确处理一次。
-5. <sub>全自动处理任意格式url的相对路径绝对路径。
-6. <sub>css中引入的背景图等资源全自动处理，css中的@import全自动处理，支持任意深度！
-7. <sub>支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
-8. <sub>支持对每个前缀url指定二级前缀，每个二级前缀还可以设置一个深度。
-9. <sub>全自动处理3xx跳转。
-10. <sub>跨站资源共享，例如采集站点A的时候A用到了站点B的图片，jss，css等，等采集站点B的时候这些文件会直接使用不会再次下载。
-11. <sub>同一个目录下可以复制任意数量的站点并且不会发生任何可能的文件重复或覆盖。
-12. <sub>支持不同类型资源文件下载控制。
+```PHP
+public $downloadExtension = array();
+```
+根据后缀指要下载的链接（a标签），例如 zip,rar等。
 
-<sub>结果展示：http://manual.phpdr.net/
+```PHP
+public $httpCode = array(
+    200
+);
+```
+合法请求的http状态码，非法状态码会被忽略。
 
+```PHP
+function __construct($dir)
+```
+克隆结果的保存目录。
 
+```PHP
+function add($url, $depth = null)
+```
+添加一个起始地址，$depth控制从该地址开始的目录深度。
+
+返回值：自身的引用。
+
+```PHP
+function start()
+```
+启动克隆过程。
+
+```PHP
+function start()
+```
+启动克隆过程并阻塞。

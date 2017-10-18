@@ -50,7 +50,7 @@ class HttpClone extends Toolkit
     {
         parent::__construct();
         if (! is_dir($dir) || ! is_writable($dir)) {
-            user_error('dir(' . $dir . ') is invalid');
+            user_error('dir(' . $dir . ') is invalid',E_USER_ERROR);
         }
         $this->dir = $dir;
         $this->isWin = (0 === strpos(PHP_OS, 'WIN'));
