@@ -12,7 +12,7 @@ composer require ares333/php-curl
 ## 联系我们
 QQ群: 215348766
 
-##特性
+## 特性
 1. 极低的CPU、内存使用率和高性能(实测抓取html速度达到2000+页每秒，下载速度1000Mbps)。
 2. 所有curl接口全部直接暴露以实现高通用性和高扩展性，同时具备高易用性（只有两个公有方法）。
 3. 支持任务中断和恢复（例如进程退出，下次启动从任务中断的位置继续执行）。
@@ -22,11 +22,11 @@ QQ群: 215348766
 7. 所有配置可以运行中实时修改并生效。
 8. 支持全局配置、任务配置、回调配置三个级别，优先级由低到高。
 
-##运行机制
+## 运行机制
 Curl::add()添加任务到任务池，Curl::start()开始执行任务并阻塞，过程中产生不同事件并调用对应的回调函数，
 事件包括任务完成、任务失败、状态信息处理、任务池任务不足等，任务池中所有任务完成之后结束阻塞状态。
 
-##快速入门
+## 快速入门
 **基本使用**
 ```PHP
 $curl = new Curl();
@@ -177,7 +177,7 @@ finish http://cn.bing.com/
 完成的url比添加时多了结尾的/，因为Curl内部做了3xx跳转（Curl::$opt[CURLOPT_FOLLOWLOCATION]=true)。
 如果有大量任务需要执行可以设置Curl::onTask回调，任务池任务数小于并发数的时候会被调用。
 
-##Curl (src/Curl.php 核心类) 
+## Curl (src/Curl.php 核心类) 
 ```PHP
 public $maxThread = 10
 ```
@@ -281,7 +281,7 @@ public function stop($onSerialize = null)
 ```
 中断事件循环并调用回调函数，当前Curl对象句柄作为回调函数的唯一参数。
 
-##Toolkit (src/Toolkit.php 必要工具类) 
+## Toolkit (src/Toolkit.php 必要工具类) 
 ```PHP
 function __construct(Curl $curl = null)
 ```
