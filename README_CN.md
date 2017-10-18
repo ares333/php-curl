@@ -183,11 +183,19 @@ finish http://cn.bing.com/
 ## Http网站克隆
 基于Curl和Toolkit，继承Curl强大能力的同时有一些自身的特性：
 1. 所有重复页面只会精确下载一次，智能处理3xx跳转和不规范url。
-2. 全自动处理任意格式url的相对路径绝对路径。
+2. 全自动处理所有远程url和本地uri的相对路径和绝对路径。
 3. style标签和css文件中引入的背景图等资源全自动处理，@import全自动处理，支持任意深度。
-4. 支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
-5. 多站本地资源共享，保持原站结构，从底层逻辑上保证了数据完整性。
-6. 支持拷贝过程精确控制和扩展。
+4. 支持指定根据后缀下载，根据类型下载，自动处理表单。
+5. 支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
+6. 多站本地资源共享，保持原站结构，从底层逻辑上保证了数据完整性。
+
+注意：克隆功能极其复杂，只测试了有限的网站，部分克隆网站的demo如下：
+
+demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://demo-clone.phpdr.net/http_www.laruence.com/manual/)
+
+demo2：源站已关闭  [克隆站](http://demo-clone.phpdr.net/http_yamlcss.meezhou.com/blog/)
+
+demo3：[源站](http://www.handubaby.com/)  [克隆站](http://demo-clone.phpdr.net/http_www.handubaby.com/)
 
 ## Curl (src/Curl.php 核心类) 
 ```PHP
