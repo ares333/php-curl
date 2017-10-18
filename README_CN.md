@@ -1,183 +1,366 @@
-关于
------
+## 关于
+利用curlmulti内置的IO事件循环实现，具备高性能、高通用性、高扩展性。尤其适合复杂业务逻辑大批量请求的应用场景。
 
-这是目前最好的php curl类库，很多开发者基于此库开发项目。类库是对curl_multi_*系列函数的封装，性能、扩展性、易用性都是最高水平，很强大。
+## 需求
+PHP: >=5.3
 
-需求
-----
-PHP: >=5.4
+## 安装
+```
+composer require ares333/php-curl
+```
 
-安装
-----
-composer require phpdr.net/php-curlmulti
+## 联系我们
+QQ群: 215348766
 
-联系我们
---------
-Email: admin@phpdr.com<br>
-QQ群:215348766
+##特性
+1. 极低的CPU、内存使用率和高性能(实测抓取html速度达到2000+页每秒，下载速度1000Mbps)。
+2. 所有curl接口全部直接暴露以实现高通用性和高扩展性，同时具备高易用性（只有两个公有方法）。
+3. 支持任务中断和恢复（例如进程退出，下次启动从任务中断的位置继续执行）。
+4. 支持动态任务。
+5. 支持透明文件缓存。
+6. 支持失败任务自动重试。
+7. 所有配置可以运行中实时修改并生效。
+8. 支持全局配置、任务配置、回调配置三个级别，优先级由低到高。
 
-特性
-----
-1. 极低的CPU和内存使用率。
-1. 速度在程序层面最高(实测抓取html速度达到2000+页每秒，下载速度1000Mbps)。
-1. 支持全局并发设置和根据任务类型单独设置并发。
-1. 支持状态回调，运行中的所有信息都被返回，包括单独的每个任务信息。
-1. 支持通过回调添加任务。
-1. 支持用户自定义回调，可以在回调中做任何事情。
-1. 支持成功回调返回值控制任务。
-1. 支持全局错误回调和单独任务的错误回调，所有和错误相关的信息都被返回。
-1. 支持内部全自动重试。
-1. 支持用户参数任意传递。
-1. 支持CURLOPT_\*全局设置和单个任务设置。
-1. 强大的内置缓存，可以设置全局缓存和单独任务缓存。
-1. 所有配置可以在运行中动态改变并生效！
-1. 基于此库你可以开发各种强劲的CURL应用。
+##运行机制
+Curl::add()添加任务到任务池，Curl::start()开始执行任务并阻塞，过程中产生不同事件并调用对应的回调函数，
+事件包括任务完成、任务失败、状态信息处理、任务池任务不足等，任务池中所有任务完成之后结束阻塞状态。
 
-运行机制
---------
+##快速入门
+**基本使用**
+```PHP
+$curl = new Curl();
+$curl->add(
+    array(
+        'opt' => array(
+            CURLOPT_URL => 'http://baidu.com'
+        ),
+        'args' => 'This is user arg for ' . $v
+    ),
+    function ($r, $args) {
+        echo "Request success for " . $r['info']['url'] . "\n";
+        echo "\nHeader info:\n";
+        print_r($r['info']);
+        echo "\nRaw header:\n";
+        print_r($r['header']);
+        echo "\nArgs:\n";
+        print_r($args);
+        echo "\n\nBody size:\n";
+        echo strlen($r['body']) . ' bytes';
+        echo "\n";
+    });
+$curl->start();
+```
+**文件下载**
+```PHP
+$curl = new Curl();
+$url = 'http://www.baidu.com/img/bd_logo1.png';
+$file = __DIR__ . '/download.png';
+// $fp is closed automatically on download finished.
+$fp = fopen($file, 'w');
+$curl->add(
+    array(
+        'opt' => array(
+            CURLOPT_URL => $url,
+            CURLOPT_FILE => $fp,
+            CURLOPT_HEADER => false
+        ),
+        'args' => array(
+            'file' => $file
+        )
+    ),
+    function ($r, $args) {
+        echo "download finished successfully, file=$args[file]\n";
+    })->start();
+```
+**运行状态**
+```PHP
+$curl = new Curl();
+$toolkit = new Toolkit();
+$curl->onInfo = array(
+    $toolkit,
+    'onInfo'
+);
+$curl->maxThread = 2;
+$url = 'http://www.baidu.com';
+for ($i = 0; $i < 100; $i ++) {
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i
+            )
+        ));
+}
+$curl->start();
+```
+命令行执行会输出运行状态，格式如下：
+```
+SPD    DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL  
+457KB  3MB  24   0      3    3       73    0      100   0
+```
+回调函数会接收到所有详细数据，默认回调中只显示了一部分常用状态数据，数据含义如下：
+SPD：下载速度
+DWN：已经下载的字节数
+FNH：已经完成的请求数
+CACHE：缓存命中数
+RUN：运行中的任务数
+ACTIVE：有IO活动的任务数
+POOL：任务池中排队的任务数
+QUEUE：请求已经完毕等待回调处理的任务数
+TASK：加入过的任务总数
+FAIL：超过自动重试次数之后失败的任务数
+**自动缓存**
+```PHP
+$curl = new Curl();
+$toolkit = new Toolkit();
+$curl->onInfo = array(
+    $toolkit,
+    'onInfo'
+);
+$curl->maxThread = 2;
+$curl->cache['enable'] = true;
+$curl->cache['dir'] = __DIR__ . '/output/cache';
+$url = 'http://www.baidu.com';
+for ($i = 0; $i < 20; $i ++) {
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i
+            )
+        ));
+}
+$curl->start();
+```
+第二次运行之后输出：
+```
+SPD  DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL  
+0KB  0MB  20   20     0    0       0     0      20    0
+```
+说明全部使用缓存，没有任何网络活动。
+**动态任务**
+```PHP
+$curl = new Curl();
+$url = 'http://baidu.com';
+$curl->add(array(
+    'opt' => array(
+        CURLOPT_URL => $url
+    )
+), 'cb1');
+echo "add $url\n";
+$curl->start();
 
-没有pthreads扩展支持，php是单线程顺序执行的，所以本类库大量使用回调函数。类库只有两个常用的方法，add()和start()，add()添加一个任务到内部任务池，start()开始以$maxTrhead设置的并发数进行回调循环，此方法是阻塞的直到所有任务完成。如果有大量的任务需要处理，使用$cbTask指定添加任务的回调函数，当并发不足并且任务池为空时此回调函数被调用。当一个任务完成之后add()中指定的回调立刻被执行，然后curl从任务池取一个任务添加到并发请求中。所有任务完成后start()函数结束。
+function cb1($r, $args)
+{
+    echo "finish " . $r['info']['url'] . "\n";
+    $url = 'http://bing.com';
+    $r['curl']->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url
+            )
+        ), 'cb2');
+    echo "add $url\n";
+}
 
-文件
-----
-**src/Core.php**<br>
-核心库。
+function cb2($r, $args)
+{
+    echo "finish " . $r['info']['url'] . "\n";
+}
+```
+输出如下：
+```
+add http://baidu.com
+finish https://www.baidu.com/
+add http://bing.com
+finish http://cn.bing.com/
+```
+完成的url比添加时多了结尾的/，因为Curl内部做了3xx跳转（Curl::$opt[CURLOPT_FOLLOWLOCATION]=true)。
+如果有大量任务需要执行可以设置Curl::onTask回调，任务池任务数小于并发数的时候会被调用。
 
-**src/Base.php**<br>
-核心库的封装，包含非常有用的工具和一些规范。
-
-**src/AutoClone.php**<br>
-一个完美的全自动网站克隆工具。
-
-<sub>**特性：**
-
-1. <sub>软件工程，面向对象和编程技巧的完美结晶，和php-curlmulti一样非常具有艺术性。
-1. <sub>使用方便，只有一个无参方法start()。
-1. <sub>低耦合，扩展极其容易，配合php-curlmulti的强大能力可以分分钟拷贝一个站。
-1. <sub>所有页面的重复的url只会精确处理一次。
-1. <sub>全自动处理任意格式url的相对路径绝对路径。
-1. <sub>css中引入的背景图等资源全自动处理，css中的@import全自动处理，支持任意深度！
-1. <sub>支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
-1. <sub>支持对每个前缀url指定二级前缀，每个二级前缀还可以设置一个深度。
-1. <sub>全自动处理3xx跳转。
-1. <sub>跨站资源共享，例如采集站点A的时候A用到了站点B的图片，jss，css等，等采集站点B的时候这些文件会直接使用不会再次下载。
-1. <sub>同一个目录下可以复制任意数量的站点并且不会发生任何可能的文件重复或覆盖。
-1. <sub>支持不同类型资源文件下载控制。
-
-<sub>结果展示：http://manual.phpdr.net/
-
-API(Core)
--------------------
+##Curl (src/Curl.php 核心类) 
 ```PHP
 public $maxThread = 10
 ```
-最大并发数，这个值可以运行中动态改变。<br>
-最大数限制跟操作系统和libcurl有关，和本库无关。
+最大并发数，这个值可以运行中动态改变。
 
 ```PHP
 public $maxTry = 3
 ```
-触发curl错误或用户错误之前最大重试次数，超过次数$cbFail指定的回调会被调用。
+触发curl错误事件之前最大重试次数。
 
 ```PHP
 public $opt = array ()
 ```
-全局CURLOPT_\*，可以被add()中设置的opt覆盖。
+全局CURLOPT_\*，可以被任务配置覆盖。
 
 ```PHP
-public $cache = array ('enable' => false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false)
+public $cache = array(
+    'enable' => false,
+    'compress' => 0, //级别0-9，如果启用压缩，6是一个不错的选择
+    'dir' => null, //缓存目录，必须提前创建
+    'expire' => 86400, //过期缓存不会被删除而是被忽略
+    'verifyPost' => false //缓存id是否使用http post的值
+);
 ```
-缓存选项很容易被理解，缓存使用url来识别。如果使用缓存类库不会访问网络而是直接返回缓存。
+全局配置，缓存id使用url生成，可以被任务配置和onProcess回调函数的返回值覆盖。
 
 ```PHP
 public $taskPoolType = 'queue'
 ```
-有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先，默认是stack深度优先。
+有两个值stack或queue，这两个选项决定任务池是深度优先还是广度优先。
 
 ```PHP
-public $cbTask = null
+public $onTask = null
 ```
-当并发数小于$maxThread并且任务池为空的时候类库会调用$cbTask指定的回调函数。
+当并发数小于Curl::$maxThread并且任务池为空的时候会被调用，当前Curl对象句柄作为回调函数的唯一参数。
 
 ```PHP
-public $cbInfo = null
+public $onInfo = null
 ```
-运行信息回调函数，回调中使用print_r()可以查看详细信息，回调函数最快1秒钟调用一次。
+运行状态信息回调，IO事件发生时调用，但是1秒钟最多调用一次，回调函数参数如下：
+1. $info数组，包含两个键，all和running，running包含每个运行中任务的Response头（curl_getinfo()返回值)，all包含全局运行信息，包含的键如下：
+    + $info['all']['downloadSpeed'] 下载速度。
+    + $info['all']['bodySize'] 已经下载的Response消息体大小。
+    + $info['all']['headerSize'] 已经下载的Response消息头大小。
+    + $info['all']['activeNum'] 有IO活动的任务数。
+    + $info['all']['queueNum'] 请求已经完毕等待回调处理的任务数。
+    + $info['all']['finishNum'] 已经完成的请求数。
+    + $info['all']['cacheNum'] 缓存命中数。
+    + $info['all']['failNum'] 超过自动重试次数之后失败的任务数。
+    + $info['all']['taskNum'] 加入过的任务总数。
+    + $info['all']['taskRunningNum'] 运行中的任务数。
+    + $info['all']['taskPoolNum'] 任务池中排队的任务数。
+    + $info['all']['taskFailNum'] 失败重试中的任务数。
+2. 当前Curl实例的句柄
 
 ```PHP
-public $cbUser = null
+public $onEvent = null
 ```
-用户自定义回调函数，这个函数调用非常频繁，用户函数可以执行任何操作，有网络活动就会调用。
+网络IO事件发生时被调用，当前Curl对象句柄作为回调函数的唯一参数。
 
 ```PHP
-public $cbFail = null
+public $onFail = null
 ```
-失败任务回调，可以被add()中指定的错误回调覆盖。
+全局失败回调，可以被任务回调覆盖，回调函数接收两个参数：
+1. 数组，键值如下：
+  + errorCode CURLE_* 常量的值。
+  + errorMsg 错误描述。
+  + info Response头信息。
+  + curl 当前Curl对象句柄。
+2. 添加任务时指定的$item['args']的值。
 
 ```PHP
 public function add(array $item, $process = null, $fail = null, $ahead = null)
 ```
-添加一个任务到任务池<br>
-**$item['opt']=array()** 当前任务的CURLOPT_\*，覆盖全局的CURLOPT_\*。<br>
-**$item['args']** 成功和失败回调的第二个参数。<br>
-**$item['cache']=array()** 任务缓存配置，覆盖合并$cache属性。<br />
-**$process** 任务成功完成调用此回调，回调的第一个参数是结果数组，第二个参数是$item['args']。可以返回一个数组，键：cache（bool,控制是否缓存本次请求）<br />
-**$fail** 任务失败回调，第一个参数是相关信息，第二个参数是$item['args']。<br>
-**$ahead** bool,是否优先执行任务。
+添加一个任务到任务池
++ $item
+    1. $item['opt']=array() 当前任务的CURLOPT_\*。
+    2. $item['args'] 最终以参数形式传递给回调函数。
+    3. $item['cache']=array() 任务缓存配置。
++ $onProcess 任务正常完成后被调用
+    + 回调函数的参数，一共两个：
+        1. $result数组，键值如下：
+            + $result['info'] Response头信息。
+            + $result['curl'] 当前Curl对象句柄。
+            + $result['body'] Response消息体，任务成功时才会包含这个键。
+            + $result['header'] Response原始头信息，启用CURLOPT_HEADER之后才有这个键。
+            + $result['cacheFile'] 读取的缓存数据才会包含这个键。
+        2. $item['args']的值。
+    + 回调函数的返回值（可选），数组形式，键值如下：
+        + cache Curl::$cache结构一致，控制当前任务的缓存配置。
++ $onFail 覆盖Curl::$onFail。
++ $ahead 是否加入优先队列，优先队列取完才回取普通任务池中的任务。
 
 ```PHP
 public function start()
 ```
-开始回调循环，此方法是阻塞的。
-
-API(Base)
------------------
-```PHP
-function hashpath($name)
-```
-获得hash相对路径。
+开始进入事件循环，此方法是阻塞的。
 
 ```PHP
-function substr($str, $start, $end = null, $mode = 'g')
+public function stop($onSerialize = null)
 ```
-获取开始和结束字符串之间的字符串，开始和结束字符串不包含在内。
+中断事件循环并调用回调函数，当前Curl对象句柄作为回调函数的唯一参数。
+
+##Toolkit (src/Toolkit.php 必要工具类) 
+```PHP
+function __construct(Curl $curl = null)
+```
+可以通过参数传递一个自定义的Curl对象或子对象。
 
 ```PHP
-function cbCurlFail($error, $args)
+function onFail($error, $args)
 ```
-全局默认错误回调。
+默认错误处理回调，参数详情见Curl::$onFail。
 
 ```PHP
-function cbCurlInfo($info,$isFirst,$isLast)
+function onInfo($info)
 ```
-默认的信息回调，以标准形式输出运行信息。
+默认信息回调，以标准形式输出运行信息，参数详情见Curl::onInfo。
 
 ```PHP
-function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
+function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 ```
-强力的转码函数，可以自动获取当前编码，转码后自动修改\<head\>\</head\>中的编码，可选不同的转码函数。
+强力的全自动转码函数，可以自动获取当前编码，转码后自动修改\<head\>\</head\>中的编码。
+参数：
++ $html 完整的html字符串。
++ $in 如果确定当前编码则指定。
++ $out 需要转换的目标编码。
++ $mode auto|iconv|mb_convert_encoding，auto自动选择转码函数，否则手动指定一个。
+返回值：
+转码后的html字符串。
 
 ```PHP
-function isUrl($str)
+function isUrl($url)
 ```
-是否是一个绝对的url。
+是否是一个绝对的url，返回bool类型。
+
+```PHP
+function urlFormater($url)
+```
+替换空格为+号，去除空白，协议、主机名转换成小些形式，去除$url中的锚点。
+
+```PHP
+function buildUrl(array $parse)
+```
+parse_url()的反函数。
 
 ```PHP
 function uri2url($uri, $urlCurrent)
 ```
-根据当前页面url获取当前页中的相对uri对应的绝对url。
+根据当前页面url获取当前页中的相对uri对应的绝对url，$urlCurrent应该是经过3xx重定向之后的值。
 
 ```PHP
 function url2uri($url, $urlCurrent)
 ```
-根据当前页面url获取当前页中的绝对url对应的相对uri。
+根据当前页面url获取当前页中的绝对url对应的相对uri，$url应该是经过3xx重定向之后的值。
 
 ```PHP
-function urlDir($url)
+function url2uri($url)
 ```
-绝对url对应的目录，参数中的url应该是重定向之后的url。
+绝对url对应的目录，$url应该是经过3xx重定向之后的值。
 
 ```PHP
 function getCurl()
 ```
-返回核心类的对象。
+返回核心类的实例句柄。
+
+
+
+<sub>**特性：**
+
+1. <sub>软件工程，面向对象和编程技巧的完美结晶，和php-curlmulti一样非常具有艺术性。
+2. <sub>使用方便，只有一个无参方法start()。
+3. <sub>低耦合，扩展极其容易，配合php-curlmulti的强大能力可以分分钟拷贝一个站。
+4. <sub>所有页面的重复的url只会精确处理一次。
+5. <sub>全自动处理任意格式url的相对路径绝对路径。
+6. <sub>css中引入的背景图等资源全自动处理，css中的@import全自动处理，支持任意深度！
+7. <sub>支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
+8. <sub>支持对每个前缀url指定二级前缀，每个二级前缀还可以设置一个深度。
+9. <sub>全自动处理3xx跳转。
+10. <sub>跨站资源共享，例如采集站点A的时候A用到了站点B的图片，jss，css等，等采集站点B的时候这些文件会直接使用不会再次下载。
+11. <sub>同一个目录下可以复制任意数量的站点并且不会发生任何可能的文件重复或覆盖。
+12. <sub>支持不同类型资源文件下载控制。
+
+<sub>结果展示：http://manual.phpdr.net/
+
+

@@ -31,13 +31,13 @@ class Toolkit
     /**
      * Output curl error infomation
      *
-     * @param array $r
+     * @param array $error
      * @param mixed $args
-     *            passed in Curl::add()
      */
-    function onFail($r, $args)
+    function onFail($error, $args)
     {
-        $msg = "Curl error ($r[errorCode])$r[errorMsg], url=" . $r['info']['url'];
+        $msg = "Curl error ($error[errorCode])$error[errorMsg], url=" .
+             $error['info']['url'];
         if ($this->curl->onInfo == array(
             $this,
             'onInfo'
@@ -256,7 +256,7 @@ class Toolkit
      *
      * @param array $parse
      */
-    function buildUrl($parse)
+    function buildUrl(array $parse)
     {
         $keys = array(
             'scheme',

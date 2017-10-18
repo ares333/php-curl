@@ -4,7 +4,7 @@ use Ares333\Curlmulti\Curl;
 $curl = new Curl();
 $url = 'http://www.baidu.com/img/bd_logo1.png';
 $file = __DIR__ . '/output/download.png';
-// $fp must be closed in onProcess()
+// $fp is closed automatically on download finished.
 $fp = fopen($file, 'w');
 $curl->add(
     array(
@@ -14,13 +14,9 @@ $curl->add(
             CURLOPT_HEADER => false
         ),
         'args' => array(
-            'file' => $file,
-            'fp' => $fp
+            'file' => $file
         )
-    ), 'onProcess')->start();
-
-function onProcess($r, $args)
-{
-    fclose($args['fp']);
-    echo "download finished successfully, file=$args[file]\n";
-}
+    ),
+    function ($r, $args) {
+        echo "download finished successfully, file=$args[file]\n";
+    })->start();

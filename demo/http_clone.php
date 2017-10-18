@@ -68,7 +68,7 @@ if (is_file($dumpFile)) {
 
 pcntl_signal(SIGINT,
     function () use ($clone, $dumpFile) {
-        $clone->getCurl()->serialize(
+        $clone->getCurl()->stop(
             function () use ($clone, $dumpFile) {
                 $clone->getCurl()->onEvent = null;
                 file_put_contents($dumpFile, serialize($clone));

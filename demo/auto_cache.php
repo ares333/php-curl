@@ -1,18 +1,16 @@
 <?php
-require_once '../vendor/autoload.php';
-use Ares333\CurlMulti\Core;
-use Ares333\CurlMulti\Base;
-$curl = new Core();
-$curl->cbInfo = array(
-    new Base(),
-    'cbCurlInfo'
+require_once '_inc.php';
+use Ares333\Curlmulti\Curl;
+use Ares333\Curlmulti\Toolkit;
+$curl = new Curl();
+$toolkit = new Toolkit();
+$curl->onInfo = array(
+    $toolkit,
+    'onInfo'
 );
 $curl->maxThread = 2;
 $curl->cache['enable'] = true;
-$curl->cache['dir'] = __DIR__ . '/cache';
-if (! file_exists($curl->cache['dir'])) {
-    mkdir($curl->cache['dir']);
-}
+$curl->cache['dir'] = __DIR__ . '/output/cache';
 $url = 'http://www.baidu.com';
 for ($i = 0; $i < 20; $i ++) {
     $curl->add(

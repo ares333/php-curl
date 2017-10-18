@@ -69,10 +69,10 @@ class Curl
     // Failed tasks retrying.
     protected $taskFailed = array();
 
-    protected $serializing = false;
+    protected $stoping = false;
 
     // Handle serialization callback temporarily
-    protected $onSerialize = null;
+    protected $onStop = null;
 
     protected static $running = false;
 
@@ -222,17 +222,22 @@ class Curl
         unset($v, $v1);
     }
 
-    public function serialize($onSerialize)
+    /**
+     *
+     * @param callable $onStop
+     */
+    public function stop($onStop = null)
     {
-        if (! self::$running || $this->serializing) {
+        if (! self::$running || $this->stoping) {
             return;
         }
-        $this->serializing = true;
-        $this->onSerialize = $onSerialize;
+        $this->stoping = true;
+        $this->onStop = $onStop;
     }
 
-    protected function onSerialize()
+    protected function onStop()
     {
+        $this->stoping = false;
         foreach (array(
             $this->taskFailed,
             $this->taskRunning,
@@ -270,11 +275,12 @@ class Curl
         $this->info['all']['downloadSpeed'] = 0;
         $this->info['all']['activeNum'] = 0;
         $this->info['all']['queueNum'] = 0;
-        // Serialization of 'Closure' is not allowed
-        $onSerialize = $this->onSerialize;
-        unset($this->onSerialize);
-        $this->serializing = false;
-        call_user_func($onSerialize);
+        if (isset($this->onStop)) {
+            // Serialization of 'Closure' is not allowed
+            $onStop = $this->onStop;
+            unset($this->onStop);
+            call_user_func($onStop,$this);
+        }
     }
 
     public function start()
@@ -288,8 +294,8 @@ class Curl
         do {
             $this->exec();
             $this->onInfo();
-            if ($this->serializing) {
-                $this->onSerialize();
+            if ($this->stoping) {
+                $this->onStop();
                 break;
             }
             curl_multi_select($this->mh);
@@ -298,8 +304,8 @@ class Curl
             }
             while (false != ($curlInfo = curl_multi_info_read($this->mh,
                 $this->info['all']['queueNum']))) {
-                if ($this->serializing) {
-                    $this->onSerialize();
+                if ($this->stoping) {
+                    $this->onStop();
                     break 2;
                 }
                 $ch = $curlInfo['handle'];
