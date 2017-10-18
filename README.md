@@ -1,22 +1,17 @@
-[中文文档](README_CN.md "中文文档")
+#[中文文档](README_CN.md "中文文档")
 
 About
 -----
 
-This is undoubtedly the best php curl library.It is widely used by many developers.The library is a wrapper of curl_multi_* functions with best performance,maximum flexibility,maximum ease of use and negligible performance consumption.All in all it's a very very powerful library.
+The library is a wrapper of curl_multi_* functions with best performance,maximum flexibility,maximum ease of use and negligible performance consumption.All in all it's a very very powerful library.
 
 Requirement
 -----------
-PHP: >=5.4
+PHP: >=5.3
 
 Install
 -------
-composer require phpdr.net/php-curlmulti
-
-Contact Us
-----------
-Email: admin@phpdr.com<br>
-QQ Group:215348766
+composer require ares333/php-curl
 
 Feature
 -------
