@@ -41,6 +41,7 @@ if (is_file($dumpFile)) {
     $clone->getCurl()->opt[CURLOPT_CONNECTTIMEOUT] = 3;
     $clone->getCurl()->opt[CURLOPT_ENCODING] = 'gzip,deflate';
     $clone->getCurl()->cache['enable'] = true;
+    $clone->getCurl()->cache['expire'] = 86400 * 30;
     $clone->getCurl()->cache['enableDownload'] = true;
     $clone->getCurl()->cache['dir'] = $cacheDir;
     $clone->getCurl()->cache['compress'] = 6;
