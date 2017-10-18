@@ -10,8 +10,9 @@ class Toolkit
     // Curl instance
     protected $curl;
 
-    function __construct()
+    function __construct(Curl $curl = null)
     {
+        $this->curl = $curl;
         if (! isset($this->curl)) {
             $this->curl = new Curl();
             // default fail callback
