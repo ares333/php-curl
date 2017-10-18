@@ -99,6 +99,7 @@ SPD    DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL
 457KB  3MB  24   0      3    3       73    0      100   0
 ```
 回调函数会接收到所有详细数据，默认回调中只显示了一部分常用状态数据，数据含义如下：
+```
 SPD：下载速度
 DWN：已经下载的字节数
 FNH：已经完成的请求数
@@ -109,6 +110,7 @@ POOL：任务池中排队的任务数
 QUEUE：请求已经完毕等待回调处理的任务数
 TASK：加入过的任务总数
 FAIL：超过自动重试次数之后失败的任务数
+```
 **自动缓存**
 ```PHP
 $curl = new Curl();
