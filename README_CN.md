@@ -139,6 +139,7 @@ SPD  DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL
 0KB  0MB  20   20     0    0       0     0      20    0
 ```
 说明全部使用缓存，没有任何网络活动。
+
 **动态任务**
 ```PHP
 $curl = new Curl();
@@ -177,7 +178,7 @@ add http://bing.com
 finish http://cn.bing.com/
 ```
 完成的url比添加时多了结尾的/，因为Curl内部做了3xx跳转（Curl::$opt[CURLOPT_FOLLOWLOCATION]=true)。
-如果有大量任务需要执行可以设置Curl::onTask回调，任务池任务数小于并发数的时候会被调用。
+如果有大量任务需要执行可以设置Curl::onTask回调。
 
 ## Curl (src/Curl.php 核心类) 
 ```PHP
@@ -279,7 +280,7 @@ public function start()
 开始进入事件循环，此方法是阻塞的。
 
 ```PHP
-public function stop($onSerialize = null)
+public function stop($onStop = null)
 ```
 中断事件循环并调用回调函数，当前Curl对象句柄作为回调函数的唯一参数。
 
@@ -308,6 +309,7 @@ function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 + $in 如果确定当前编码则指定。
 + $out 需要转换的目标编码。
 + $mode auto|iconv|mb_convert_encoding，auto自动选择转码函数，否则手动指定一个。
+
 返回值：
 转码后的html字符串。
 
