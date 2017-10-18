@@ -189,13 +189,13 @@ finish http://cn.bing.com/
 5. 支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
 6. 多站本地资源共享，保持原站结构，从底层逻辑上保证了数据完整性。
 
-注意：克隆功能极其复杂，只测试了有限的网站，部分克隆网站的demo如下：
+注意：克隆功能极其复杂，只测试了有限的网站，部分克隆网站的demo如下（demo服务器小带宽，部分demo可能加载慢）：
 
-demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://demo-clone.phpdr.net/http_www.laruence.com/manual/)
+demo1：<a href="http://www.laruence.com/manual/" target="_blank">源站</a>  <a href="http://demo-clone.phpdr.net/http_www.laruence.com/manual/" target="_blank">克隆站</a>
 
-demo2：源站已关闭  [克隆站](http://demo-clone.phpdr.net/http_yamlcss.meezhou.com/blog/)
+demo2：源站已关闭  <a href="http://demo-clone.phpdr.net/http_yamlcss.meezhou.com/blog/" target="_blank">克隆站</a>
 
-demo3：[源站](http://www.handubaby.com/)  [克隆站](http://demo-clone.phpdr.net/http_www.handubaby.com/)
+demo3： <a href="http://www.handubaby.com/" target="_blank">源站</a> <a href="http://demo-clone.phpdr.net/http_www.handubaby.com/" target="_blank">克隆站</a>
 
 ## Curl (src/Curl.php 核心类) 
 ```PHP
