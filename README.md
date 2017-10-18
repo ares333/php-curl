@@ -1,5 +1,6 @@
 # [中文文档](README_CN.md "中文文档")
 
+<!-- 
 About
 -----
 
@@ -178,3 +179,4 @@ url should be redirected final url.Final url normally has '/' suffix.
 function getCurl()
 ```
 Return CurlMulti_Core instance.
+-->
