@@ -191,11 +191,11 @@ finish http://cn.bing.com/
 
 注意：克隆功能极其复杂，只测试了有限的网站，部分克隆网站的demo如下（demo服务器小带宽，部分demo可能加载慢）：
 
-demo1：<a href="http://www.laruence.com/manual/" target="_blank">源站</a>  <a href="http://demo-clone.phpdr.net/http_www.laruence.com/manual/" target="_blank">克隆站</a>
+demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://demo-clone.phpdr.net/http_www.laruence.com/manual/)
 
-demo2：源站已关闭  <a href="http://demo-clone.phpdr.net/http_yamlcss.meezhou.com/blog/" target="_blank">克隆站</a>
+demo2：源站已关闭  [克隆站](http://demo-clone.phpdr.net/http_yamlcss.meezhou.com/blog/)
 
-demo3： <a href="http://www.handubaby.com/" target="_blank">源站</a> <a href="http://demo-clone.phpdr.net/http_www.handubaby.com/" target="_blank">克隆站</a>
+demo3：[源站](http://www.handubaby.com/)  [克隆站](http://demo-clone.phpdr.net/http_www.handubaby.com/)
 
 ## Curl (src/Curl.php 核心类) 
 ```PHP
