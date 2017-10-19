@@ -273,6 +273,9 @@ class Toolkit
                 $parse[$v] = '';
             }
         }
+        if ('' !== $parse['scheme']) {
+            $parse['scheme'] .= '://';
+        }
         if ('' !== $parse['user']) {
             $parse['user'] .= ':';
             $parse['pass'] .= '@';
@@ -291,7 +294,7 @@ class Toolkit
             $parse['query'] .= '#';
         }
         $parse['path'] = preg_replace('/\/+/', '/', $parse['path']);
-        return $parse['scheme'] . '://' . $parse['user'] . $parse['pass'] .
+        return $parse['scheme'] . $parse['user'] . $parse['pass'] .
              $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'] .
              $parse['fragment'];
     }
