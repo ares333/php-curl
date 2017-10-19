@@ -1,5 +1,5 @@
 {
-	"name" : "ares333/phpcurl",
+	"name" : "ares333/php-curl",
 	"description" : "The best php curl library.",
 	"require" : {
 		"php" : ">=5.3.0",
@@ -14,7 +14,7 @@
 	],
 	"autoload" : {
 		"psr-4" : {
-			"Ares333\\Curlmulti\\" : "src"
+			"Ares333\\Curl\\" : "src"
 		}
 	},
 	"minimum-stability" : "stable",
