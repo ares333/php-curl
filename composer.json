@@ -19,7 +19,8 @@
 	},
 	"minimum-stability" : "stable",
 	"authors" : [{
-			"name" : "Ares"
+			"name" : "Ares",
+			"homepage" : "http://phpdr.net"
 		}
 	]
 }
