@@ -1,5 +1,5 @@
 {
-	"name" : "ares333/php-curl",
+	"name" : "ares333/phpcurl",
 	"description" : "The best php curl library.",
 	"require" : {
 		"php" : ">=5.3.0",
