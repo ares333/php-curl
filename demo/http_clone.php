@@ -1,5 +1,5 @@
 <?php
-use Ares333\Curlmulti\HttpClone;
+use Ares333\Curl\HttpClone;
 require_once '_inc.php';
 $dir = __DIR__ . '/output/clone';
 $cacheDir = __DIR__ . '/output/cache';

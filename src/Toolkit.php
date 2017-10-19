@@ -1,5 +1,5 @@
 <?php
-namespace Ares333\Curlmulti;
+namespace Ares333\Curl;
 
 /**
  * Toolkit for Curl
@@ -435,7 +435,7 @@ class Toolkit
 
     /**
      *
-     * @return \Ares333\Curlmulti\Curl
+     * @return \Ares333\Curl\Curl
      */
     function getCurl()
     {

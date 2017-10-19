@@ -6,5 +6,5 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Ares333\\Curlmulti\\' => array($baseDir . '/../src'),
+    'Ares333\\Curl\\' => array($baseDir . '/../src'),
 );

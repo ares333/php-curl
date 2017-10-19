@@ -5,7 +5,7 @@
 	},
 	"autoload" : {
 		"psr-4" : {
-			"Ares333\\Curlmulti\\" : "../src"
+			"Ares333\\Curl\\" : "../src"
 		}
 	}
 }

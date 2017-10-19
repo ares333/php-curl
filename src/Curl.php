@@ -1,5 +1,5 @@
 <?php
-namespace Ares333\Curlmulti;
+namespace Ares333\Curl;
 
 /**
  * The best curlmulti library.

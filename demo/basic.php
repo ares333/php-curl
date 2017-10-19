@@ -1,6 +1,6 @@
 <?php
 require_once '_inc.php';
-use Ares333\Curlmulti\Curl;
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $curl->add(
     array(

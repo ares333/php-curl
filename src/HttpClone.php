@@ -1,5 +1,5 @@
 <?php
-namespace Ares333\Curlmulti;
+namespace Ares333\Curl;
 
 use phpQuery;
 
@@ -83,7 +83,7 @@ class HttpClone extends Toolkit
      *
      * {@inheritdoc}
      *
-     * @see \Ares333\Curlmulti\Toolkit::formatUrl()
+     * @see \Ares333\Curl\Toolkit::formatUrl()
      */
     function urlFormater($url)
     {
@@ -612,7 +612,7 @@ class HttpClone extends Toolkit
      *
      * {@inheritdoc}
      *
-     * @see \Ares333\Curlmulti\Toolkit::isUrl()
+     * @see \Ares333\Curl\Toolkit::isUrl()
      */
     function isUrl($url)
     {

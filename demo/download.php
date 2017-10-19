@@ -1,6 +1,6 @@
 <?php
 require '_inc.php';
-use Ares333\Curlmulti\Curl;
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $url = 'http://www.baidu.com/img/bd_logo1.png';
 $file = __DIR__ . '/output/download.png';
