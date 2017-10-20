@@ -223,7 +223,7 @@ public $cache = array(
     'verifyPost' => false //缓存id是否使用http post的值
 );
 ```
-全局配置，缓存id使用url生成，可以被任务配置和onProcess回调函数的返回值覆盖。
+全局配置，缓存id使用url生成，可以被任务配置和onSuccess回调函数的返回值覆盖。
 
 ```PHP
 public $taskPoolType = 'queue'
@@ -271,14 +271,14 @@ public $onFail = null
 2. 添加任务时指定的$item['args']的值。
 
 ```PHP
-public function add(array $item, $process = null, $fail = null, $ahead = null)
+public function add(array $item, $onSuccess = null, $onFail = null, $ahead = null)
 ```
 添加一个任务到任务池
 + $item
     1. $item['opt']=array() 当前任务的CURLOPT_\*。
     2. $item['args'] 最终以参数形式传递给回调函数。
     3. $item['cache']=array() 任务缓存配置。
-+ $onProcess 任务正常完成后被调用
++ $onSuccess 任务正常完成后被调用
     + 回调函数的参数，一共两个：
         1. $result数组，键值如下：
             + $result['info'] Response头信息。

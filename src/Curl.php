@@ -119,14 +119,14 @@ class Curl
      *            array $item[opt] CURLOPT_* for current task
      *            mixed $item[args] Args for callbacks
      *            array $item[cache]
-     * @param mixed $onProcess
+     * @param mixed $onSuccess
      *            Callback for response
      * @param mixed $onFail
      *            Callback for curl error
      * @param bool $ahead
      * @return self
      */
-    public function add(array $item, $onProcess = null, $onFail = null, $ahead = null)
+    public function add(array $item, $onSuccess = null, $onFail = null, $ahead = null)
     {
         if (! isset($ahead)) {
             $ahead = false;
@@ -183,8 +183,8 @@ class Curl
         $task['args'] = $item['args'];
         $task['opt'] = $item['opt'];
         $task['cache'] = $item['cache'];
-        $task['process'] = $onProcess;
-        $task['fail'] = $onFail;
+        $task['onSuccess'] = $onSuccess;
+        $task['onFail'] = $onFail;
         $task['tried'] = 0;
         $task['ch'] = null;
         // $task['fileMeta'] is used for download cache and __wakeup
@@ -279,7 +279,7 @@ class Curl
             // Serialization of 'Closure' is not allowed
             $onStop = $this->onStop;
             unset($this->onStop);
-            call_user_func($onStop,$this);
+            call_user_func($onStop, $this);
         }
     }
 
@@ -345,14 +345,11 @@ class Curl
                     if ($task['tried'] >= $this->maxTry) {
                         $param['errorCode'] = $curlInfo['result'];
                         $param['errorMsg'] = $curlError;
-                        if (isset($task['fail']) || isset($this->onFail)) {
-                            if (isset($task['fail'])) {
-                                call_user_func($task['fail'], $param,
-                                    $task['args']);
-                            } elseif (isset($this->onFail)) {
-                                call_user_func($this->onFail, $param,
-                                    $task['args']);
-                            }
+                        if (isset($task['onFail'])) {
+                            call_user_func($task['onFail'], $param,
+                                $task['args']);
+                        } elseif (isset($this->onFail)) {
+                            call_user_func($this->onFail, $param, $task['args']);
                         } else {
                             user_error(
                                 "Curl error($curlInfo[result]) $info[url]",
@@ -502,8 +499,8 @@ class Curl
     protected function onProcess($task, $param)
     {
         $userRes = array();
-        if (isset($task['process'])) {
-            $userRes = call_user_func($task['process'], $param, $task['args']);
+        if (isset($task['onSuccess'])) {
+            $userRes = call_user_func($task['onSuccess'], $param, $task['args']);
         }
         if (isset($userRes['cache'])) {
             $task['cache'] = array_merge($task['cache'], $userRes['cache']);
