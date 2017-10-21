@@ -1,182 +1,416 @@
-# [中文文档](README_CN.md "中文文档")
+## [中文文档](README_CN.md "中文文档")
 
-<!-- 
-About
------
+## About
 
-The library is a wrapper of curl_multi_* functions with best performance,maximum flexibility,maximum ease of use and negligible performance consumption.All in all it's a very very powerful library.
+Implemented by using curlmulti internal io event.It's a high performance,high universality,high expansibility library which is especially suitable for massive scale tasks and complex logic case.
 
-Requirement
------------
+## Demand
 PHP: >=5.3
 
-Install
--------
+## Install
+```
 composer require ares333/php-curl
+```
 
-Feature
--------
-1. Extremely low cpu and memory usage.
-1. Best program performance(tested spider 2000+ html pages per second and 1000MBps pic download speed).
-1. Support global parallel and seperate parallel for defferent task type.
-1. Support running info callback.All info you need is returned, include overall and every task infomation.
-1. Support adding task in task callback.
-1. Support user callback.You can do anything in that.
-1. Support task controll use value returned from process callback .
-1. Support global error callback and task error callback.All error info is returned.
-1. Support internal max try for tasks.
-1. Support user variable flow arbitrarily.
-1. Support global CURLOPT_* and task CURLOPT_*.
-1. Powerfull cache.Global and task cache config supported.
-1. All public property config can be changed on the fly!
-1. You can develop amazing curl application based on the library.
+## Features
+1. Extremely low cpu and memory usage and very high performance(More than 3000 html requests finished in some cases and download speed can reach 1000Mbps in servers with a 1Gbps network interface).
+2. All curl options exposed directly,so high universality and high expansibility is possible.At the same time has high usability(Only has 2 public methods).
+3. Support process disruption and resume from last running state.
+4. Support dynamic tasks.
+5. Support transparent file cache.
+6. Support retry faild tasks automaticlly.
+7. Support global config,task config,callback config with same config format with priority from high to low.
+8. All configs can be changed on the fly and take effact immediately.
 
-Mechanism
----------
+## Work Flow
+Curl::add() add tasks to task pool.Curl::start() start the event loop and blocked.Events(onSuccess,onFail,onInfo,onTask...) will be triggered and corresponding callbacks will be called on the fly.The loop finished when all tasks in the task poll finished.
 
-Without pthreads php is single-threaded language,so the library widely use callbacks.There are only two common functions CurlMulti_Core::add() and CurlMulti_Core::start().add() just add a task to internal taskpool.start() starts callback cycle with the concurrent number of CurlMulti_Core::$maxThread and is blocked until all added tasks(a typical task is a url) are finished.If you have huge number of tasks you will use CurlMulti_Core::$cbTask to specify a callback function to add() urls,this callback is called when the number of running concurrent is less than CurlMulti_Core::$maxThread and internal taskpool is empty.When a task finished the 'process callback' specified in add() is immediately called,and then fetch a task from internal taskpool,and then add the task to the running concurrent.When all added tasks finished the start() finished.
+## Tutorial
+**basic**
+```PHP
+$curl = new Curl();
+$curl->add(
+    array(
+        'opt' => array(
+            CURLOPT_URL => 'http://baidu.com'
+        ),
+        'args' => 'This is user arg for ' . $v
+    ),
+    function ($r, $args) {
+        echo "Request success for " . $r['info']['url'] . "\n";
+        echo "\nHeader info:\n";
+        print_r($r['info']);
+        echo "\nRaw header:\n";
+        print_r($r['header']);
+        echo "\nArgs:\n";
+        print_r($args);
+        echo "\n\nBody size:\n";
+        echo strlen($r['body']) . ' bytes';
+        echo "\n";
+    });
+$curl->start();
+```
+**file download**
+```PHP
+$curl = new Curl();
+$url = 'http://www.baidu.com/img/bd_logo1.png';
+$file = __DIR__ . '/download.png';
+// $fp is closed automatically on download finished.
+$fp = fopen($file, 'w');
+$curl->add(
+    array(
+        'opt' => array(
+            CURLOPT_URL => $url,
+            CURLOPT_FILE => $fp,
+            CURLOPT_HEADER => false
+        ),
+        'args' => array(
+            'file' => $file
+        )
+    ),
+    function ($r, $args) {
+        echo "download finished successfully, file=$args[file]\n";
+    })->start();
+```
+**running info**
+```PHP
+$curl = new Curl();
+$toolkit = new Toolkit();
+$curl->onInfo = array(
+    $toolkit,
+    'onInfo'
+);
+$curl->maxThread = 2;
+$url = 'http://www.baidu.com';
+for ($i = 0; $i < 100; $i ++) {
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i
+            )
+        ));
+}
+$curl->start();
+```
+run in cli and will out info with format:
+```
+SPD    DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL  
+457KB  3MB  24   0      3    3       73    0      100   0
+```
+Info callback will receive all information.The default callback only show part of it.
+```
+SPD：Download speed
+DWN：Bytes downloaded
+FNH：Task count which has finished
+CACHE：Cache count which were used 
+RUN：Task running count
+ACTIVE：Task count which has IO activities
+POOL：Task count in task pool
+QUEUE：Task count which has finished and waiting for onSuccess callback to process
+TASK：Task count has been added to the task pool
+FAIL：Task count which has failed after retry.
+```
+**transparent cache**
+```PHP
+$curl = new Curl();
+$toolkit = new Toolkit();
+$curl->onInfo = array(
+    $toolkit,
+    'onInfo'
+);
+$curl->maxThread = 2;
+$curl->cache['enable'] = true;
+$curl->cache['dir'] = __DIR__ . '/output/cache';
+$url = 'http://www.baidu.com';
+for ($i = 0; $i < 20; $i ++) {
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i
+            )
+        ));
+}
+$curl->start();
+```
+Run the script second time and will output：
+```
+SPD  DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL  
+0KB  0MB  20   20     0    0       0     0      20    0
+```
+The result indicate that all tasks is using cache and there is no network activity.
 
-Files
------
-**src/Core.php**<br>
-Kernel class
+**dynamic tasks**
+```PHP
+$curl = new Curl();
+$url = 'http://baidu.com';
+$curl->add(array(
+    'opt' => array(
+        CURLOPT_URL => $url
+    )
+), 'cb1');
+echo "add $url\n";
+$curl->start();
 
-**src/Base.php**<br>
-A wraper of CurlMulti_Core.Very usefull tools and convention is included.It's very easy to use.All spider shoud inherent this class.
+function cb1($r, $args)
+{
+    echo "finish " . $r['info']['url'] . "\n";
+    $url = 'http://bing.com';
+    $r['curl']->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url
+            )
+        ), 'cb2');
+    echo "add $url\n";
+}
 
-**src/AutoClone.php**<br>
-A powerfull site clone tool.It's a perfect tool.
+function cb2($r, $args)
+{
+    echo "finish " . $r['info']['url'] . "\n";
+}
+```
+Output is as below:
+```
+add http://baidu.com
+finish https://www.baidu.com/
+add http://bing.com
+finish http://cn.bing.com/
+```
+Finished url has a / at end because curl processed the 3xx redirect(Curl::$opt[CURLOPT_FOLLOWLOCATION]=true).
+Curl::onTask should be used when deal with massive sale tasks.
 
-<sub>**Feature：**
+## Http website clone
+Based on Curl and Toolkit,inherit power of Curl and has self features as below:
+1. Same page will be processed only once.3xx and malformed url will be dealed automatically.
+2. Url and uri including remote and local will be processed automatically.
+3. All local link will be a file(not directory),with this all file can be placed on cdn or aws s3 or something like.
+4. Resource in style and css tag will be processed automatically,@import expression is supported recursively.
+5. Support download by file extension.Form action process automatically.
+6. Support multi start url with depth.
+7. Original site structure is  reserved.Data integrity is guaranted from underlying.
 
-1. <sub>It's a work of art on software engineer and programming technique.
-1. <sub>Easy to use, has only one public method start(void).
-1. <sub>Low coupling,easy to extend.Copying a site with CurlMulti is very fast.
-1. <sub>All duplicate url in all pages will be processed only once.
-1. <sub>All url and uri in pages will be accurately processed automaticly!
-1. <sub>@import in css and images in css can be downloaded automaticly,ignore @import depth!
-1. <sub>Can process multi url prefix and config the url individually.
-1. <sub>Subprefix for url can be specified and config for the subprefix can be specified.
-1. <sub>Process 3xx redirect automaticly.
-1. <sub>Resources cross site will be shared.For example,site A use js and css of B,when clone B this css and js will not be processed again.
-1. <sub>In one dir arbitray number site can be located and no file will conflict.
-1. <sub>Download option support multitype control.
+Notice: Clone is a very complex work and was tested with limited website.Below is the demo from some of the tests:
 
-<sub>Clone of site: http://manual.phpdr.net/
+demo1: [Source](http://www.laruence.com/manual/)  [Clone](http://static.phpdr.net/demo-clone/http_www.laruence.com/manual/index.html)
 
-API(Core)
--------------------
+demo2: Source has been closed  [Clone](http://static.phpdr.net/demo-clone/http_yamlcss.meezhou.com/index.html)
+
+demo3: [Source](http://www.handubaby.com/)  [Clone](http://static.phpdr.net/demo-clone/http_www.handubaby.com/index.html)
+
+## Curl (src/Curl.php Core functionality) 
 ```PHP
 public $maxThread = 10
 ```
-Max concurrence num, can be changed in the fly.<br>
-The limit may be associated with OS or libcurl,but not the library.
+Max work parallels which can be change on the fly.
 
 ```PHP
 public $maxTry = 3
 ```
-Trigger curl error or user error before max try times reached.If reached $cbFail will be called.
+Max retry before onFail event is triggered.
 
 ```PHP
 public $opt = array ()
 ```
-Global CURLOPT_* for all tasks.Overrided by CURLOPT_* in add().
+Global CURLOPT_\* which can be overwrite by task config.
 
 ```PHP
-public $cache = array ('enable' => false, 'compress' => false, 'dir' => null, 'expire' =>86400, 'verifyPost' => false)
+public $cache = array(
+    'enable' => false,
+    'compress' => 0, //0-9,6 is a good choice if you want use compress.
+    'dir' => null, //Cache dir which must exists.
+    'expire' => 86400,
+    'verifyPost' => false //If http post will be part of cache id.
+);
 ```
-The options is very easy to understand.Cache is identified by url.If cache finded,the class will not access the network,but return the cache directly.
+Global cache config.Cache id is related with url.This config can be overwrite by task config and onSuccess callback return value with same config format.
 
 ```PHP
 public $taskPoolType = 'queue'
 ```
-Values are 'stack' or 'queue'.This option decide depth-first or width-first.Default value is 'stack' depth-first.
+stack or queue.
 
 ```PHP
-public $cbTask = null
+public $onTask = null
 ```
-When the parallel is less than $maxThread and taskpool is empty the class will try to call callback function specified by $cbTask.
+Will be triggered when parallel count is less than Curl::$maxThread and task pool is empty.Only argument for callbak is current Curl instance.
 
 ```PHP
-public $cbInfo = null
+public $onInfo = null
 ```
-Callback for running info.Use print_r() to check the info in callback.The speed is limited once per second.
+Running state callback which triggered when IO event happens.Triggered one second at most.Callback arguments are as below:
+1. $info array with two keys 'all' and 'running'.Key 'running' contains response header(curl_getinfo()) for each running task.Key 'all' contains global information with keys as below:
+    + $info['all']['downloadSpeed'] Download speed.
+    + $info['all']['bodySize'] Body sized downloaded.
+    + $info['all']['headerSize'] Header size downloaded.
+    + $info['all']['activeNum'] Task has IO activity.
+    + $info['all']['queueNum'] Tasks waiting for onSuccess.
+    + $info['all']['finishNum'] Tasks has been processed.
+    + $info['all']['cacheNum'] Cache using count.
+    + $info['all']['failNum'] Failed task count after retry.
+    + $info['all']['taskNum'] Task count added to the pool.
+    + $info['all']['taskRunningNum'] Running task count.
+    + $info['all']['taskPoolNum'] Task pool count.
+    + $info['all']['taskFailNum'] Task count which are retrying.
+2. Current Curl instance.
 
 ```PHP
-public $cbUser = null
+public $onEvent = null
 ```
-Callback for user operations very frequently.You can do anything there.Is called when has network activity.
+Triggered on IO event.Only argument for callbak is current Curl instance.
 
 ```PHP
-public $cbFail = null
+public $onFail = null
 ```
-Callback for failed tasks.Lower priority than 'fail callback' specified than add().
+Global callback for fail.Can be overwrite by task onTask.The callback receive two arguments.
+1. array with key as below：
+  + errorCode CURLE_* constants.
+  + errorMsg Error message.
+  + info Response header.
+  + curl Current Curl instance.
+2. $item['args'] value from Curl::add().
 
 ```PHP
-public function add(array $item, $process = null, $fail = null, $ahead = null)
+public function add(array $item, $onSuccess = null, $onFail = null, $ahead = null)
 ```
-Add a task to taskpool.<br>
-**$item['opt']=array()** CURLOPT_* for current task.Override the global $this->opt and merged.<br>
-**$item['args']** Second parameter for callbacks.Include $this->cbFail and $fail and $process.<br>
-**$item['cache']=array()** Task cache.Override $this->cache and merged.<br />
-**$process** Called if task is success.The first parameter for the callback is array('info'=>array(),'content'=>'','ext'=>array()) and the second parameter is $item['args'] specified in first parameter of add().First callback parameter's info key is http info,content key is url content,ext key has some extended info.Callback can return array.key:cache(bool,controll caching the current request)<br />
-**$fail** Task fail callback.The first parameter has two keys of info and error.Info key is http info.The error key is full error infomation.The second parameter is $item['args'].<br>
-**$ahead** bool.Switch for higher priority.
+Add one task to the pool.
++ $item
+    1. $item['opt']=array() CURLOPT_\* constants for current task.
+    2. $item['args'] Arguments for callbacks.
+    3. $item['cache']=array() Cache config for current task.
++ $onSuccess Triggered on task finish.
+    + Callback has two arguments：
+        1. $result array with keys as below:
+            + $result['info'] Response header.
+            + $result['curl'] Current Curl instance.
+            + $result['body'] Response body.Not exist in download task.
+            + $result['header'] Raw response header.Exists when CURLOPT_HEADER was enabled.
+            + $result['cacheFile'] Exists when cache is used.
+        2. Value from $item['args']
+    + Return value can be setted.Must be array if setted.Array keys is as below:
+        + cache Same format with Curl::$cache.This is the last chance to set.
++ $onFail overwrite Curl::$onFail。
++ $ahead Add to high priority poll or not.
+
+Return: current Curl instance.
 
 ```PHP
 public function start()
 ```
-Start the loop.This is a blocked method.
-
-API(Base)
------------------
-```PHP
-function hashpath($name)
-```
-Get hashed path
+Start the event loop and block.
 
 ```PHP
-function substr($str, $start, $end = null, $mode = 'g')
+public function stop($onStop = null)
 ```
-Get substring between start string and end string.Start and end string are excluded.
+Stop the event loop and $onStop will be called when the loop has been stoped.
+Only argument for callbak is current Curl instance.
+
+## Toolkit (src/Toolkit.php Necessary tools) 
+```PHP
+function __construct(Curl $curl = null)
+```
+Default Curl instance is used if $curl is not setted.
 
 ```PHP
-function cbCurlFail($error, $args)
+function onFail($error, $args)
 ```
-Default fail callback.
+Default onFail.See Curl::$onFail for details.
 
 ```PHP
-function cbCurlInfo($info,$isFirst,$isLast)
+function onInfo($info)
 ```
-Default CurlMulti_Core::$cbInfo
+Default onInfo.See Curl::onInfo for details.
 
 ```PHP
-function encoding($html, $in = null, $out = 'UTF-8', $mode = 'auto')
+function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 ```
-Powerfull function to convert html encoding and set \<head\>\</head\> in html.$in can be get from \<head\>\</head\>.
+Powerful html encoding tranformer which can get current automatically and replace encoding in \<head\>\</head\>.
+Arguments：
++ $html Html string.
++ $in Current encoding.It's best to specify one.
++ $out Target encoding.
++ $mode auto|iconv|mb_convert_encoding，auto will choose automatically.
+
+Return:
+New encoded html.
 
 ```PHP
-function isUrl($str)
+function isUrl($url)
 ```
-If is a full url.
+Full url or not.Return bool.
+
+```PHP
+function urlFormater($url)
+```
+Replace space,process scheme and hosts and remove anchor etc.
+
+```PHP
+function buildUrl(array $parse)
+```
+Inverse function for parse_url().
 
 ```PHP
 function uri2url($uri, $urlCurrent)
 ```
-Get full url of $uri used in the $urlCurrent html page.
+Transform uri to full url for currentPage.$urlCurrent should be redirected after 3xx.
 
 ```PHP
 function url2uri($url, $urlCurrent)
 ```
-get relative uri of the current page.
+Transform full url to uri for currentPage.$urlCurrent should be redirected after 3xx.
 
 ```PHP
-function urlDir($url)
+function url2dir($url)
 ```
-url should be redirected final url.Final url normally has '/' suffix.
+Transform full url to dir.$urlCurrent should be redirected after 3xx.
 
 ```PHP
 function getCurl()
 ```
-Return CurlMulti_Core instance.
--->
+return current Curl instance.
+
+## HttpClone (src/HttpClone.php Website clone) 
+```PHP
+public $expire = null
+```
+Local file expire time.
+
+```PHP
+public $download = array(
+	'pic' => true,
+	'video' => false
+);
+```
+false will use remote file.
+
+```PHP
+public $blacklist = array();
+```
+Used for urls out of work.
+
+```PHP
+public $downloadExtension = array();
+```
+Download by extension(in html tag a),for example zip,rar.
+
+```PHP
+public $httpCode = array(
+    200
+);
+```
+Valid http code.Invalid http code will be reported and ignored.
+
+```PHP
+function __construct($dir)
+```
+Local top directory.
+
+```PHP
+function add($url, $depth = null)
+```
+Add a start url.All sub urls with prefix $url will be download if $depth is null.
+Return: Self instance.
+
+```PHP
+function start()
+```
+Start clone and block.

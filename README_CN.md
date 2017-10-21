@@ -19,8 +19,8 @@ QQ群: 215348766
 4. 支持动态任务。
 5. 支持透明文件缓存。
 6. 支持失败任务自动重试。
-7. 所有配置可以运行中实时修改并生效。
-8. 支持全局配置、任务配置、回调配置三个级别，优先级由低到高。
+7. 支持全局配置、任务配置、回调配置三个级别，优先级由低到高。
+8. 所有配置可以运行中实时修改并生效。
 
 ## 运行机制
 Curl::add()添加任务到任务池，Curl::start()开始执行任务并阻塞，过程中产生不同事件并调用对应的回调函数，
@@ -198,7 +198,7 @@ demo2：源站已关闭  [克隆站](http://static.phpdr.net/demo-clone/http_yam
 
 demo3：[源站](http://www.handubaby.com/)  [克隆站](http://static.phpdr.net/demo-clone/http_www.handubaby.com/index.html)
 
-## Curl (src/Curl.php 核心类) 
+## Curl (src/Curl.php 核心功能) 
 ```PHP
 public $maxThread = 10
 ```
@@ -283,7 +283,7 @@ public function add(array $item, $onSuccess = null, $onFail = null, $ahead = nul
         1. $result数组，键值如下：
             + $result['info'] Response头信息。
             + $result['curl'] 当前Curl对象句柄。
-            + $result['body'] Response消息体，任务成功时才会包含这个键。
+            + $result['body'] Response消息体，下载任务不包含这个键。
             + $result['header'] Response原始头信息，启用CURLOPT_HEADER之后才有这个键。
             + $result['cacheFile'] 读取的缓存数据才会包含这个键。
         2. $item['args']的值。
@@ -308,7 +308,7 @@ public function stop($onStop = null)
 ```PHP
 function __construct(Curl $curl = null)
 ```
-可以通过参数传递一个自定义的Curl对象或子对象。
+可以通过参数传递一个自定义的Curl对象或子对象，如果不指定会自动创建一个默认对象。
 
 ```PHP
 function onFail($error, $args)
@@ -359,7 +359,7 @@ function url2uri($url, $urlCurrent)
 根据当前页面url获取当前页中的绝对url对应的相对uri，$url应该是经过3xx重定向之后的值。
 
 ```PHP
-function url2uri($url)
+function url2dir($url)
 ```
 绝对url对应的目录，$url应该是经过3xx重定向之后的值。
 
@@ -410,11 +410,6 @@ function add($url, $depth = null)
 添加一个起始地址，$depth控制从该地址开始的目录深度。
 
 返回值：自身的引用。
-
-```PHP
-function start()
-```
-启动克隆过程。
 
 ```PHP
 function start()
