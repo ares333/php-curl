@@ -104,9 +104,9 @@ class Curl
         'running' => array()
     );
 
-    protected $downloadSpeedStartTime;
+    protected $onInfoLastTime = 0;
 
-    protected $downloadSpeedLastTime = 0;
+    protected $downloadSpeedStartTime;
 
     protected $downloadSpeedTotalSize = 0;
 
@@ -269,7 +269,7 @@ class Curl
         }
         unset($v);
         $this->downloadSpeedStartTime = null;
-        $this->downloadSpeedLastTime = 0;
+        $this->onInfoLastTime = 0;
         $this->downloadSpeedTotalSize = 0;
         $this->downloadSpeedList = array();
         $this->info['all']['downloadSpeed'] = 0;
@@ -390,13 +390,12 @@ class Curl
      */
     protected function onInfo($isLast = false)
     {
-        $downloadSpeedRefreshTime = 3;
         $now = time();
         if (! isset($this->downloadSpeedStartTime)) {
             $this->downloadSpeedStartTime = $now;
         }
-        if (($isLast || $now - $this->downloadSpeedLastTime > 0) &&
-             isset($this->onInfo)) {
+        if (($isLast || $now - $this->onInfoLastTime > 0) && isset(
+            $this->onInfo)) {
             $this->info['all']['taskPoolNum'] = count($this->taskPool);
             $this->info['all']['taskPoolNum'] += count($this->taskPoolAhead);
             $this->info['all']['taskRunningNum'] = count($this->taskRunning);
@@ -407,7 +406,7 @@ class Curl
                 $this->info['running'][$k] = curl_getinfo($v['ch']);
             }
             if ($now - $this->downloadSpeedStartTime > 0) {
-                if (count($this->downloadSpeedList) > $downloadSpeedRefreshTime) {
+                if (count($this->downloadSpeedList) > 10) {
                     array_shift($this->downloadSpeedList);
                 }
                 $this->downloadSpeedList[] = round(
@@ -417,12 +416,12 @@ class Curl
                     array_sum($this->downloadSpeedList) /
                          count($this->downloadSpeedList));
             }
-            if ($now - $this->downloadSpeedStartTime > $downloadSpeedRefreshTime) {
+            if ($now - $this->downloadSpeedStartTime > 3) {
                 $this->downloadSpeedTotalSize = 0;
                 $this->downloadSpeedStartTime = $now;
             }
             call_user_func($this->onInfo, $this->info, $this);
-            $this->downloadSpeedLastTime = $now;
+            $this->onInfoLastTime = $now;
         }
     }
 
