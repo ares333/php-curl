@@ -66,20 +66,23 @@ if (is_file($dumpFile)) {
             break;
     }
 }
-
-pcntl_signal(SIGINT,
-    function () use ($clone, $dumpFile) {
-        $clone->getCurl()->stop(
-            function () use ($clone, $dumpFile) {
-                $clone->getCurl()->onEvent = null;
-                file_put_contents($dumpFile, serialize($clone));
-                exit(0);
-            });
-    });
-
-$clone->getCurl()->onEvent = function () {
-    pcntl_signal_dispatch();
-};
+if (function_exists('pcntl_signal')) {
+    pcntl_signal(SIGINT,
+        function () use ($clone, $dumpFile) {
+            $clone->getCurl()->stop(
+                function () use ($clone, $dumpFile) {
+                    $clone->getCurl()->onEvent = null;
+                    file_put_contents($dumpFile, serialize($clone));
+                    exit(0);
+                });
+        });
+    
+    $clone->getCurl()->onEvent = function () {
+        pcntl_signal_dispatch();
+    };
+} else {
+    echo "pcntl extension not found!\n";
+}
 $clone->start();
 if (is_file($dumpFile)) {
     unlink($dumpFile);
