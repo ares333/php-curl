@@ -310,6 +310,21 @@ function __construct(Curl $curl = null)
 ```
 可以通过参数传递一个自定义的Curl对象或子对象，如果不指定会自动创建一个默认对象。
 
+默认对象会初始化Curl::$opt、Curl::onInfo、Curl::onFail，Curl::$opt初始值如下：
+```PHP
+array(
+    CURLINFO_HEADER_OUT => true,
+    CURLOPT_HEADER => true,
+    CURLOPT_CONNECTTIMEOUT => 10,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_AUTOREFERER => true,
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_MAXREDIRS => 5
+)
+```
+
 ```PHP
 function onFail($error, $args)
 ```
@@ -319,6 +334,8 @@ function onFail($error, $args)
 function onInfo($info)
 ```
 默认信息回调，以标准形式输出运行信息，参数详情见Curl::onInfo。
+
+此方法也可以手动调用，传递一个字符串参，字符串会被加入输出缓冲，和直接输出相比的好处是可以避免shell控制字符的影响。
 
 ```PHP
 function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')

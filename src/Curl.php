@@ -15,17 +15,7 @@ class Curl
     public $maxTry = 0;
 
     // Global CURLOPT_*
-    public $opt = array(
-        CURLINFO_HEADER_OUT => true,
-        CURLOPT_HEADER => true,
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_AUTOREFERER => true,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 5
-    );
+    public $opt = array();
 
     // Global config.
     public $cache = array(
@@ -57,27 +47,27 @@ class Curl
     // Emitted on IO event.
     public $onEvent;
 
-    protected $mh;
+    protected $_mh;
 
-    protected $taskPool = array();
+    protected $_taskPool = array();
 
     // Task pool with higher priority.
-    protected $taskPoolAhead = array();
+    protected $_taskPoolAhead = array();
 
-    protected $taskRunning = array();
+    protected $_taskRunning = array();
 
     // Failed tasks retrying.
-    protected $taskFailed = array();
+    protected $_taskFailed = array();
 
-    protected $stoping = false;
+    protected $_stoping = false;
 
     // Handle serialization callback temporarily
-    protected $onStop = null;
+    protected $_onStop = null;
 
-    protected static $running = false;
+    protected static $_running = false;
 
     // Running info.
-    protected $info = array(
+    protected $_info = array(
         'all' => array(
             'downloadSpeed' => 0,
             'bodySize' => 0,
@@ -104,13 +94,13 @@ class Curl
         'running' => array()
     );
 
-    protected $onInfoLastTime = 0;
+    protected $_onInfoLastTime = 0;
 
-    protected $downloadSpeedStartTime;
+    protected $_downloadSpeedStartTime;
 
-    protected $downloadSpeedTotalSize = 0;
+    protected $_downloadSpeedTotalSize = 0;
 
-    protected $downloadSpeedList = array();
+    protected $_downloadSpeedList = array();
 
     /**
      * Add a task to the taskPool
@@ -195,20 +185,20 @@ class Curl
         }
         // add
         if (true == $ahead) {
-            $this->taskPoolAhead[] = $task;
+            $this->_taskPoolAhead[] = $task;
         } else {
-            $this->taskPool[] = $task;
+            $this->_taskPool[] = $task;
         }
-        $this->info['all']['taskNum'] ++;
+        $this->_info['all']['taskNum'] ++;
         return $this;
     }
 
     public function __wakeup()
     {
         foreach (array(
-            &$this->taskFailed,
-            &$this->taskPoolAhead,
-            &$this->taskPool
+            &$this->_taskFailed,
+            &$this->_taskPoolAhead,
+            &$this->_taskPool
         ) as &$v) {
             foreach ($v as &$v1) {
                 if (isset($v1['fileMeta']['uri'])) {
@@ -228,21 +218,21 @@ class Curl
      */
     public function stop($onStop = null)
     {
-        if (! self::$running || $this->stoping) {
+        if (! self::$_running || $this->_stoping) {
             return;
         }
-        $this->stoping = true;
-        $this->onStop = $onStop;
+        $this->_stoping = true;
+        $this->_onStop = $onStop;
     }
 
     protected function onStop()
     {
-        $this->stoping = false;
+        $this->_stoping = false;
         foreach (array(
-            $this->taskFailed,
-            $this->taskRunning,
-            $this->taskPool,
-            $this->taskPoolAhead
+            $this->_taskFailed,
+            $this->_taskRunning,
+            $this->_taskPool,
+            $this->_taskPoolAhead
         ) as $v) {
             foreach ($v as $v1) {
                 if (isset($v1['opt'][CURLOPT_FILE]) &&
@@ -256,63 +246,63 @@ class Curl
             }
         }
         foreach (array(
-            &$this->taskRunning
+            &$this->_taskRunning
         ) as $k => &$v) {
             foreach ($v as $k1 => $v1) {
                 if (is_resource($v1['ch'])) {
-                    curl_multi_remove_handle($this->mh, $v1['ch']);
+                    curl_multi_remove_handle($this->_mh, $v1['ch']);
                     curl_close($v1['ch']);
                 }
                 unset($v[$k1]);
-                array_unshift($this->taskPoolAhead, $v1);
+                array_unshift($this->_taskPoolAhead, $v1);
             }
         }
         unset($v);
-        $this->downloadSpeedStartTime = null;
-        $this->onInfoLastTime = 0;
-        $this->downloadSpeedTotalSize = 0;
-        $this->downloadSpeedList = array();
-        $this->info['all']['downloadSpeed'] = 0;
-        $this->info['all']['activeNum'] = 0;
-        $this->info['all']['queueNum'] = 0;
-        if (isset($this->onStop)) {
+        $this->_downloadSpeedStartTime = null;
+        $this->_onInfoLastTime = 0;
+        $this->_downloadSpeedTotalSize = 0;
+        $this->_downloadSpeedList = array();
+        $this->_info['all']['downloadSpeed'] = 0;
+        $this->_info['all']['activeNum'] = 0;
+        $this->_info['all']['queueNum'] = 0;
+        if (isset($this->_onStop)) {
             // Serialization of 'Closure' is not allowed
-            $onStop = $this->onStop;
-            unset($this->onStop);
+            $onStop = $this->_onStop;
+            unset($this->_onStop);
             call_user_func($onStop, $this);
         }
     }
 
     public function start()
     {
-        if (self::$running) {
+        if (self::$_running) {
             user_error(__CLASS__ . ' is running !', E_USER_ERROR);
         }
-        self::$running = true;
-        $this->mh = curl_multi_init();
+        self::$_running = true;
+        $this->_mh = curl_multi_init();
         $this->runTask();
         do {
             $this->exec();
             $this->onInfo();
-            if ($this->stoping) {
+            if ($this->_stoping) {
                 $this->onStop();
                 break;
             }
-            curl_multi_select($this->mh);
+            curl_multi_select($this->_mh);
             if (isset($this->onEvent)) {
                 call_user_func($this->onEvent, $this);
             }
-            while (false != ($curlInfo = curl_multi_info_read($this->mh,
-                $this->info['all']['queueNum']))) {
-                if ($this->stoping) {
+            while (false != ($curlInfo = curl_multi_info_read($this->_mh,
+                $this->_info['all']['queueNum']))) {
+                if ($this->_stoping) {
                     $this->onStop();
                     break 2;
                 }
                 $ch = $curlInfo['handle'];
-                $task = $this->taskRunning[(int) $ch];
+                $task = $this->_taskRunning[(int) $ch];
                 $info = curl_getinfo($ch);
-                $this->info['all']['bodySize'] += $info['size_download'];
-                $this->info['all']['headerSize'] += $info['header_size'];
+                $this->_info['all']['bodySize'] += $info['size_download'];
+                $this->_info['all']['headerSize'] += $info['header_size'];
                 $param = array();
                 $param['info'] = $info;
                 $param['curl'] = $this;
@@ -332,7 +322,7 @@ class Curl
                     }
                 }
                 $curlError = curl_error($ch);
-                curl_multi_remove_handle($this->mh, $ch);
+                curl_multi_remove_handle($this->_mh, $ch);
                 curl_close($ch);
                 if (isset($task['opt'][CURLOPT_FILE])) {
                     fclose($task['opt'][CURLOPT_FILE]);
@@ -355,16 +345,16 @@ class Curl
                                 "Curl error($curlInfo[result]) $info[url]",
                                 E_USER_WARNING);
                         }
-                        $this->info['all']['failNum'] ++;
+                        $this->_info['all']['failNum'] ++;
                     } else {
                         $task['tried'] ++;
-                        $this->taskFailed[] = $task;
-                        $this->info['all']['taskNum'] ++;
+                        $this->_taskFailed[] = $task;
+                        $this->_info['all']['taskNum'] ++;
                     }
                 }
-                unset($this->taskRunning[(int) $ch]);
-                $this->info['all']['finishNum'] ++;
-                $this->downloadSpeedTotalSize += $info['size_download'] +
+                unset($this->_taskRunning[(int) $ch]);
+                $this->_info['all']['finishNum'] ++;
+                $this->_downloadSpeedTotalSize += $info['size_download'] +
                      $info['header_size'];
                 $this->runTask();
                 $this->exec();
@@ -373,13 +363,13 @@ class Curl
                     call_user_func($this->onEvent, $this);
                 }
             }
-        } while ($this->info['all']['activeNum'] ||
-             $this->info['all']['queueNum'] || ! empty($this->taskFailed) ||
-             ! empty($this->taskRunning) || ! empty($this->taskPool));
+        } while ($this->_info['all']['activeNum'] ||
+             $this->_info['all']['queueNum'] || ! empty($this->_taskFailed) ||
+             ! empty($this->_taskRunning) || ! empty($this->_taskPool));
         $this->onInfo(true);
-        curl_multi_close($this->mh);
-        $this->mh = null;
-        self::$running = false;
+        curl_multi_close($this->_mh);
+        $this->_mh = null;
+        self::$_running = false;
     }
 
     /**
@@ -391,43 +381,43 @@ class Curl
     protected function onInfo($isLast = false)
     {
         $now = time();
-        if (! isset($this->downloadSpeedStartTime)) {
-            $this->downloadSpeedStartTime = $now;
+        if (! isset($this->_downloadSpeedStartTime)) {
+            $this->_downloadSpeedStartTime = $now;
         }
-        if (($isLast || $now - $this->onInfoLastTime > 0) && isset(
+        if (($isLast || $now - $this->_onInfoLastTime > 0) && isset(
             $this->onInfo)) {
-            $this->info['all']['taskPoolNum'] = count($this->taskPool);
-            $this->info['all']['taskPoolNum'] += count($this->taskPoolAhead);
-            $this->info['all']['taskRunningNum'] = count($this->taskRunning);
-            $this->info['all']['taskFailNum'] = count($this->taskFailed);
+            $this->_info['all']['taskPoolNum'] = count($this->_taskPool);
+            $this->_info['all']['taskPoolNum'] += count($this->_taskPoolAhead);
+            $this->_info['all']['taskRunningNum'] = count($this->_taskRunning);
+            $this->_info['all']['taskFailNum'] = count($this->_taskFailed);
             // running
-            $this->info['running'] = array();
-            foreach ($this->taskRunning as $k => $v) {
-                $this->info['running'][$k] = curl_getinfo($v['ch']);
+            $this->_info['running'] = array();
+            foreach ($this->_taskRunning as $k => $v) {
+                $this->_info['running'][$k] = curl_getinfo($v['ch']);
             }
-            if ($now - $this->downloadSpeedStartTime > 0) {
-                if (count($this->downloadSpeedList) > 10) {
-                    array_shift($this->downloadSpeedList);
+            if ($now - $this->_downloadSpeedStartTime > 0) {
+                if (count($this->_downloadSpeedList) > 10) {
+                    array_shift($this->_downloadSpeedList);
                 }
-                $this->downloadSpeedList[] = round(
-                    $this->downloadSpeedTotalSize /
-                         ($now - $this->downloadSpeedStartTime));
-                $this->info['all']['downloadSpeed'] = round(
-                    array_sum($this->downloadSpeedList) /
-                         count($this->downloadSpeedList));
+                $this->_downloadSpeedList[] = round(
+                    $this->_downloadSpeedTotalSize /
+                         ($now - $this->_downloadSpeedStartTime));
+                $this->_info['all']['downloadSpeed'] = round(
+                    array_sum($this->_downloadSpeedList) /
+                         count($this->_downloadSpeedList));
             }
-            if ($now - $this->downloadSpeedStartTime > 3) {
-                $this->downloadSpeedTotalSize = 0;
-                $this->downloadSpeedStartTime = $now;
+            if ($now - $this->_downloadSpeedStartTime > 3) {
+                $this->_downloadSpeedTotalSize = 0;
+                $this->_downloadSpeedStartTime = $now;
             }
-            call_user_func($this->onInfo, $this->info, $this);
-            $this->onInfoLastTime = $now;
+            call_user_func($this->onInfo, $this->_info, $this);
+            $this->_onInfoLastTime = $now;
         }
     }
 
     protected function exec()
     {
-        while (curl_multi_exec($this->mh, $this->info['all']['activeNum']) ===
+        while (curl_multi_exec($this->_mh, $this->_info['all']['activeNum']) ===
              CURLM_CALL_MULTI_PERFORM) {
                 continue;
         }
@@ -435,25 +425,25 @@ class Curl
 
     protected function runTask()
     {
-        $c = $this->maxThread - count($this->taskRunning);
+        $c = $this->maxThread - count($this->_taskRunning);
         while ($c > 0) {
             $task = null;
             // search failed first
-            if (! empty($this->taskFailed)) {
-                $task = array_pop($this->taskFailed);
+            if (! empty($this->_taskFailed)) {
+                $task = array_pop($this->_taskFailed);
             } else {
                 // onTask
-                if (empty($this->taskPool) && empty($this->taskPoolAhead) &&
+                if (empty($this->_taskPool) && empty($this->_taskPoolAhead) &&
                      isset($this->onTask)) {
                     call_user_func($this->onTask, $this);
                 }
-                if (! empty($this->taskPoolAhead)) {
-                    $task = array_shift($this->taskPoolAhead);
-                } elseif (! empty($this->taskPool)) {
+                if (! empty($this->_taskPoolAhead)) {
+                    $task = array_shift($this->_taskPoolAhead);
+                } elseif (! empty($this->_taskPool)) {
                     if ($this->taskPoolType == 'stack') {
-                        $task = array_pop($this->taskPool);
+                        $task = array_pop($this->_taskPool);
                     } else {
-                        $task = array_shift($this->taskPool);
+                        $task = array_shift($this->_taskPool);
                     }
                 }
             }
@@ -472,13 +462,13 @@ class Curl
                     }
                     $cache['curl'] = $this;
                     $this->onProcess($task, $cache);
-                    $this->info['all']['cacheNum'] ++;
-                    $this->info['all']['finishNum'] ++;
+                    $this->_info['all']['cacheNum'] ++;
+                    $this->_info['all']['finishNum'] ++;
                     $this->onInfo();
                 } else {
                     $task = $this->initTask($task);
-                    $this->taskRunning[(int) $task['ch']] = $task;
-                    curl_multi_add_handle($this->mh, $task['ch']);
+                    $this->_taskRunning[(int) $task['ch']] = $task;
+                    curl_multi_add_handle($this->_mh, $task['ch']);
                 }
             } else {
                 break;

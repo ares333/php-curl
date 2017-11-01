@@ -310,6 +310,21 @@ function __construct(Curl $curl = null)
 ```
 Default Curl instance is used if $curl is not setted.
 
+The default instance will initialize Curl::$opt,Curl::onInfo,Curl::onFail. Curl::$opt initial values are as follows:
+```PHP
+array(
+    CURLINFO_HEADER_OUT => true,
+    CURLOPT_HEADER => true,
+    CURLOPT_CONNECTTIMEOUT => 10,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_AUTOREFERER => true,
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_MAXREDIRS => 5
+)
+```
+
 ```PHP
 function onFail($error, $args)
 ```
@@ -319,6 +334,8 @@ Default onFail.See Curl::$onFail for details.
 function onInfo($info)
 ```
 Default onInfo.See Curl::onInfo for details.
+
+The method can be call manually with a string parameter which will be added to output buffer.The purpose is to avoid the effects of shell control characters.
 
 ```PHP
 function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')

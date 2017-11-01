@@ -27,20 +27,20 @@ class HttpClone extends Toolkit
         200
     );
 
-    protected $suffix = 'html';
+    protected $_suffix = 'html';
 
-    protected $index = 'index.html';
+    protected $_index = 'index.html';
 
-    protected $task = array();
+    protected $_task = array();
 
     // absolute path of local dir
-    protected $dir;
+    protected $_dir;
 
     // processed url
-    protected $urlRequested = array();
+    protected $_urlRequested = array();
 
     // windows system flag
-    protected $isWin;
+    protected $_isWin;
 
     /**
      *
@@ -52,8 +52,8 @@ class HttpClone extends Toolkit
         if (! is_dir($dir) || ! is_writable($dir)) {
             user_error('dir(' . $dir . ') is invalid', E_USER_ERROR);
         }
-        $this->dir = $dir;
-        $this->isWin = (0 === strpos(PHP_OS, 'WIN'));
+        $this->_dir = $dir;
+        $this->_isWin = (0 === strpos(PHP_OS, 'WIN'));
     }
 
     /**
@@ -68,12 +68,12 @@ class HttpClone extends Toolkit
         if (! isset($url)) {
             user_error('invalid url(' . $url . ')', E_USER_ERROR);
         }
-        foreach (array_keys($this->task) as $v) {
+        foreach (array_keys($this->_task) as $v) {
             if (0 === strpos($url, $v) || 0 === strpos($v, $url)) {
                 user_error("url($url) conflict with $v", E_USER_ERROR);
             }
         }
-        $this->task[$url] = array(
+        $this->_task[$url] = array(
             'depth' => $depth
         );
         return $this;
@@ -103,7 +103,7 @@ class HttpClone extends Toolkit
         foreach ($this->blacklist as $k => $v) {
             $this->blacklist[$k] = $this->urlFormater($v);
         }
-        foreach (array_keys($this->task) as $v) {
+        foreach (array_keys($this->_task) as $v) {
             if ($this->checkUrl($v)) {
                 $this->getCurl()->add(
                     array(
@@ -300,7 +300,7 @@ class HttpClone extends Toolkit
                 $r['body'] = $pq->html();
                 $path = $args['file'];
                 if (isset($path)) {
-                    if ($this->isWin) {
+                    if ($this->_isWin) {
                         $path = mb_convert_encoding($path, 'gbk', 'utf-8');
                     }
                     file_put_contents($path, $r['body'], LOCK_EX);
@@ -430,7 +430,7 @@ class HttpClone extends Toolkit
     protected function isProcess($url)
     {
         $doProcess = false;
-        foreach ($this->task as $k => $v) {
+        foreach ($this->_task as $k => $v) {
             if (0 === strpos($url, $k)) {
                 if (isset($v['depth'])) {
                     $depth = $this->urlDepth($url, $k);
@@ -502,9 +502,9 @@ class HttpClone extends Toolkit
      */
     protected function url2file($url)
     {
-        $file = $this->dir . '/' . $this->getPath($url);
+        $file = $this->_dir . '/' . $this->getPath($url);
         $dir = dirname($file);
-        if ($this->isWin) {
+        if ($this->_isWin) {
             $dir = mb_convert_encoding($dir, 'gbk', 'utf-8');
         }
         if (! file_exists($dir)) {
@@ -541,7 +541,7 @@ class HttpClone extends Toolkit
             '#'
         );
         $invalidName = array();
-        if ($this->isWin) {
+        if ($this->_isWin) {
             $invalid = array_merge($invalid,
                 array(
                     '*',
@@ -636,10 +636,10 @@ class HttpClone extends Toolkit
             return false;
         }
         $md5 = md5($url, true);
-        if (in_array($md5, $this->urlRequested)) {
+        if (in_array($md5, $this->_urlRequested)) {
             return false;
         } else {
-            $this->urlRequested[] = $md5;
+            $this->_urlRequested[] = $md5;
             return true;
         }
     }
@@ -658,9 +658,9 @@ class HttpClone extends Toolkit
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         if (empty($ext)) {
             if (substr($path, - 1) === '/' || '' === $path) {
-                $path .= $this->index;
+                $path .= $this->_index;
             } else {
-                $path .= empty($this->suffix) ? '' : '.' . $this->suffix;
+                $path .= empty($this->_suffix) ? '' : '.' . $this->_suffix;
             }
         }
         return $path;

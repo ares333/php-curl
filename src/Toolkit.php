@@ -8,20 +8,31 @@ class Toolkit
 {
 
     // Curl instance
-    protected $curl;
+    protected $_curl;
 
     function __construct(Curl $curl = null)
     {
-        $this->curl = $curl;
-        if (! isset($this->curl)) {
-            $this->curl = new Curl();
+        $this->_curl = $curl;
+        if (! isset($this->_curl)) {
+            $this->_curl = new Curl();
+            $this->_curl->opt = array(
+                CURLINFO_HEADER_OUT => true,
+                CURLOPT_HEADER => true,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_AUTOREFERER => true,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => 5
+            );
             // default fail callback
-            $this->curl->onFail = array(
+            $this->_curl->onFail = array(
                 $this,
                 'onFail'
             );
             // default info callback
-            $this->curl->onInfo = array(
+            $this->_curl->onInfo = array(
                 $this,
                 'onInfo'
             );
@@ -38,7 +49,7 @@ class Toolkit
     {
         $msg = "Curl error ($error[errorCode])$error[errorMsg], url=" .
              $error['info']['url'];
-        if ($this->curl->onInfo == array(
+        if ($this->_curl->onInfo == array(
             $this,
             'onInfo'
         )) {
@@ -439,6 +450,6 @@ class Toolkit
      */
     function getCurl()
     {
-        return $this->curl;
+        return $this->_curl;
     }
 }

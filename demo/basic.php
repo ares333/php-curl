@@ -1,7 +1,8 @@
 <?php
 require_once '_inc.php';
-use Ares333\Curl\Curl;
-$curl = new Curl();
+use Ares333\Curl\Toolkit;
+$curl = (new Toolkit())->getCurl();
+$curl->onInfo = null;
 $curl->add(
     array(
         'opt' => array(

@@ -1,13 +1,8 @@
 <?php
 require_once '_inc.php';
-use Ares333\Curl\Curl;
 use Ares333\Curl\Toolkit;
-$curl = new Curl();
 $toolkit = new Toolkit();
-$curl->onInfo = array(
-    $toolkit,
-    'onInfo'
-);
+$curl = $toolkit->getCurl();
 $curl->maxThread = 2;
 $curl->cache['enable'] = true;
 $curl->cache['dir'] = __DIR__ . '/output/cache';

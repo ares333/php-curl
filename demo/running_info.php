@@ -1,16 +1,10 @@
-<?php
+ <?php
 require_once '_inc.php';
-use Ares333\Curl\Curl;
 use Ares333\Curl\Toolkit;
-$curl = new Curl();
-$toolkit = new Toolkit();
-$curl->onInfo = array(
-    $toolkit,
-    'onInfo'
-);
-$curl->maxThread = 2;
+$curl = (new Toolkit())->getCurl();
+$curl->maxThread = 1;
 $url = 'http://www.baidu.com';
-for ($i = 0; $i < 100; $i ++) {
+for ($i = 0; $i < 50; $i ++) {
     $curl->add(
         array(
             'opt' => array(
