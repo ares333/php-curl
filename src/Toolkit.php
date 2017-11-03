@@ -314,46 +314,46 @@ class Toolkit
 
     /**
      *
-     * @param string $uri
+     * @param string $urlPath
      * @param string $urlCurrent
      *            Should be final url which was redirected by 3xx http code.
      * @return string
      */
-    function uri2url($uri, $urlCurrent)
+    function path2url($urlPath, $urlCurrent)
     {
-        if (empty($uri)) {
+        if (empty($urlPath)) {
             return $urlCurrent;
         }
-        if ($this->isUrl($uri)) {
-            return $uri;
+        if ($this->isUrl($urlPath)) {
+            return $urlPath;
         }
         if (! $this->isUrl($urlCurrent)) {
             return;
         }
-        // uri started with ?,#
-        if (0 === strpos($uri, '#') || 0 === strpos($uri, '?')) {
+        // path started with ?,#
+        if (0 === strpos($urlPath, '#') || 0 === strpos($urlPath, '?')) {
             if (false !== ($pos = strpos($urlCurrent, '#'))) {
                 $urlCurrent = substr($urlCurrent, 0, $pos);
             }
             if (false !== ($pos = strpos($urlCurrent, '?'))) {
                 $urlCurrent = substr($urlCurrent, 0, $pos);
             }
-            return $urlCurrent . $uri;
+            return $urlCurrent . $urlPath;
         }
-        if (0 === strpos($uri, './')) {
-            $uri = substr($uri, 2);
+        if (0 === strpos($urlPath, './')) {
+            $urlPath = substr($urlPath, 2);
         }
         $urlDir = $this->url2dir($urlCurrent);
-        if (0 === strpos($uri, '/')) {
+        if (0 === strpos($urlPath, '/')) {
             $path = parse_url($urlDir, PHP_URL_PATH);
             if (isset($path)) {
                 $len = 0 - strlen($path);
             } else {
                 $len = strlen($urlDir);
             }
-            return substr($urlDir, 0, $len) . $uri;
+            return substr($urlDir, 0, $len) . $urlPath;
         } else {
-            return $urlDir . $uri;
+            return $urlDir . $urlPath;
         }
     }
 
@@ -364,7 +364,7 @@ class Toolkit
      *            Should be final url which was redirected by 3xx http code.
      * @return string
      */
-    function url2uri($url, $urlCurrent)
+    function url2path($url, $urlCurrent)
     {
         if (! $this->isUrl($url)) {
             return;
