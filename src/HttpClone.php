@@ -140,7 +140,7 @@ class HttpClone extends Toolkit
             return '';
         }
         if ($isLocal) {
-            $url = $this->url2path($url, $urlCurrent);
+            $url = $this->url2uri($url, $urlCurrent);
         }
         return $url;
     }
@@ -184,7 +184,7 @@ class HttpClone extends Toolkit
                             $isCss = true;
                         }
                     }
-                    $url = $this->path2url($v->attr('href'), $urlCurrent);
+                    $url = $this->uri2url($v->attr('href'), $urlCurrent);
                     $v->attr('href', $this->url2src($url, $urlCurrent, true));
                     $urlDownload[$url] = $isCss ? array(
                         'type' => 'css'
@@ -204,7 +204,7 @@ class HttpClone extends Toolkit
                 foreach ($script as $v) {
                     $v = pq($v);
                     if (null != $v->attr('src')) {
-                        $url = $this->path2url($v->attr('src'), $urlCurrent);
+                        $url = $this->uri2url($v->attr('src'), $urlCurrent);
                         $v->attr('src', $this->url2src($url, $urlCurrent, true));
                         $urlDownload[$url] = array();
                     }
@@ -214,7 +214,7 @@ class HttpClone extends Toolkit
                 if ($this->download['pic']) {
                     foreach ($pic as $v) {
                         $v = pq($v);
-                        $url = $this->path2url($v->attr('src'), $urlCurrent);
+                        $url = $this->uri2url($v->attr('src'), $urlCurrent);
                         $v->attr('src', $this->url2src($url, $urlCurrent, true));
                         $urlDownload[$url] = array();
                     }
@@ -223,7 +223,7 @@ class HttpClone extends Toolkit
                         $v = pq($v);
                         $v->attr('src',
                             $this->url2src(
-                                $this->path2url($v->attr('src'), $urlCurrent),
+                                $this->uri2url($v->attr('src'), $urlCurrent),
                                 $urlCurrent, false));
                     }
                 }
@@ -232,7 +232,7 @@ class HttpClone extends Toolkit
                 if ($this->download['pic']) {
                     foreach ($pic as $v) {
                         $v = pq($v);
-                        $url = $this->path2url($v->attr('poster'), $urlCurrent);
+                        $url = $this->uri2url($v->attr('poster'), $urlCurrent);
                         $v->attr('poster',
                             $this->url2src($url, $urlCurrent, true));
                         $urlDownload[$url] = array();
@@ -242,7 +242,7 @@ class HttpClone extends Toolkit
                         $v = pq($v);
                         $v->attr('poster',
                             $this->url2src(
-                                $this->path2url($v->attr('src'), $urlCurrent),
+                                $this->uri2url($v->attr('src'), $urlCurrent),
                                 $urlCurrent, false));
                     }
                 }
@@ -251,7 +251,7 @@ class HttpClone extends Toolkit
                 if ($this->download['video']) {
                     foreach ($video as $v) {
                         $v = pq($v);
-                        $url = $this->path2url($v->attr('src'), $urlCurrent);
+                        $url = $this->uri2url($v->attr('src'), $urlCurrent);
                         $v->attr('src', $this->url2src($url, $urlCurrent, true));
                         $urlDownload[$url] = array();
                     }
@@ -260,7 +260,7 @@ class HttpClone extends Toolkit
                         $v = pq($v);
                         $v->attr('src',
                             $this->url2src(
-                                $this->path2url($v->attr('src'), $urlCurrent),
+                                $this->uri2url($v->attr('src'), $urlCurrent),
                                 $urlCurrent, false));
                     }
                 }
@@ -270,7 +270,7 @@ class HttpClone extends Toolkit
                     $v = pq($v);
                     $v->attr('action',
                         $this->url2src(
-                            $this->path2url($v->attr('action'), $urlCurrent),
+                            $this->uri2url($v->attr('action'), $urlCurrent),
                             $urlCurrent, false));
                 }
                 // href
@@ -282,7 +282,7 @@ class HttpClone extends Toolkit
                          strtolower(substr(ltrim($href), 0, 11)) == 'javascript:') {
                         continue;
                     }
-                    $url = $this->path2url($href, $urlCurrent);
+                    $url = $this->uri2url($href, $urlCurrent);
                     if ($this->isProcess($this->urlFormater($url))) {
                         if (in_array(pathinfo($url, PATHINFO_EXTENSION),
                             $this->downloadExtension)) {
@@ -404,7 +404,7 @@ class HttpClone extends Toolkit
                     } else {
                         $vUrl = array();
                     }
-                    $url[$this->path2url($v, $urlCurrent)] = $vUrl;
+                    $url[$this->uri2url($v, $urlCurrent)] = $vUrl;
                 }
                 $content = preg_replace_callback($patterns,
                     function ($matches) use ($urlCurrent) {
@@ -414,7 +414,7 @@ class HttpClone extends Toolkit
                         }
                         return str_replace($matches[2],
                             $this->url2src(
-                                $this->path2url($matches[2], $urlCurrent),
+                                $this->uri2url($matches[2], $urlCurrent),
                                 $urlCurrent, true), $matches[0]);
                     }, $content);
             }
@@ -473,9 +473,9 @@ class HttpClone extends Toolkit
      * @param string $urlCurrent
      * @return string
      */
-    public function url2path($url, $urlCurrent)
+    public function url2uri($url, $urlCurrent)
     {
-        $path = parent::url2path($url, $urlCurrent);
+        $path = parent::url2uri($url, $urlCurrent);
         $path = $this->fixPath($path);
         if (! isset($path)) {
             $dir2 = $this->url2dir($urlCurrent);
@@ -645,7 +645,7 @@ class HttpClone extends Toolkit
     }
 
     /**
-     * Fix urlPath and file path.
+     * Fix uri and file path.
      *
      * @param string $path
      * @return string
