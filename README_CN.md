@@ -270,7 +270,7 @@ public function add(array $item, $onSuccess = null, $onFail = null, $ahead = nul
             + $result['cacheFile'] 读取的缓存数据才会包含这个键。
         2. $item['args']的值。
     + 回调函数的返回值（可选），数组形式，键值如下：
-        + cache Curl::$cache结构一致，控制当前任务的缓存配置。
+        + cache 和Curl::$cache结构一致，控制当前任务的缓存配置。
 + $onFail 覆盖Curl::$onFail。
 + $ahead 是否加入优先队列，优先队列取完才回取普通任务池中的任务。
 
