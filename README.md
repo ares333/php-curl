@@ -423,7 +423,7 @@ Start clone and block.
 Based on Curl and Toolkit,inherit power of Curl and has self features as below:
 1. Same page will be processed only once.3xx and malformed url will be dealed automatically.
 2. Url and uri including remote and local will be processed automatically.
-3. All local link will be a file(not directory),with this all file can be placed on cdn or aws s3 or something like.
+3. All local link will be a file(not directory),with this all files can be placed on cdn or aws s3 or something like.
 4. Resource in style and css tag will be processed automatically,@import expression is supported recursively.
 5. Support download by file extension.Form action process automatically.
 6. Support multi start url with depth.
