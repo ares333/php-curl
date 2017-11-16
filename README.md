@@ -121,6 +121,9 @@ $curl->onInfo = array(
 $curl->maxThread = 2;
 $curl->cache['enable'] = true;
 $curl->cache['dir'] = __DIR__ . '/output/cache';
+if (! is_dir($curl->cache['dir'])) {
+    mkdir($curl->cache['dir'], 0755, true);
+}
 $url = 'http://www.baidu.com';
 for ($i = 0; $i < 20; $i ++) {
     $curl->add(
