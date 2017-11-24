@@ -268,6 +268,7 @@ class Toolkit
     /**
      *
      * @param array $parse
+     * @return string
      */
     function buildUrl(array $parse)
     {
