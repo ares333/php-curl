@@ -231,6 +231,38 @@ class Toolkit
     }
 
     /**
+     * content between start and end
+     *
+     * @param string $str
+     * @param string $start
+     * @param string $end
+     * @param bool $greed
+     * @return string
+     */
+    function between($str, $start, $end = null, $greed = true)
+    {
+        if (isset($start)) {
+            $pos1 = strpos($str, $start);
+        } else {
+            $pos1 = 0;
+        }
+        if (isset($end)) {
+            if ($greed) {
+                $pos2 = strrpos($str, $end);
+            } else {
+                $pos2 = strpos($str, $end, $pos1);
+            }
+        } else {
+            $pos2 = strlen($str);
+        }
+        if (false === $pos1 || false === $pos2 || $pos2 < $pos1) {
+            return '';
+        }
+        $len = strlen($start);
+        return substr($str, $pos1 + $len, $pos2 - $pos1 - $len);
+    }
+
+    /**
      *
      * @param string $url
      * @return boolean
