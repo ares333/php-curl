@@ -293,7 +293,6 @@ class Toolkit
         $parse = parse_url($url);
         strtolower($parse['scheme']);
         strtolower($parse['host']);
-        unset($parse['fragment']);
         return $this->buildUrl($parse);
     }
 
