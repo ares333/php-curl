@@ -166,6 +166,10 @@ class HttpClone extends Toolkit
                 $doParse = true;
             }
             if ($doParse) {
+                $r['body'] = trim($r['body']);
+                while (substr($r['body'], 0, 3) === chr(239) . chr(187) . chr(191)) {
+                    $r['body'] = substr($r['body'], 3);
+                }
                 $r['body'] = $this->htmlEncode($r['body']);
                 $urlCurrent = $r['info']['url'];
                 $pq = phpQuery::newDocumentHTML($r['body']);

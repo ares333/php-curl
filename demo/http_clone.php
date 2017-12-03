@@ -7,6 +7,10 @@ global $argv;
 if (! isset($argv[1])) {
     $argv[1] = '1';
 }
+$dump = true;
+if (isset($argv[2]) && '0' === $argv[2]) {
+    $dump = false;
+}
 
 class HttpCloneDemo extends HttpClone
 {
@@ -64,24 +68,31 @@ if (is_file($dumpFile)) {
             $clone->download['video'] = true;
             $clone->add('http://www.handubaby.com', 5);
             break;
+        case '3':
+            $clone->getCurl()->maxThread = 2;
+            $clone->getCurl()->opt[CURLOPT_TIMEOUT] = 30;
+            $clone->add('http://www.bjszxx.cn/', 3);
+            break;
     }
 }
-if (function_exists('pcntl_signal')) {
-    pcntl_signal(SIGINT,
-        function () use ($clone, $dumpFile) {
-            $clone->getCurl()->stop(
-                function () use ($clone, $dumpFile) {
-                    $clone->getCurl()->onEvent = null;
-                    file_put_contents($dumpFile, serialize($clone));
-                    exit(0);
-                });
-        });
-    
-    $clone->getCurl()->onEvent = function () {
-        pcntl_signal_dispatch();
-    };
-} else {
-    echo "pcntl extension not found!\n";
+if ($dump) {
+    if (function_exists('pcntl_signal')) {
+        pcntl_signal(SIGINT,
+            function () use ($clone, $dumpFile) {
+                $clone->getCurl()->stop(
+                    function () use ($clone, $dumpFile) {
+                        $clone->getCurl()->onEvent = null;
+                        file_put_contents($dumpFile, serialize($clone));
+                        exit(0);
+                    });
+            });
+        
+        $clone->getCurl()->onEvent = function () {
+            pcntl_signal_dispatch();
+        };
+    } else {
+        echo "pcntl extension not found and auto dump is disabled.\n";
+    }
 }
 $clone->start();
 if (is_file($dumpFile)) {
