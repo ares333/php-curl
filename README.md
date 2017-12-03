@@ -431,10 +431,10 @@ Based on Curl and Toolkit,inherit power of Curl and has self features as below:
 
 Notice: Clone is a very complex work and was tested with limited website.Below is the demo from some of the tests:
 
-demo1: [Source](http://www.laruence.com/manual/)  [Clone](http://static.phpdr.net/demo-clone/http_www.laruence.com/manual/index.html)
+demo1: [Source](http://www.laruence.com/manual/)  [Clone](http://demo-curl.phpdr.net/clone/http_www.laruence.com/manual/index.html)
 
-demo2: Source has been closed  [Clone](http://static.phpdr.net/demo-clone/http_yamlcss.meezhou.com/index.html)
+demo2: Source has been closed  [Clone](http://demo-curl.phpdr.net/clone/http_yamlcss.meezhou.com/index.html)
 
-demo3: [Source](http://www.handubaby.com/)  [Clone](http://static.phpdr.net/demo-clone/http_www.handubaby.com/index.html)
+demo3: [Source](http://www.handubaby.com/)  [Clone](http://demo-curl.phpdr.net/clone/http_www.handubaby.com/index.html)
 
-demo4: [Source](http://www.bjszxx.cn/) [Clone](http://static.phpdr.net/demo-clone/http_www.bjszxx.cn/index.html)
+demo4: [Source](http://www.bjszxx.cn/) [Clone](http://demo-curl.phpdr.net/clone/http_www.bjszxx.cn/index.html)

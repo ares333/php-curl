@@ -432,10 +432,10 @@ function start()
 
 注意：克隆功能极其复杂，只测试了有限的网站，部分克隆网站的demo如下：
 
-demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://static.phpdr.net/demo-clone/http_www.laruence.com/manual/index.html)
+demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://demo-curl.phpdr.net/clone/http_www.laruence.com/manual/index.html)
 
-demo2：源站已关闭  [克隆站](http://static.phpdr.net/demo-clone/http_yamlcss.meezhou.com/index.html)
+demo2：源站已关闭  [克隆站](http://demo-curl.phpdr.net/clone/http_yamlcss.meezhou.com/index.html)
 
-demo3：[源站](http://www.handubaby.com/)  [克隆站](http://static.phpdr.net/demo-clone/http_www.handubaby.com/index.html)
+demo3：[源站](http://www.handubaby.com/)  [克隆站](http://demo-curl.phpdr.net/clone/http_www.handubaby.com/index.html)
 
-demo4：[源站](http://www.bjszxx.cn/) [克隆站](http://static.phpdr.net/demo-clone/http_www.bjszxx.cn/index.html)
+demo4：[源站](http://www.bjszxx.cn/) [克隆站](http://demo-curl.phpdr.net/clone/http_www.bjszxx.cn/index.html)
