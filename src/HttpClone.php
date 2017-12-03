@@ -284,7 +284,6 @@ class HttpClone extends Toolkit
                             $this->uri2url($v->attr('action'), $urlCurrent),
                             $urlCurrent, false));
                 }
-                if ('http://www.bjszxx.cn/244.html' == $r['info']['url']) {}
                 // href
                 $a = $pq['a[href]'];
                 foreach ($a as $v) {
@@ -304,9 +303,6 @@ class HttpClone extends Toolkit
                         }
                         $v->attr('href',
                             $this->url2src($url, $urlCurrent, true));
-                        if ('http://www.bjszxx.cn/244.html' == $r['info']['url']) {
-                            $this->onInfo($v->attr('href') . "\n");
-                        }
                     } else {
                         $v->attr('href',
                             $this->url2src($url, $urlCurrent, false));
