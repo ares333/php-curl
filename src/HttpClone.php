@@ -130,10 +130,13 @@ class HttpClone extends Toolkit
     /**
      *
      * @param string $url
+     * @param string $urlCurrent
      * @param bool $isLocal
+     * @param bool $fixQuery
+     *            only used if $isLocal is true
      * @return string
      */
-    protected function url2src($url, $urlCurrent, $isLocal)
+    protected function url2src($url, $urlCurrent, $isLocal, $fixQuery = true)
     {
         $url = $this->urlFormater($url);
         if (in_array($url, $this->blacklist)) {
@@ -141,6 +144,9 @@ class HttpClone extends Toolkit
         }
         if ($isLocal) {
             $url = $this->url2uri($url, $urlCurrent);
+            if ($fixQuery) {
+                $url = str_replace('?', '？', $url);
+            }
         }
         return $url;
     }
@@ -167,8 +173,9 @@ class HttpClone extends Toolkit
             }
             if ($doParse) {
                 $r['body'] = trim($r['body']);
-                while (substr($r['body'], 0, 3) === chr(239) . chr(187) . chr(191)) {
-                    $r['body'] = substr($r['body'], 3);
+                while (substr($r['body'], 0, 3) ===
+                     chr(239) . chr(187) . chr(191)) {
+                        $r['body'] = substr($r['body'], 3);
                 }
                 $r['body'] = $this->htmlEncode($r['body']);
                 $urlCurrent = $r['info']['url'];
@@ -277,6 +284,7 @@ class HttpClone extends Toolkit
                             $this->uri2url($v->attr('action'), $urlCurrent),
                             $urlCurrent, false));
                 }
+                if ('http://www.bjszxx.cn/244.html' == $r['info']['url']) {}
                 // href
                 $a = $pq['a[href]'];
                 foreach ($a as $v) {
@@ -296,6 +304,9 @@ class HttpClone extends Toolkit
                         }
                         $v->attr('href',
                             $this->url2src($url, $urlCurrent, true));
+                        if ('http://www.bjszxx.cn/244.html' == $r['info']['url']) {
+                            $this->onInfo($v->attr('href') . "\n");
+                        }
                     } else {
                         $v->attr('href',
                             $this->url2src($url, $urlCurrent, false));
@@ -419,7 +430,7 @@ class HttpClone extends Toolkit
                         return str_replace($matches[2],
                             $this->url2src(
                                 $this->uri2url($matches[2], $urlCurrent),
-                                $urlCurrent, true), $matches[0]);
+                                $urlCurrent, true, false), $matches[0]);
                     }, $content);
             }
         }
