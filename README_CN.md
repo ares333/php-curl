@@ -437,3 +437,5 @@ demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://static.ph
 demo2：源站已关闭  [克隆站](http://static.phpdr.net/demo-clone/http_yamlcss.meezhou.com/index.html)
 
 demo3：[源站](http://www.handubaby.com/)  [克隆站](http://static.phpdr.net/demo-clone/http_www.handubaby.com/index.html)
+
+demo4：[源站](http://www.bjszxx.cn/) [克隆站](http://static.phpdr.net/demo-clone/http_www.bjszxx.cn/index.html)
