@@ -17,6 +17,9 @@ class HttpClone extends Toolkit
         'video' => false
     );
 
+    // transform ext to fixed html
+    public $htmlExt = array();
+
     public $blacklist = array();
 
     // zip,rar ...
@@ -666,14 +669,31 @@ class HttpClone extends Toolkit
         if (! isset($path)) {
             return;
         }
-        $ext = pathinfo($path, PATHINFO_EXTENSION);
-        if (empty($ext)) {
+        $fragment = '';
+        $pos = strpos($path, '#');
+        if (false !== $pos) {
+            $fragment = substr($path, $pos);
+            $path = substr($path, 0, $pos);
+        }
+        $query = '';
+        $parse = parse_url($path);
+        $path = $parse['path'];
+        if (isset($parse['query'])) {
+            $query = '?' . $parse['query'];
+        }
+        $pathArr = pathinfo($path);
+        if (empty($pathArr['extension'])) {
             if (substr($path, - 1) === '/' || '' === $path) {
                 $path .= $this->_index;
             } else {
                 $path .= empty($this->_suffix) ? '' : '.' . $this->_suffix;
             }
+        } else {
+            if (in_array($pathArr['extension'], $this->htmlExt)) {
+                $path = rtrim($pathArr['dirname'], ' /') . '/' .
+                     $pathArr['filename'] . '.html';
+            }
         }
-        return $path;
+        return $path . $query . $fragment;
     }
 }
