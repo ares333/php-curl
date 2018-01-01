@@ -237,6 +237,7 @@ Running state callback which triggered when IO event happens.Triggered one secon
     + $info['all']['taskPoolNum'] Task pool count.
     + $info['all']['taskFailNum'] Task count which are retrying.
 2. Current Curl instance.
+3. bool, is last call or not.
 
 ```PHP
 public $onEvent = null

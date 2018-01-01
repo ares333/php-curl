@@ -67,9 +67,11 @@ class Toolkit
      *
      * @param array|string $info
      *            array('all'=>array(),'running'=>array())
+     * @param Curl $curl
+     * @param bool $isLast
      *
      */
-    function onInfo($info)
+    function onInfo($info, $curl = null, $isLast = null)
     {
         static $meta = array(
             'downloadSpeed' => array(
@@ -156,18 +158,26 @@ class Toolkit
                 ${$name}[$k] = $v;
             }
         }
+        $str = '';
         if (PHP_OS == 'Linux') {
             if ($isFirst) {
-                echo "\n";
+                $str .= "\n";
                 $isFirst = false;
             }
-            $str = "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim($content);
+            $str .= "\33[A\r\33[K" . $caption . "\n\r\33[K" . rtrim($content);
         } else {
-            $str = "\r" . rtrim($content);
+            $str .= "\r" . rtrim($content);
         }
         echo $str;
+        if ($isLast) {
+            echo "\n";
+        }
         if ('' !== $buffer) {
-            echo "\n" . trim($buffer) . "\n\n";
+            if ($isLast) {
+                echo trim($buffer) . "\n";
+            } else {
+                echo "\n" . trim($buffer) . "\n\n";
+            }
             $buffer = '';
         }
     }

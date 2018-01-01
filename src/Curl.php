@@ -410,7 +410,7 @@ class Curl
                 $this->_downloadSpeedTotalSize = 0;
                 $this->_downloadSpeedStartTime = $now;
             }
-            call_user_func($this->onInfo, $this->_info, $this);
+            call_user_func($this->onInfo, $this->_info, $this, $isLast);
             $this->_onInfoLastTime = $now;
         }
     }

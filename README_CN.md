@@ -238,6 +238,7 @@ public $onInfo = null
     + $info['all']['taskPoolNum'] 任务池中排队的任务数。
     + $info['all']['taskFailNum'] 失败重试中的任务数。
 2. 当前Curl实例的句柄
+3. bool值，是否是最后一次调用
 
 ```PHP
 public $onEvent = null
