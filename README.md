@@ -72,6 +72,26 @@ $curl->add(
         echo "download finished successfully, file=$args[file]\n";
     })->start();
 ```
+**task callback**
+Task can be added in task callback. See more details in Curl::$onTask.
+```PHP
+$curl = (new Toolkit())->getCurl();
+$curl->maxThread = 1;
+$curl->onTask = function ($curl) {
+    static $i = 0;
+    if ($i >= 50) {
+        return;
+    }
+    $url = 'http://www.baidu.com';
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i ++
+            )
+        ));
+};
+$curl->start();
+```
 **running info**
 ```PHP
 $curl = new Curl();

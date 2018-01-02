@@ -73,6 +73,26 @@ $curl->add(
         echo "download finished successfully, file=$args[file]\n";
     })->start();
 ```
+**大量任务**
+任务可以动态添加，可以参考Curl::$onTask
+```PHP
+$curl = (new Toolkit())->getCurl();
+$curl->maxThread = 1;
+$curl->onTask = function ($curl) {
+    static $i = 0;
+    if ($i >= 50) {
+        return;
+    }
+    $url = 'http://www.baidu.com';
+    $curl->add(
+        array(
+            'opt' => array(
+                CURLOPT_URL => $url . '?wd=' . $i ++
+            )
+        ));
+};
+$curl->start();
+```
 **运行状态**
 ```PHP
 $curl = new Curl();
