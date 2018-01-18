@@ -420,15 +420,17 @@ class HttpClone extends Toolkit
                     }
                     $url[$this->uri2url($v, $urlCurrent)] = $vUrl;
                 }
+                // for php5.3
+                $_this = $this;
                 $content = preg_replace_callback($patterns,
-                    function ($matches) use ($urlCurrent) {
+                    function ($matches) use ($urlCurrent, $_this) {
                         // base64
                         if (0 === strpos(ltrim($matches[2]), 'data:')) {
                             return $matches[0];
                         }
                         return str_replace($matches[2],
-                            $this->url2src(
-                                $this->uri2url($matches[2], $urlCurrent),
+                            $_this->url2src(
+                                $_this->uri2url($matches[2], $urlCurrent),
                                 $urlCurrent, true, false), $matches[0]);
                     }, $content);
             }
