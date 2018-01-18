@@ -249,18 +249,17 @@ class Curl
             }
         }
         foreach (array(
-            &$this->_taskRunning
-        ) as $k => &$v) {
-            foreach ($v as $k1 => $v1) {
+            '_taskRunning'
+        ) as $v) {
+            foreach ($this->$v as $k1 => $v1) {
                 if (is_resource($v1['ch'])) {
                     curl_multi_remove_handle($this->_mh, $v1['ch']);
                     curl_close($v1['ch']);
                 }
-                unset($v[$k1]);
+                unset($this->{$v}[$k1]);
                 array_unshift($this->_taskPoolAhead, $v1);
             }
         }
-        unset($v);
         $this->_downloadSpeedStartTime = null;
         $this->_onInfoLastTime = 0;
         $this->_downloadSpeedTotalSize = 0;
