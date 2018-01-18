@@ -1,7 +1,8 @@
 <?php
 require_once '_inc.php';
 use Ares333\Curl\Toolkit;
-$curl = (new Toolkit())->getCurl();
+$toolkit = new Toolkit();
+$curl = $toolkit->getCurl();
 $curl->onInfo = null;
 $curl->add(
     array(

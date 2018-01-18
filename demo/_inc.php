@@ -12,7 +12,7 @@ foreach ($dir as $v) {
 }
 
 if (! function_exists('printr')) {
-    
+
     /**
      *
      * @param mixed $expression
@@ -31,7 +31,7 @@ if (! function_exists('printr')) {
 }
 
 if (! function_exists('vardump')) {
-    
+
     /**
      *
      * @param mixed $expression
@@ -42,9 +42,10 @@ if (! function_exists('vardump')) {
         exit();
     }
 }
+
 class ErrorHandler
 {
-    
+
     /**
      * error to exception
      *
@@ -65,7 +66,7 @@ class ErrorHandler
                 }
             });
     }
-    
+
     /**
      *
      * @param int $severity
@@ -75,7 +76,8 @@ class ErrorHandler
     {
         static $map;
         if (! isset($map)) {
-            $map = get_defined_constants(true)['Core'];
+            $map = get_defined_constants(true);
+            $map = $map['Core'];
             foreach ($map as $k => $v) {
                 if (0 !== strpos($k, 'E_')) {
                     unset($map[$k]);
@@ -87,7 +89,7 @@ class ErrorHandler
             return $map[$severity];
         }
     }
-    
+
     /**
      * deal with exception
      *

@@ -1,7 +1,8 @@
 <?php
 require '_inc.php';
 use Ares333\Curl\Toolkit;
-$curl = (new Toolkit())->getCurl();
+$toolkit = new Toolkit();
+$curl = $toolkit->getCurl();
 $curl->onInfo = null;
 $url = 'http://www.baidu.com/img/bd_logo1.png';
 $file = __DIR__ . '/output/download.png';

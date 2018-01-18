@@ -1,7 +1,8 @@
 <?php
 require_once '_inc.php';
 use Ares333\Curl\Toolkit;
-$curl = (new Toolkit())->getCurl();
+$toolkit = new Toolkit();
+$curl = $toolkit->getCurl();
 $curl->maxThread = 1;
 $curl->onTask = function ($curl) {
     static $i = 0;
