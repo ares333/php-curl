@@ -73,6 +73,7 @@ $curl->add(
     })->start();
 ```
 **task callback**
+
 Task can be added in task callback. See more details in Curl::$onTask.
 ```PHP
 $curl = (new Toolkit())->getCurl();
