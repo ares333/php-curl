@@ -74,6 +74,7 @@ $curl->add(
     })->start();
 ```
 **大量任务**
+
 任务可以动态添加，可以参考Curl::$onTask
 ```PHP
 $curl = (new Toolkit())->getCurl();
