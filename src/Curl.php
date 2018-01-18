@@ -196,20 +196,23 @@ class Curl
     public function __wakeup()
     {
         foreach (array(
-            &$this->_taskFailed,
-            &$this->_taskPoolAhead,
-            &$this->_taskPool
-        ) as &$v) {
-            foreach ($v as &$v1) {
+            '_taskFailed',
+            '_taskPoolAhead',
+            '_taskPool'
+        ) as $v) {
+            if (! is_array($this->$v)) {
+                printr($this->$v);
+            }
+            foreach ($this->$v as $k1 => $v1) {
                 if (isset($v1['fileMeta']['uri'])) {
                     $v1['opt'][CURLOPT_FILE] = fopen($v1['fileMeta']['uri'],
                         $v1['fileMeta']['mode']);
                     $v1['fileMeta'] = stream_get_meta_data(
                         $v1['opt'][CURLOPT_FILE]);
+                    $this->{$v}[$k1] = $v1;
                 }
             }
         }
-        unset($v, $v1);
     }
 
     /**
