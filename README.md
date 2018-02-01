@@ -2,7 +2,7 @@
 
 ## About
 
-Implemented by using curlmulti internal io event.It's a high performance,high universality,high expansibility library which is especially suitable for massive scale tasks and complex logic case.
+Implemented by using curlmulti internal io event.It's a high performance,high universality,high expansibility library which especially suitable for massive scale tasks and complex logic case.
 
 ## Demand
 PHP: >=5.3
