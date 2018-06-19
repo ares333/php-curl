@@ -4,14 +4,19 @@ use Ares333\Curl\Toolkit;
 $toolkit = new Toolkit();
 $curl = $toolkit->getCurl();
 $curl->onInfo = null;
+$responseCode = null;
 $curl->add(
     array(
         'opt' => array(
             CURLOPT_URL => 'http://baidu.com'
         ),
-        'args' => 'This is user arg for ' . $v
+        'args' => [
+            'This is user arg for ' . $v,
+            &$responseCode
+        ]
     ),
     function ($r, $args) {
+        $args[1] = $r['info']['http_code'];
         echo "Request success for " . $r['info']['url'] . "\n";
         echo "\nHeader info:\n";
         print_r($r['info']);
@@ -24,3 +29,5 @@ $curl->add(
         echo "\n";
     });
 $curl->start();
+echo "\nresponse code returned by reference:\n";
+echo $responseCode . "\n";
