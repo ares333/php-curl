@@ -117,8 +117,7 @@ class HttpClone extends Toolkit
                             'file' => $this->url2file($v),
                             'isDownload' => false
                         )
-                    ),
-                    array(
+                    ), array(
                         $this,
                         'onProcess'
                     ));
@@ -170,15 +169,15 @@ class HttpClone extends Toolkit
             $doParse = ! $args['isDownload'];
             // Download file may need to be parsed.
             if (! $doParse && ! isset($args['type']) &&
-                 false !== strpos($r['info']['content_type'], 'text/html')) {
+                false !== strpos($r['info']['content_type'], 'text/html')) {
                 $r['body'] = file_get_contents($args['file']);
                 $doParse = true;
             }
             if ($doParse) {
                 $r['body'] = trim($r['body']);
                 while (substr($r['body'], 0, 3) ===
-                     chr(239) . chr(187) . chr(191)) {
-                        $r['body'] = substr($r['body'], 3);
+                    chr(239) . chr(187) . chr(191)) {
+                    $r['body'] = substr($r['body'], 3);
                 }
                 $r['body'] = $this->htmlEncode($r['body']);
                 $urlCurrent = $r['info']['url'];
@@ -293,7 +292,7 @@ class HttpClone extends Toolkit
                     $v = pq($v);
                     $href = $v->attr('href');
                     if (empty($href) ||
-                         strtolower(substr(ltrim($href), 0, 11)) == 'javascript:') {
+                        strtolower(substr(ltrim($href), 0, 11)) == 'javascript:') {
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
@@ -304,8 +303,7 @@ class HttpClone extends Toolkit
                         } else {
                             $urlParse[$url] = array();
                         }
-                        $v->attr('href',
-                            $this->url2src($url, $urlCurrent, true));
+                        $v->attr('href', $this->url2src($url, $urlCurrent, true));
                     } else {
                         $v->attr('href',
                             $this->url2src($url, $urlCurrent, false));
@@ -361,11 +359,10 @@ class HttpClone extends Toolkit
                                 'isDownload' => $isDownload
                             )
                         );
-                        $this->getCurl()->add($item,
-                            array(
-                                $this,
-                                'onProcess'
-                            ));
+                        $this->getCurl()->add($item, array(
+                            $this,
+                            'onProcess'
+                        ));
                     }
                 }
             }
@@ -394,6 +391,7 @@ class HttpClone extends Toolkit
             '/\s*url\((\'|")?(.+?)\\1?\)/i'
         );
         foreach ($patterns as $pattern) {
+            $matches = [];
             preg_match_all($pattern, $content, $matches);
             if (! empty($matches[2])) {
                 if (! is_array($matches[2])) {
@@ -408,10 +406,9 @@ class HttpClone extends Toolkit
                     }
                     $ext = pathinfo(parse_url($v, PHP_URL_PATH),
                         PATHINFO_EXTENSION);
-                    if (in_array($ext,
-                        array(
-                            'css'
-                        ))) {
+                    if (in_array($ext, array(
+                        'css'
+                    ))) {
                         $vUrl = array(
                             'type' => 'css'
                         );
@@ -502,7 +499,7 @@ class HttpClone extends Toolkit
                 $arr2 = explode('/', rtrim($path2, '/'));
             }
             $path = '../';
-            foreach ($arr2 as $v) {
+            for ($v = 0; $v < count($arr2); $v ++) {
                 $path .= '../';
             }
             $path .= $path1;
@@ -528,7 +525,7 @@ class HttpClone extends Toolkit
         }
         if (file_exists($file)) {
             if (! isset($this->expire) ||
-                 time() - filemtime($file) < $this->expire) {
+                time() - filemtime($file) < $this->expire) {
                 $file = null;
             }
         }
@@ -594,10 +591,9 @@ class HttpClone extends Toolkit
                 "lpt9"
             );
         }
-        $invalidNameReplace = array_map(
-            function ($v) {
-                return '_' . $v;
-            }, $invalidName);
+        $invalidNameReplace = array_map(function ($v) {
+            return '_' . $v;
+        }, $invalidName);
         $path = str_replace($invalid, '-', $path);
         $path = str_replace($invalidName, $invalidNameReplace, $path);
         return $path;
@@ -693,7 +689,7 @@ class HttpClone extends Toolkit
         } else {
             if (in_array($pathArr['extension'], $this->htmlExt)) {
                 $path = rtrim($pathArr['dirname'], ' /') . '/' .
-                     $pathArr['filename'] . '.html';
+                    $pathArr['filename'] . '.html';
             }
         }
         return $path . $query . $fragment;

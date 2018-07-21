@@ -11,7 +11,7 @@ $curl->add(
             CURLOPT_URL => 'http://baidu.com'
         ),
         'args' => [
-            'This is user arg for ' . $v,
+            'This is user arg',
             &$responseCode
         ]
     ),

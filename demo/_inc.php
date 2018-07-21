@@ -78,9 +78,9 @@ class ErrorHandler
         if (! isset($map)) {
             $map = get_defined_constants(true);
             $map = $map['Core'];
-            foreach ($map as $k => $v) {
-                if (0 !== strpos($k, 'E_')) {
-                    unset($map[$k]);
+            foreach (array_keys($map) as $v) {
+                if (0 !== strpos($v, 'E_')) {
+                    unset($map[$v]);
                 }
             }
             $map = array_flip($map);

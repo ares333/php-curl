@@ -50,7 +50,7 @@ class Toolkit
     function onFail($error, $args)
     {
         $msg = "Curl error ($error[errorCode])$error[errorMsg], url=" .
-             $error['info']['url'];
+            $error['info']['url'];
         if ($this->_curl->onInfo == array(
             $this,
             'onInfo'
@@ -149,8 +149,7 @@ class Toolkit
                         $v[0] = mb_strlen($v[1]);
                     }
                     $caption .= sprintf('%-' . ($v[0] + $lenPad) . 's', $v[1]);
-                    $content .= sprintf('%-' . ($v[0] + $lenPad) . 's',
-                        $all[$k]);
+                    $content .= sprintf('%-' . ($v[0] + $lenPad) . 's', $all[$k]);
                 } else {
                     $format = '%-' . ($v[0] + strlen($v[1]) + 1 + $lenPad) . 's';
                     $content .= sprintf($format, $v[1] . ':' . $all[$k]);
@@ -280,11 +279,10 @@ class Toolkit
     function isUrl($url)
     {
         $url = ltrim($url);
-        return in_array(substr($url, 0, 7),
-            array(
-                'http://',
-                'https:/'
-            ));
+        return in_array(substr($url, 0, 7), array(
+            'http://',
+            'https:/'
+        ));
     }
 
     /**
@@ -341,6 +339,7 @@ class Toolkit
         if ('' !== $parse['query']) {
             $parse['path'] .= '?';
             // sort
+            $query = [];
             parse_str($parse['query'], $query);
             asort($query);
             $parse['query'] = http_build_query($query);
@@ -350,8 +349,8 @@ class Toolkit
         }
         $parse['path'] = preg_replace('/\/+/', '/', $parse['path']);
         return $parse['scheme'] . $parse['user'] . $parse['pass'] .
-             $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'] .
-             $parse['fragment'];
+            $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'] .
+            $parse['fragment'];
     }
 
     /**
