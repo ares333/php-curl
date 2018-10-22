@@ -64,8 +64,6 @@ class Curl
     // Handle serialization callback temporarily
     protected $_onStop = null;
 
-    protected static $_running = false;
-
     // Running info.
     protected $_info = array(
         'all' => array(
@@ -221,7 +219,7 @@ class Curl
      */
     public function stop($onStop = null)
     {
-        if (! self::$_running || $this->_stoping) {
+        if ($this->_stoping) {
             return;
         }
         $this->_stoping = true;
@@ -277,10 +275,6 @@ class Curl
 
     public function start()
     {
-        if (self::$_running) {
-            user_error(__CLASS__ . ' is running !', E_USER_ERROR);
-        }
-        self::$_running = true;
         $this->_mh = curl_multi_init();
         $this->runTask();
         do {
@@ -371,7 +365,6 @@ class Curl
         $this->onInfo(true);
         curl_multi_close($this->_mh);
         $this->_mh = null;
-        self::$_running = false;
     }
 
     /**
