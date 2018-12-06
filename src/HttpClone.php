@@ -51,7 +51,6 @@ class HttpClone extends Toolkit
      */
     function __construct($dir)
     {
-        parent::__construct();
         if (! is_dir($dir) || ! is_writable($dir)) {
             user_error('dir(' . $dir . ') is invalid', E_USER_ERROR);
         }

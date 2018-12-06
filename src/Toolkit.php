@@ -10,7 +10,7 @@ class Toolkit
     // Curl instance
     protected $_curl;
 
-    function __construct(Curl $curl = null)
+    function setCurl(Curl $curl = null)
     {
         $this->_curl = $curl;
         if (! isset($this->_curl)) {
@@ -49,8 +49,7 @@ class Toolkit
      */
     function onFail($error, $args)
     {
-        $msg = "Curl error ($error[errorCode]). $error[errorMsg], url=" .
-            $error['info']['url'];
+        $msg = "Curl error ($error[errorCode]). $error[errorMsg], url=" . $error['info']['url'];
         if ($this->_curl->onInfo == array(
             $this,
             'onInfo'
@@ -123,8 +122,7 @@ class Toolkit
         }
         $all = $info['all'];
         $all['downloadSpeed'] = round($all['downloadSpeed'] / 1024) . 'KB';
-        $all['downloadSize'] = round(
-            ($all['headerSize'] + $all['bodySize']) / 1024 / 1024) . "MB";
+        $all['downloadSize'] = round(($all['headerSize'] + $all['bodySize']) / 1024 / 1024) . "MB";
         // clean
         foreach (array_keys($meta) as $v) {
             if (! array_key_exists($v, $all)) {
@@ -348,9 +346,8 @@ class Toolkit
             $parse['query'] .= '#';
         }
         $parse['path'] = preg_replace('/\/+/', '/', $parse['path']);
-        return $parse['scheme'] . $parse['user'] . $parse['pass'] .
-            $parse['host'] . $parse['port'] . $parse['path'] . $parse['query'] .
-            $parse['fragment'];
+        return $parse['scheme'] . $parse['user'] . $parse['pass'] . $parse['host'] . $parse['port'] . $parse['path'] .
+            $parse['query'] . $parse['fragment'];
     }
 
     /**
