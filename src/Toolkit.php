@@ -49,7 +49,7 @@ class Toolkit
      */
     function onFail($error, $args)
     {
-        $msg = "Curl error ($error[errorCode])$error[errorMsg], url=" .
+        $msg = "Curl error ($error[errorCode]). $error[errorMsg], url=" .
             $error['info']['url'];
         if ($this->_curl->onInfo == array(
             $this,
