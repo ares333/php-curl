@@ -441,6 +441,26 @@ class Curl
     }
 
     /**
+     *
+     * @param string $url
+     * @param string|array $post
+     * @return string
+     */
+    public function getCacheFile($url, $post = null)
+    {
+        $suffix = '';
+        if (isset($post)) {
+            if (is_array($post)) {
+                $post = http_build_query($post);
+                ksort($post);
+            }
+            $suffix .= $post;
+        }
+        $key = md5($url . $suffix);
+        return substr($key, 0, 3) . '/' . substr($key, 3, 3) . '/' . substr($key, 6);
+    }
+
+    /**
      * Set or get file cache.
      *
      * @param string $url
@@ -458,18 +478,12 @@ class Curl
             return;
         }
         $url = $task['opt'][CURLOPT_URL];
-        // verify post
-        $suffix = '';
+        $post = null;
         if (true == $config['verifyPost'] && ! empty($task['opt'][CURLOPT_POSTFIELDS])) {
             $post = $task['opt'][CURLOPT_POSTFIELDS];
-            if (is_array($post)) {
-                $post = http_build_query($post);
-            }
-            $suffix .= $post;
         }
-        $key = md5($url . $suffix);
         $file = rtrim($config['dir'], '/') . '/';
-        $file .= substr($key, 0, 3) . '/' . substr($key, 3, 3) . '/' . substr($key, 6);
+        $file .= $this->getCacheFile($url, $post);
         if (! isset($data)) {
             if (file_exists($file)) {
                 $time = time();

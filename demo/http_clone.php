@@ -33,6 +33,7 @@ class HttpCloneDemo extends HttpClone
     }
 }
 $clone = new HttpCloneDemo($dir);
+$clone->setCurl();
 $clone->getCurl()->opt[CURLOPT_CONNECTTIMEOUT] = 3;
 $clone->getCurl()->opt[CURLOPT_ENCODING] = 'gzip,deflate';
 $clone->getCurl()->cache['enable'] = true;
