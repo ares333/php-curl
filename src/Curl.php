@@ -253,13 +253,7 @@ class Curl
                     if (! isset($task['opt'][CURLOPT_FILE])) {
                         $param['body'] = curl_multi_getcontent($ch);
                         if (isset($task['opt'][CURLOPT_HEADER])) {
-                            preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $param['body'], $param['header']);
-                            $param['header'] = $param['header'][0];
-                            $pos = 0;
-                            foreach ($param['header'] as $v) {
-                                $pos += strlen($v) + 4;
-                            }
-                            $param['body'] = substr($param['body'], $pos);
+                            $param = array_merge($param, $this->parseResponse($param['body']));
                         }
                     }
                 }
@@ -309,6 +303,19 @@ class Curl
         $this->onInfo(true);
         curl_multi_close($this->_mh);
         $this->_mh = null;
+    }
+
+    public function parseResponse($content)
+    {
+        $res = [];
+        preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $content, $res['header']);
+        $res['header'] = $res['header'][0];
+        $pos = 0;
+        foreach ($res['header'] as $v) {
+            $pos += strlen($v) + 4;
+        }
+        $res['body'] = substr($content, $pos);
+        return $res;
     }
 
     /**
