@@ -289,7 +289,7 @@ class Toolkit
      * @param string $url
      * @return string
      */
-    function urlFormater($url)
+    function formatUrl($url)
     {
         if (! $this->isUrl($url)) {
             return;

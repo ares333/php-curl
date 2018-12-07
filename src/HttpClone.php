@@ -66,7 +66,7 @@ class HttpClone extends Toolkit
      */
     function add($url, $depth = null)
     {
-        $url = $this->urlFormater($url);
+        $url = $this->formatUrl($url);
         if (! isset($url)) {
             user_error('invalid url(' . $url . ')', E_USER_ERROR);
         }
@@ -87,9 +87,9 @@ class HttpClone extends Toolkit
      *
      * @see \Ares333\Curl\Toolkit::formatUrl()
      */
-    function urlFormater($url)
+    function formatUrl($url)
     {
-        $url = parent::urlFormater($url);
+        $url = parent::formatUrl($url);
         $parse = parse_url($url);
         if (! isset($parse['path'])) {
             $parse['path'] = '/';
@@ -103,7 +103,7 @@ class HttpClone extends Toolkit
     function start()
     {
         foreach ($this->blacklist as $k => $v) {
-            $this->blacklist[$k] = $this->urlFormater($v);
+            $this->blacklist[$k] = $this->formatUrl($v);
         }
         foreach (array_keys($this->_task) as $v) {
             if ($this->checkUrl($v)) {
@@ -139,7 +139,7 @@ class HttpClone extends Toolkit
      */
     protected function url2src($url, $urlCurrent, $isLocal, $fixQuery = true)
     {
-        $url = $this->urlFormater($url);
+        $url = $this->formatUrl($url);
         if (in_array($url, $this->blacklist)) {
             return '';
         }
@@ -295,7 +295,7 @@ class HttpClone extends Toolkit
                         continue;
                     }
                     $url = $this->uri2url($href, $urlCurrent);
-                    if ($this->isProcess($this->urlFormater($url))) {
+                    if ($this->isProcess($this->formatUrl($url))) {
                         if (in_array(pathinfo($url, PATHINFO_EXTENSION),
                             $this->downloadExtension)) {
                             $urlDownload[$url] = array();
@@ -332,7 +332,7 @@ class HttpClone extends Toolkit
                 $urlParse
             ) as $k => $v) {
                 foreach ($v as $k1 => $v1) {
-                    $k1 = $this->urlFormater($k1);
+                    $k1 = $this->formatUrl($k1);
                     if ($this->checkUrl($k1)) {
                         $file = $this->url2file($k1);
                         if (null == $file) {
