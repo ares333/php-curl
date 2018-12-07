@@ -305,16 +305,16 @@ class Curl
         $this->_mh = null;
     }
 
-    public function parseResponse($content)
+    public function parseResponse($response)
     {
         $res = [];
-        preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $content, $res['header']);
+        preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $response, $res['header']);
         $res['header'] = $res['header'][0];
         $pos = 0;
         foreach ($res['header'] as $v) {
             $pos += strlen($v) + 4;
         }
-        $res['body'] = substr($content, $pos);
+        $res['body'] = substr($response, $pos);
         return $res;
     }
 
