@@ -2,6 +2,7 @@
 require_once '_inc.php';
 use Ares333\Curl\Toolkit;
 $toolkit = new Toolkit();
+$toolkit->setCurl();
 $curl = $toolkit->getCurl();
 $curl->maxThread = 1;
 $curl->onTask = function ($curl) {

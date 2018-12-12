@@ -2,6 +2,7 @@
 require '_inc.php';
 use Ares333\Curl\Toolkit;
 $toolkit = new Toolkit();
+$toolkit->setCurl();
 $curl = $toolkit->getCurl();
 $curl->onInfo = null;
 $url = 'http://www.baidu.com/img/bd_logo1.png';

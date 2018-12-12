@@ -253,13 +253,7 @@ class Curl
                     if (! isset($task['opt'][CURLOPT_FILE])) {
                         $param['body'] = curl_multi_getcontent($ch);
                         if (isset($task['opt'][CURLOPT_HEADER])) {
-                            preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $param['body'], $param['header']);
-                            $param['header'] = $param['header'][0];
-                            $pos = 0;
-                            foreach ($param['header'] as $v) {
-                                $pos += strlen($v) + 4;
-                            }
-                            $param['body'] = substr($param['body'], $pos);
+                            $param = array_merge($param, $this->parseResponse($param['body']));
                         }
                     }
                 }
@@ -309,6 +303,19 @@ class Curl
         $this->onInfo(true);
         curl_multi_close($this->_mh);
         $this->_mh = null;
+    }
+
+    public function parseResponse($response)
+    {
+        $res = [];
+        preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $response, $res['header']);
+        $res['header'] = $res['header'][0];
+        $pos = 0;
+        foreach ($res['header'] as $v) {
+            $pos += strlen($v) + 4;
+        }
+        $res['body'] = substr($response, $pos);
+        return $res;
     }
 
     /**
@@ -441,6 +448,26 @@ class Curl
     }
 
     /**
+     *
+     * @param string $url
+     * @param string|array $post
+     * @return string
+     */
+    public function getCacheFile($url, $post = null)
+    {
+        $suffix = '';
+        if (isset($post)) {
+            if (is_array($post)) {
+                $post = http_build_query($post);
+                ksort($post);
+            }
+            $suffix .= $post;
+        }
+        $key = md5($url . $suffix);
+        return substr($key, 0, 3) . '/' . substr($key, 3, 3) . '/' . substr($key, 6);
+    }
+
+    /**
      * Set or get file cache.
      *
      * @param string $url
@@ -458,18 +485,12 @@ class Curl
             return;
         }
         $url = $task['opt'][CURLOPT_URL];
-        // verify post
-        $suffix = '';
+        $post = null;
         if (true == $config['verifyPost'] && ! empty($task['opt'][CURLOPT_POSTFIELDS])) {
             $post = $task['opt'][CURLOPT_POSTFIELDS];
-            if (is_array($post)) {
-                $post = http_build_query($post);
-            }
-            $suffix .= $post;
         }
-        $key = md5($url . $suffix);
         $file = rtrim($config['dir'], '/') . '/';
-        $file .= substr($key, 0, 3) . '/' . substr($key, 3, 3) . '/' . substr($key, 6);
+        $file .= $this->getCacheFile($url, $post);
         if (! isset($data)) {
             if (file_exists($file)) {
                 $time = time();
