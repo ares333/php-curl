@@ -506,10 +506,10 @@ class Toolkit
      * URLs, or FALSE if the base URL is not absolute or if either
      * URL cannot be parsed.
      */
-    function url2absolute($baseUrl, $relativeUrl)
+    function url2absolute($url, $urlCurrent)
     {
         // If relative URL has a scheme, clean path and return.
-        $r = $this->splitUrl($relativeUrl);
+        $r = $this->splitUrl($url);
         if ($r === FALSE)
             return FALSE;
         if (! empty($r['scheme'])) {
@@ -519,7 +519,7 @@ class Toolkit
         }
 
         // Make sure the base URL is absolute.
-        $b = $this->splitUrl($baseUrl);
+        $b = $this->splitUrl($urlCurrent);
         if ($b === FALSE || empty($b['scheme']) || empty($b['host']))
             return FALSE;
         $r['scheme'] = $b['scheme'];
