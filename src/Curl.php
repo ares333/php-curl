@@ -35,10 +35,10 @@ class Curl
     // stack or queue
     public $taskPoolType = 'queue';
 
-    // Emmited when new tasks are needed.
+    // Emitted when new tasks are needed.
     public $onTask;
 
-    // Emmited on IO event.At least 1 second interval.
+    // Emitted on IO event.At least 1 second interval.
     public $onInfo;
 
     // Emitted on curl error.
@@ -193,7 +193,7 @@ class Curl
     public function stop()
     {
         $this->_stop = true;
-        $tasks = [];
+        $tasks = array();
         foreach (array(
             '_taskPoolAhead',
             '_taskFailed',
@@ -307,7 +307,7 @@ class Curl
 
     public function parseResponse($response)
     {
-        $res = [];
+        $res = array();
         preg_match_all("/HTTP\/.+(?=\r\n\r\n)/Usm", $response, $res['header']);
         $res['header'] = $res['header'][0];
         $pos = 0;
@@ -458,8 +458,8 @@ class Curl
         $suffix = '';
         if (isset($post)) {
             if (is_array($post)) {
-                $post = http_build_query($post);
                 ksort($post);
+                $post = http_build_query($post);
             }
             $suffix .= $post;
         }
@@ -470,7 +470,7 @@ class Curl
     /**
      * Set or get file cache.
      *
-     * @param string $url
+     * @param $task
      * @param array|null $data
      * @return mixed
      */
@@ -478,11 +478,11 @@ class Curl
     {
         $config = array_merge($this->cache, $task['cache']);
         if (! $config['enable']) {
-            return;
+            return null;
         }
         if (! isset($config['dir'])) {
             user_error('cache dir is not defined', E_USER_WARNING);
-            return;
+            return null;
         }
         $url = $task['opt'][CURLOPT_URL];
         $post = null;
@@ -519,6 +519,7 @@ class Curl
             }
             file_put_contents($file, gzcompress(serialize($data), $config['compress']), LOCK_EX);
         }
+        return null;
     }
 
     /**

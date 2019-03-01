@@ -1,8 +1,9 @@
-/.settings/*
+/.settings
 /.buildpath
 /.classpath
 /.project
-/vendor/*
+/.idea
+/vendor
 /demo/output/*
 /composer.lock
 .DS_Store
