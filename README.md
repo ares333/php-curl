@@ -76,7 +76,9 @@ $curl->add(
 
 Task can be added in task callback. See more details in Curl::$onTask.
 ```PHP
-$curl = (new Toolkit())->getCurl();
+$toolkit = new Toolkit();
+$toolkit->setCurl();
+$curl = $toolkit->getCurl();
 $curl->maxThread = 1;
 $curl->onTask = function ($curl) {
     static $i = 0;
