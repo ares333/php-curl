@@ -2,6 +2,7 @@
 /.buildpath
 /.classpath
 /.project
+/.idea
 /vendor/*
 /demo/output/*
 /composer.lock

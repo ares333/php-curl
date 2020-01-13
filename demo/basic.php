@@ -11,10 +11,10 @@ $curl->add(
         'opt' => array(
             CURLOPT_URL => 'http://baidu.com'
         ),
-        'args' => [
+        'args' => array(
             'This is user arg',
             &$responseCode
-        ]
+        )
     ),
     function ($r, $args) {
         $args[1] = $r['info']['http_code'];
