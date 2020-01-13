@@ -5,7 +5,7 @@ $toolkit = new Toolkit();
 $toolkit->setCurl();
 $curl = $toolkit->getCurl();
 $curl->onInfo = null;
-$url = 'http://www.baidu.com/img/bd_logo1.png';
+$url = 'https://www.baidu.com/img/bd_logo1.png';
 $file = __DIR__ . '/output/download.png';
 // $fp is closed automatically on download finished.
 $fp = fopen($file, 'w');
