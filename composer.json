@@ -1,26 +1,29 @@
 {
-	"name" : "ares333/php-curl",
-	"description" : "The best php curl library.",
-	"require" : {
-		"php" : ">=5.3.0",
-		"ext-curl" : "*"
-	},
-	"license" : "Apache-2.0",
-	"keywords" : [
-		"curl",
-		"curlmulti",
-		"aysnc http",
-		"php curl"
-	],
-	"autoload" : {
-		"psr-4" : {
-			"Ares333\\Curl\\" : "src"
-		}
-	},
-	"minimum-stability" : "stable",
-	"authors" : [{
-			"name" : "Ares",
-			"homepage" : "http://phpdr.net"
-		}
-	]
+  "name": "ares333/php-curl",
+  "description": "The best php curl library.",
+  "require": {
+    "php": ">=5.3.0",
+    "ext-curl": "*",
+    "ext-zlib": "*",
+    "ext-mbstring": "*"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "curl",
+    "curlmulti",
+    "aysnc http",
+    "php curl"
+  ],
+  "autoload": {
+    "psr-4": {
+      "Ares333\\Curl\\": "src"
+    }
+  },
+  "minimum-stability": "stable",
+  "authors": [
+    {
+      "name": "Ares",
+      "homepage": "http://phpdr.net"
+    }
+  ]
 }

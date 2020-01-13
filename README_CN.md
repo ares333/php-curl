@@ -77,7 +77,9 @@ $curl->add(
 
 任务可以动态添加，可以参考Curl::$onTask
 ```PHP
-$curl = (new Toolkit())->getCurl();
+$toolkit = new Toolkit();
+$toolkit->setCurl();
+$curl = $toolkit->getCurl();
 $curl->maxThread = 1;
 $curl->onTask = function ($curl) {
     static $i = 0;
@@ -393,71 +395,3 @@ function url2dir($url)
 function getCurl()
 ```
 返回核心类的实例句柄。
-
-## HttpClone (src/HttpClone.php 网站克隆) 
-```PHP
-public $expire = null
-```
-本地文件过期时间，克隆过程中发现过期文件会重新下载覆盖，否则不下载。
-
-```PHP
-public $download = array(
-	'pic' => true,
-	'video' => false
-);
-```
-下载类型配置，false代表使用远程文件，目前可配置类型只有pic和video。
-
-```PHP
-public $blacklist = array();
-```
-强制跳过的url列表，一般添加目标网站已经失效的url。
-
-```PHP
-public $downloadExtension = array();
-```
-根据后缀指要下载的链接（a标签），例如 zip,rar等。
-
-```PHP
-public $httpCode = array(
-    200
-);
-```
-合法请求的http状态码，非法状态码会被忽略。
-
-```PHP
-function __construct($dir)
-```
-克隆结果的保存目录。
-
-```PHP
-function add($url, $depth = null)
-```
-添加一个起始地址，$depth控制从该地址开始的目录深度。
-
-返回值：自身的引用。
-
-```PHP
-function start()
-```
-启动克隆过程并阻塞。
-
-## Http网站克隆
-基于Curl和Toolkit，继承Curl强大能力的同时有一些自身的特性：
-1. 所有重复页面只会精确下载一次，智能处理3xx跳转和不规范url。
-2. 全自动处理所有远程url和本地uri的相对路径和绝对路径。
-3. 所有本地文件链接都指向明确文件，所以克隆结果可以放到阿里云OSS或亚马逊S3等文件云存储上运行。
-4. style标签和css文件中引入的背景图等资源全自动处理，@import全自动处理，支持任意深度。
-5. 支持指定根据后缀下载，根据类型下载，自动处理表单。
-6. 支持指定多个前缀url并且可以针对每个前缀url设置一个深度。
-7. 多站本地资源共享，保持原站结构，从底层逻辑上保证了数据完整性。
-
-注意：克隆功能极其复杂，只测试了有限的网站，部分克隆网站的demo如下：
-
-demo1：[源站](http://www.laruence.com/manual/)  [克隆站](http://demo-curl.phpdr.net/clone/http_www.laruence.com/manual/index.html)
-
-demo2：源站已关闭  [克隆站](http://demo-curl.phpdr.net/clone/http_yamlcss.meezhou.com/index.html)
-
-demo3：[源站](http://www.handubaby.com/)  [克隆站](http://demo-curl.phpdr.net/clone/http_www.handubaby.com/index.html)
-
-demo4：[源站](http://www.bjszxx.cn/) [克隆站](http://demo-curl.phpdr.net/clone/http_www.bjszxx.cn/index.html)

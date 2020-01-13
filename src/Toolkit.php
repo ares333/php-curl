@@ -42,12 +42,11 @@ class Toolkit
     }
 
     /**
-     * Output curl error infomation
+     * Output curl error information
      *
      * @param array $error
-     * @param mixed $args
      */
-    function onFail($error, $args)
+    function onFail($error)
     {
         $msg = "Curl error ($error[errorCode]). $error[errorMsg], url=" . $error['info']['url'];
         if ($this->_curl->onInfo == array(
@@ -62,16 +61,17 @@ class Toolkit
 
     /**
      *
-     * Add delayed and formated output or output with running information.
+     * Add delayed and formatted output or output with running information.
      *
      * @param array|string $info
      *            array('all'=>array(),'running'=>array())
-     * @param Curl $curl
-     * @param bool $isLast
-     *
      */
-    function onInfo($info, $curl = null, $isLast = null)
+    function onInfo($info)
     {
+        $isLast = null;
+        if (func_num_args() == 3) {
+            $isLast = func_get_arg(2);
+        }
         static $meta = array(
             'downloadSpeed' => array(
                 0,
@@ -184,7 +184,7 @@ class Toolkit
      *
      * @param string $html
      * @param string $in
-     *            detecte automaticly if not set
+     *            detect automatically if not set
      * @param string $out
      *            default UTF-8
      * @param string $mode
@@ -206,6 +206,7 @@ class Toolkit
         }
         $if = function_exists('mb_convert_encoding');
         $if = $if && ($mode == 'auto' || $mode == 'mb_convert_encoding');
+        $func = null;
         if (function_exists('iconv') && ($mode == 'auto' || $mode == 'iconv')) {
             $func = 'iconv';
         } elseif ($if) {
@@ -287,12 +288,12 @@ class Toolkit
      * Clean up and format
      *
      * @param string $url
-     * @return string
+     * @return string|null
      */
     function formatUrl($url)
     {
         if (! $this->isUrl($url)) {
-            return;
+            return null;
         }
         $url = trim($url);
         $url = str_replace(' ', '+', $url);
@@ -337,7 +338,7 @@ class Toolkit
         if ('' !== $parse['query']) {
             $parse['path'] .= '?';
             // sort
-            $query = [];
+            $query = array();
             parse_str($parse['query'], $query);
             asort($query);
             $parse['query'] = http_build_query($query);
@@ -355,7 +356,7 @@ class Toolkit
      * @param string $uri
      * @param string $urlCurrent
      *            Should be final url which was redirected by 3xx http code.
-     * @return string
+     * @return string|null
      */
     function uri2url($uri, $urlCurrent)
     {
@@ -366,7 +367,7 @@ class Toolkit
             return $uri;
         }
         if (! $this->isUrl($urlCurrent)) {
-            return;
+            return null;
         }
         // uri started with ?,#
         if (0 === strpos($uri, '#') || 0 === strpos($uri, '?')) {
@@ -400,12 +401,12 @@ class Toolkit
      * @param string $url
      * @param string $urlCurrent
      *            Should be final url which was redirected by 3xx http code.
-     * @return string
+     * @return string|null
      */
     function url2uri($url, $urlCurrent)
     {
         if (! $this->isUrl($url)) {
-            return;
+            return null;
         }
         $urlDir = $this->url2dir($urlCurrent);
         $parse1 = parse_url($url);
@@ -463,12 +464,12 @@ class Toolkit
      *
      * @param string $url
      *            Should be final url which was redirected by 3xx http code.
-     * @return string
+     * @return string|null
      */
     function url2dir($url)
     {
         if (! $this->isUrl($url)) {
-            return;
+            return null;
         }
         $parse = parse_url($url);
         $urlDir = $url;
@@ -505,11 +506,16 @@ class Toolkit
      * An absolute URL that combines parts of the base and relative
      * URLs, or FALSE if the base URL is not absolute or if either
      * URL cannot be parsed.
+     *
+     *
+     * @param $url
+     * @param $urlCurrent
+     * @return bool|string
      */
-    function url2absolute($baseUrl, $relativeUrl)
+    function url2absolute($url, $urlCurrent)
     {
         // If relative URL has a scheme, clean path and return.
-        $r = $this->splitUrl($relativeUrl);
+        $r = $this->splitUrl($url);
         if ($r === FALSE)
             return FALSE;
         if (! empty($r['scheme'])) {
@@ -519,7 +525,7 @@ class Toolkit
         }
 
         // Make sure the base URL is absolute.
-        $b = $this->splitUrl($baseUrl);
+        $b = $this->splitUrl($urlCurrent);
         if ($b === FALSE || empty($b['scheme']) || empty($b['host']))
             return FALSE;
         $r['scheme'] = $b['scheme'];
@@ -578,21 +584,24 @@ class Toolkit
      *
      * Return values:
      * The filtered path with "." and ".." removed.
+     *
+     * @param $path
+     * @return string
      */
     function urlRemoveDotSegments($path)
     {
         // multi-byte character explode
-        $inSegs = preg_split('!/!u', $path);
-        $outSegs = array();
-        foreach ($inSegs as $seg) {
+        $inSeg = preg_split('!/!u', $path);
+        $outSeg = array();
+        foreach ($inSeg as $seg) {
             if ($seg == '' || $seg == '.')
                 continue;
             if ($seg == '..')
-                array_pop($outSegs);
+                array_pop($outSeg);
             else
-                array_push($outSegs, $seg);
+                array_push($outSeg, $seg);
         }
-        $outPath = implode('/', $outSegs);
+        $outPath = implode('/', $outSeg);
         if ($path[0] == '/')
             $outPath = '/' . $outPath;
         // compare last multi-byte character against '/'
@@ -690,6 +699,11 @@ class Toolkit
      * Return values:
      * the associative array of URL parts, or FALSE if the URL is
      * too malformed to recognize any parts.
+     *
+     *
+     * @param $url
+     * @param bool $decode
+     * @return array|bool
      */
     protected function splitUrl($url, $decode = TRUE)
     {
@@ -733,11 +747,11 @@ class Toolkit
         $xurl = '^(' . $xscheme . ':)?' . $xapath . '?' . '(\?' . $xqueryfrag . ')?(#' . $xqueryfrag . ')?$';
 
         // Split the URL into components.
-        $m = [];
+        $m = array();
         if (! preg_match('!' . $xurl . '!', $url, $m))
-            return FALSE;
+            return false;
 
-        $parts = [];
+        $parts = array();
         if (! empty($m[2]))
             $parts['scheme'] = strtolower($m[2]);
 
@@ -835,6 +849,11 @@ class Toolkit
      * URL if a scheme is supplied, and a relative URL if not. An
      * empty string is returned if the $parts array does not contain
      * any of the needed values.
+     *
+     *
+     * @param $parts
+     * @param bool $encode
+     * @return string
      */
     protected function joinUrl($parts, $encode = TRUE)
     {
