@@ -1,5 +1,7 @@
 <?php
 require_once '_inc.php';
+
+use Ares333\Curl\Curl;
 use Ares333\Curl\Toolkit;
 $toolkit = new Toolkit();
 $toolkit->setCurl();
@@ -11,6 +13,7 @@ $curl->onTask = function ($curl) {
         return;
     }
     $url = 'http://www.baidu.com';
+    /** @var Curl $curl */
     $curl->add(
         array(
             'opt' => array(

@@ -1,5 +1,5 @@
 ## 关于
-利用curlmulti内置的IO事件循环实现，具备高性能、高通用性、高扩展性，尤其适合复杂业务逻辑大批量请求的应用场景。
+利用curl-multi内置的IO事件循环实现，具备高性能、高通用性、高扩展性，尤其适合复杂业务逻辑大批量请求的应用场景。
 
 ## 需求
 PHP: >=5.3
@@ -29,13 +29,14 @@ Curl::add()添加任务到任务池，Curl::start()开始执行任务并阻塞�
 ## 快速入门
 **基本使用**
 ```PHP
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $curl->add(
     array(
         'opt' => array(
             CURLOPT_URL => 'http://baidu.com'
         ),
-        'args' => 'This is user arg for ' . $v
+        'args' => 'This is user argument'
     ),
     function ($r, $args) {
         echo "Request success for " . $r['info']['url'] . "\n";
@@ -53,6 +54,7 @@ $curl->start();
 ```
 **文件下载**
 ```PHP
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $url = 'https://www.baidu.com/img/bd_logo1.png';
 $file = __DIR__ . '/download.png';
@@ -70,13 +72,19 @@ $curl->add(
         )
     ),
     function ($r, $args) {
-        echo "download finished successfully, file=$args[file]\n";
+        if($r['info']['http_code']==200) {
+            echo "download finished successfully, file=$args[file]\n";
+        }else{
+            echo "download failed\n";
+        }
     })->start();
 ```
 **大量任务**
 
 任务可以动态添加，可以参考Curl::$onTask
 ```PHP
+use Ares333\Curl\Toolkit;
+use Ares333\Curl\Curl;
 $toolkit = new Toolkit();
 $toolkit->setCurl();
 $curl = $toolkit->getCurl();
@@ -87,6 +95,7 @@ $curl->onTask = function ($curl) {
         return;
     }
     $url = 'http://www.baidu.com';
+    /** @var Curl $curl */
     $curl->add(
         array(
             'opt' => array(
@@ -98,6 +107,8 @@ $curl->start();
 ```
 **运行状态**
 ```PHP
+use Ares333\Curl\Toolkit;
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $toolkit = new Toolkit();
 $curl->onInfo = array(
@@ -136,6 +147,8 @@ FAIL：超过自动重试次数之后失败的任务数
 ```
 **自动缓存**
 ```PHP
+use Ares333\Curl\Toolkit;
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $toolkit = new Toolkit();
 $curl->onInfo = array(
@@ -168,6 +181,7 @@ SPD  DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL
 
 **动态任务**
 ```PHP
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $url = 'http://baidu.com';
 $curl->add(array(
@@ -178,7 +192,7 @@ $curl->add(array(
 echo "add $url\n";
 $curl->start();
 
-function cb1($r, $args)
+function cb1($r)
 {
     echo "finish " . $r['info']['url'] . "\n";
     $url = 'http://bing.com';
@@ -191,7 +205,7 @@ function cb1($r, $args)
     echo "add $url\n";
 }
 
-function cb2($r, $args)
+function cb2($r)
 {
     echo "finish " . $r['info']['url'] . "\n";
 }
@@ -315,7 +329,7 @@ public function stop($onStop = null)
 
 ## Toolkit (src/Toolkit.php 必要工具类) 
 ```PHP
-function __construct(Curl $curl = null)
+function setCurl($curl = null)
 ```
 可以通过参数传递一个自定义的Curl对象或子对象，如果不指定会自动创建一个默认对象。
 
@@ -367,7 +381,7 @@ function isUrl($url)
 是否是一个绝对的url，返回bool类型。
 
 ```PHP
-function urlFormater($url)
+function formatUrl($url)
 ```
 替换空格为+号，去除空白，协议、主机名转换成小些形式，去除$url中的锚点。
 

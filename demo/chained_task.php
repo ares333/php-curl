@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 require_once '_inc.php';
 use Ares333\Curl\Toolkit;
 $toolkit = new Toolkit();
@@ -14,7 +14,7 @@ $curl->add(array(
 echo "add $url\n";
 $curl->start();
 
-function cb1($r, $args)
+function cb1($r)
 {
     echo "finish " . $r['info']['url'] . "\n";
     $url = 'http://bing.com';
@@ -27,7 +27,7 @@ function cb1($r, $args)
     echo "add $url\n";
 }
 
-function cb2($r, $args)
+function cb2($r)
 {
     echo "finish " . $r['info']['url'] . "\n";
 }

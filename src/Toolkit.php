@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace Ares333\Curl;
 
 /**
@@ -511,6 +512,7 @@ class Toolkit
      * @param $url
      * @param $urlCurrent
      * @return bool|string
+     * @noinspection SpellCheckingInspection
      */
     function url2absolute($url, $urlCurrent)
     {
@@ -704,6 +706,7 @@ class Toolkit
      * @param $url
      * @param bool $decode
      * @return array|bool
+     * @noinspection SpellCheckingInspection
      */
     protected function splitUrl($url, $decode = TRUE)
     {
@@ -854,6 +857,7 @@ class Toolkit
      * @param $parts
      * @param bool $encode
      * @return string
+     * @noinspection SpellCheckingInspection
      */
     protected function joinUrl($parts, $encode = TRUE)
     {
@@ -862,7 +866,7 @@ class Toolkit
                 $parts['user'] = rawurlencode($parts['user']);
             if (isset($parts['pass']))
                 $parts['pass'] = rawurlencode($parts['pass']);
-            if (isset($parts['host']) && ! preg_match('!^(\[[\da-f.:]+\]])|([\da-f.:]+)$!ui', $parts['host']))
+            if (isset($parts['host']) && ! preg_match('!^(\[[\da-f.:]+]])|([\da-f.:]+)$!ui', $parts['host']))
                 $parts['host'] = rawurlencode($parts['host']);
             if (! empty($parts['path']))
                 $parts['path'] = preg_replace('!%2F!ui', '/', rawurlencode($parts['path']));
@@ -903,7 +907,7 @@ class Toolkit
 
     /**
      *
-     * @return \Ares333\Curl\Curl
+     * @return Curl
      */
     function getCurl()
     {

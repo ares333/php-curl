@@ -21,5 +21,9 @@ $curl->add(
         )
     ),
     function ($r, $args) {
-        echo "download finished successfully, file=$args[file]\n";
+        if($r['info']['http_code']==200) {
+            echo "download finished successfully, file=$args[file]\n";
+        }else{
+            echo "download failed\n";
+        }
     })->start();

@@ -2,7 +2,7 @@
 
 ## About
 
-Implemented by using curlmulti internal io event.It's a high performance,high universality,high expansibility library which especially suitable for massive scale tasks and complex logic case.
+Implemented by using curl-multi internal io event.It's a high performance,high universal,high extensible library which especially suitable for massive scale tasks and complex logic case.
 
 ## Demand
 PHP: >=5.3
@@ -14,13 +14,13 @@ composer require ares333/php-curl
 
 ## Features
 1. Extremely low cpu and memory usage and very high performance(More than 3000 html requests finished in some cases and download speed can reach 1000Mbps in servers with a 1Gbps network interface).
-2. All curl options exposed directly,so high universality and high expansibility is possible.At the same time has high usability(Only has 2 public methods).
+2. All curl options exposed directly,so high universality and high extensibility is possible.At the same time has high usability(Only has 2 public methods).
 3. Support process disruption and resume from last running state.
 4. Support dynamic tasks.
 5. Support transparent file cache.
-6. Support retry faild tasks automaticlly.
+6. Support retry failed tasks automatically.
 7. Support global config,task config,callback config with same config format with priority from high to low.
-8. All configs can be changed on the fly and take effact immediately.
+8. All configs can be changed on the fly and take effect immediately.
 
 ## Work Flow
 Curl::add() add tasks to task pool.Curl::start() start the event loop and blocked.Events(onSuccess,onFail,onInfo,onTask...) will be triggered and corresponding callbacks will be called on the fly.The loop finished when all tasks in the task poll finished.
@@ -28,13 +28,14 @@ Curl::add() add tasks to task pool.Curl::start() start the event loop and blocke
 ## Tutorial
 **basic**
 ```PHP
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $curl->add(
     array(
         'opt' => array(
             CURLOPT_URL => 'http://baidu.com'
         ),
-        'args' => 'This is user arg for ' . $v
+        'args' => 'This is user argument'
     ),
     function ($r, $args) {
         echo "Request success for " . $r['info']['url'] . "\n";
@@ -52,6 +53,7 @@ $curl->start();
 ```
 **file download**
 ```PHP
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $url = 'https://www.baidu.com/img/bd_logo1.png';
 $file = __DIR__ . '/download.png';
@@ -69,13 +71,19 @@ $curl->add(
         )
     ),
     function ($r, $args) {
-        echo "download finished successfully, file=$args[file]\n";
+        if($r['info']['http_code']==200) {
+            echo "download finished successfully, file=$args[file]\n";
+        }else{
+            echo "download failed\n";
+        }
     })->start();
 ```
 **task callback**
 
 Task can be added in task callback. See more details in Curl::$onTask.
 ```PHP
+use Ares333\Curl\Toolkit;
+use Ares333\Curl\Curl;
 $toolkit = new Toolkit();
 $toolkit->setCurl();
 $curl = $toolkit->getCurl();
@@ -86,6 +94,7 @@ $curl->onTask = function ($curl) {
         return;
     }
     $url = 'http://www.baidu.com';
+    /** @var Curl $curl */
     $curl->add(
         array(
             'opt' => array(
@@ -97,6 +106,8 @@ $curl->start();
 ```
 **running info**
 ```PHP
+use Ares333\Curl\Toolkit;
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $toolkit = new Toolkit();
 $curl->onInfo = array(
@@ -135,6 +146,8 @@ FAIL：Task count which has failed after retry.
 ```
 **transparent cache**
 ```PHP
+use Ares333\Curl\Toolkit;
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $toolkit = new Toolkit();
 $curl->onInfo = array(
@@ -167,6 +180,7 @@ The result indicate that all tasks is using cache and there is no network activi
 
 **dynamic tasks**
 ```PHP
+use Ares333\Curl\Curl;
 $curl = new Curl();
 $url = 'http://baidu.com';
 $curl->add(array(
@@ -177,7 +191,7 @@ $curl->add(array(
 echo "add $url\n";
 $curl->start();
 
-function cb1($r, $args)
+function cb1($r)
 {
     echo "finish " . $r['info']['url'] . "\n";
     $url = 'http://bing.com';
@@ -190,7 +204,7 @@ function cb1($r, $args)
     echo "add $url\n";
 }
 
-function cb2($r, $args)
+function cb2($r)
 {
     echo "finish " . $r['info']['url'] . "\n";
 }
@@ -240,7 +254,7 @@ stack or queue.
 ```PHP
 public $onTask = null
 ```
-Will be triggered when parallel count is less than Curl::$maxThread and task pool is empty.Only argument for callbak is current Curl instance.
+Will be triggered when parallel count is less than Curl::$maxThread and task pool is empty.Only argument for callback is current Curl instance.
 
 ```PHP
 public $onInfo = null
@@ -265,7 +279,7 @@ Running state callback which triggered when IO event happens.Triggered one secon
 ```PHP
 public $onEvent = null
 ```
-Triggered on IO event.Only argument for callbak is current Curl instance.
+Triggered on IO event.Only argument for callback is current Curl instance.
 
 ```PHP
 public $onFail = null
@@ -295,7 +309,7 @@ Add one task to the pool.
             + $result['header'] Raw response header.Exists when CURLOPT_HEADER was enabled.
             + $result['cacheFile'] Exists when cache is used.
         2. Value from $item['args']
-    + Return value can be setted.Must be array if setted.Array keys is as below:
+    + Return value can be set.Must be array if set.Array keys is as below:
         + cache Same format with Curl::$cache.This is the last chance to set.
 + $onFail overwrite Curl::$onFail。
 + $ahead Add to high priority poll or not.
@@ -310,14 +324,14 @@ Start the event loop and block.
 ```PHP
 public function stop($onStop = null)
 ```
-Stop the event loop and $onStop will be called when the loop has been stoped.
-Only argument for callbak is current Curl instance.
+Stop the event loop and $onStop will be called when the loop has been stopped.
+Only argument for callback is current Curl instance.
 
 ## Toolkit (src/Toolkit.php Necessary tools) 
 ```PHP
-function __construct(Curl $curl = null)
+function setCurl($curl = null)
 ```
-Default Curl instance is used if $curl is not setted.
+Default Curl instance is used if $curl is not set.
 
 The default instance will initialize Curl::$opt,Curl::onInfo,Curl::onFail. Curl::$opt initial values are as follows:
 ```PHP
@@ -351,7 +365,7 @@ The method can be call manually with a string parameter which will be added to o
 ```PHP
 function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 ```
-Powerful html encoding tranformer which can get current automatically and replace encoding in \<head\>\</head\>.
+Powerful html encoding transformer which can get current automatically and replace encoding in \<head\>\</head\>.
 Arguments：
 + $html Html string.
 + $in Current encoding.It's best to specify one.
@@ -367,7 +381,7 @@ function isUrl($url)
 Full url or not.Return bool.
 
 ```PHP
-function urlFormater($url)
+function formatUrl($url)
 ```
 Replace space,process scheme and hosts and remove anchor etc.
 

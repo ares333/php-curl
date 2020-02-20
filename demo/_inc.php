@@ -13,10 +13,6 @@ foreach ($dir as $v) {
 
 if (! function_exists('printr')) {
 
-    /**
-     *
-     * @param mixed $expression
-     */
     function printr()
     {
         foreach (func_get_args() as $v) {
@@ -32,10 +28,6 @@ if (! function_exists('printr')) {
 
 if (! function_exists('vardump')) {
 
-    /**
-     *
-     * @param mixed $expression
-     */
     function vardump()
     {
         call_user_func_array('var_dump', func_get_args());
@@ -48,8 +40,7 @@ class ErrorHandler
 
     /**
      * error to exception
-     *
-     * @throws \ErrorException
+     * @noinspection SpellCheckingInspection
      */
     static function error2exception()
     {
@@ -57,12 +48,12 @@ class ErrorHandler
             function ($errno, $errstr, $errfile, $errline) {
                 $r = error_reporting();
                 if ($r & $errno) {
-                    $exception = new \ErrorException($errstr, null, $errno,
+                    $exception = new ErrorException($errstr, null, $errno,
                         $errfile, $errline);
                     if ($errno == E_USER_ERROR || $errno == E_RECOVERABLE_ERROR) {
                         throw $exception;
                     }
-                    static::catchException($exception);
+                    ErrorHandler::catchException($exception);
                 }
             });
     }
@@ -88,17 +79,18 @@ class ErrorHandler
         if (array_key_exists($severity, $map)) {
             return $map[$severity];
         }
+        return null;
     }
 
     /**
      * deal with exception
      *
-     * @param \Exception $exception
+     * @param Exception $exception
      */
     static function catchException($exception)
     {
         $str = '';
-        if ($exception instanceof \ErrorException) {
+        if ($exception instanceof ErrorException) {
             $str .= static::severity2string($exception->getSeverity()) . ': ';
         }
         $str .= $exception->__toString();
@@ -110,4 +102,5 @@ class ErrorHandler
         }
     }
 }
+
 ErrorHandler::error2exception();

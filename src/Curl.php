@@ -1,8 +1,9 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace Ares333\Curl;
 
 /**
- * The best curlmulti library.
+ * The best curl-multi library.
  *
  * @author Ares
  */
