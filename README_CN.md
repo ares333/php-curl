@@ -327,6 +327,16 @@ public function stop($onStop = null)
 ```
 中断事件循环并调用回调函数，当前Curl对象句柄作为回调函数的唯一参数。
 
+```PHP
+public function parseResponse($response)
+```
+从响应中解析http头和body。
+
+```PHP
+public function getCacheFile($url, $post = null)
+```
+生成缓存文件的相对路径。
+
 ## Toolkit (src/Toolkit.php 必要工具类) 
 ```PHP
 function setCurl($curl = null)
@@ -404,6 +414,16 @@ function url2uri($url, $urlCurrent)
 function url2dir($url)
 ```
 绝对url对应的目录，$url应该是经过3xx重定向之后的值。
+
+```PHP
+function url2absolute($url, $urlCurrent)
+```
+合并基础url和相对url为绝对url。
+
+```PHP
+function urlRemoveDotSegments($path)
+```
+过滤url中的"."和".."。
 
 ```PHP
 function getCurl()

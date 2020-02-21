@@ -327,6 +327,16 @@ public function stop($onStop = null)
 Stop the event loop and $onStop will be called when the loop has been stopped.
 Only argument for callback is current Curl instance.
 
+```PHP
+public function parseResponse($response)
+```
+Parse http header and body from response.
+
+```PHP
+public function getCacheFile($url, $post = null)
+```
+Generate relative cache path.
+
 ## Toolkit (src/Toolkit.php Necessary tools) 
 ```PHP
 function setCurl($curl = null)
@@ -404,6 +414,16 @@ Transform full url to uri for currentPage.$urlCurrent should be redirected after
 function url2dir($url)
 ```
 Transform full url to dir.$urlCurrent should be redirected after 3xx.
+
+```PHP
+function url2absolute($url, $urlCurrent)
+```
+Combine a base URL and a relative URL to produce a new absolute URL.
+
+```PHP
+function urlRemoveDotSegments($path)
+```
+Filter out "." and ".." segments from a URL's path and return the result.
 
 ```PHP
 function getCurl()
