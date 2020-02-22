@@ -430,7 +430,7 @@ function getCurl()
 ```
 返回核心类的实例句柄。
 
-## Donate
+## 捐赠
 
 ![wechat](https://raw.githubusercontent.com/ares333/php-curl/master/wechat.jpg)
 ![alipay](https://raw.githubusercontent.com/ares333/php-curl/master/alipay.jpg)
