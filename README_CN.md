@@ -433,9 +433,8 @@ function getCurl()
 ## Donate
 
 ![wechat](https://raw.githubusercontent.com/ares333/php-curl/master/wechat.jpg)
-
 ![alipay](https://raw.githubusercontent.com/ares333/php-curl/master/alipay.jpg)
 
-|  日期   | 金额  |  名称   | 支付方式  |
+|  日期   | 金额  |  名称   | 方式  |
 |  ----  | ----  |  ----  | ----  |
 | 2020-01-10  | ¥200 | **J  | 支付宝 |
