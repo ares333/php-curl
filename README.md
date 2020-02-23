@@ -2,7 +2,7 @@
 
 ## About
 
-Implemented by using curl-multi internal io event.It's a high performance,high universal,high extensible library which especially suitable for massive scale tasks and complex logic case.
+Implemented by using curl-multi internal io event with high performance,high universality,high extensibility which especially suitable for massive tasks and complex logic cases.
 
 ## Demand
 PHP: >=5.3
@@ -13,17 +13,18 @@ composer require ares333/php-curl
 ```
 
 ## Features
-1. Extremely low cpu and memory usage and very high performance(More than 3000 html requests finished in some cases and download speed can reach 1000Mbps in servers with a 1Gbps network interface).
-2. All curl options exposed directly,so high universality and high extensibility is possible.At the same time has high usability(Only has 2 public methods).
-3. Support process disruption and resume from last running state.
-4. Support dynamic tasks.
-5. Support transparent file cache.
-6. Support retry failed tasks automatically.
-7. Support global config,task config,callback config with same config format with priority from high to low.
-8. All configs can be changed on the fly and take effect immediately.
+1. Extremely low cpu and memory consumption with high performance(download 3000 html pages per second,download images with 1000Mbps on server with 1Gbps interface).
+1. All curl options are exposed directly which enables high universality and high extensibility.
+1. Api is very simple.
+1. Support process disruption and resume from last running state.
+1. Support dynamic tasks.
+1. Support transparent file cache.
+1. Support retry failed tasks automatically.
+1. Support global config,task config,callback config on same format and priority is from low to high.
+1. All configs can be changed on the fly and take effect immediately.
 
 ## Work Flow
-Curl::add() add tasks to task pool.Curl::start() start the event loop and blocked.Events(onSuccess,onFail,onInfo,onTask...) will be triggered and corresponding callbacks will be called on the fly.The loop finished when all tasks in the task poll finished.
+Curl::add() add tasks to task pool.Curl::start() start the event loop and block.Events(onSuccess,onFail,onInfo,onTask...) will be triggered and callbacks will be called on the fly.The loop finished when all tasks finished.
 
 ## Tutorial
 **basic**
@@ -126,12 +127,12 @@ for ($i = 0; $i < 100; $i ++) {
 }
 $curl->start();
 ```
-run in cli and will out info with format:
+Run in cli and will output with following format:
 ```
 SPD    DWN  FNH  CACHE  RUN  ACTIVE  POOL  QUEUE  TASK  FAIL  
 457KB  3MB  24   0      3    3       73    0      100   0
 ```
-Info callback will receive all information.The default callback only show part of it.
+'onInfo' callback will receive all information.The default callback only show part of it.
 ```
 SPD：Download speed
 DWN：Bytes downloaded
@@ -216,8 +217,8 @@ finish https://www.baidu.com/
 add http://bing.com
 finish http://cn.bing.com/
 ```
-Finished url has a / at end because curl processed the 3xx redirect(Curl::$opt[CURLOPT_FOLLOWLOCATION]=true).
-Curl::onTask should be used when deal with massive sale tasks.
+Finished url has '/' suffix because curl has processed the 3xx redirect automatically(Curl::$opt[CURLOPT_FOLLOWLOCATION]=true).
+Curl::onTask should be used to deal with massive tasks.
 
 ## Curl (src/Curl.php Core functionality) 
 ```PHP
@@ -233,7 +234,7 @@ Max retry before onFail event is triggered.
 ```PHP
 public $opt = array ()
 ```
-Global CURLOPT_\* which can be overwrite by task config.
+Global CURLOPT_\* which can be overwritten by task config.
 
 ```PHP
 public $cache = array(
@@ -244,7 +245,7 @@ public $cache = array(
     'verifyPost' => false //If http post will be part of cache id.
 );
 ```
-Global cache config.Cache id is related with url.This config can be overwrite by task config and onSuccess callback return value with same config format.
+Global cache config.Cache id is mapped from url.The config can be overwritten by task config and onSuccess callback return value with same format.
 
 ```PHP
 public $taskPoolType = 'queue'
@@ -254,38 +255,38 @@ stack or queue.
 ```PHP
 public $onTask = null
 ```
-Will be triggered when parallel count is less than Curl::$maxThread and task pool is empty.Only argument for callback is current Curl instance.
+Will be triggered when work parallels is less than Curl::$maxThread and task pool is empty.The callback parameter is current Curl instance.
 
 ```PHP
 public $onInfo = null
 ```
-Running state callback which triggered when IO event happens.Triggered one second at most.Callback arguments are as below:
+Running state callback is triggered on IO events with max frequency 1/s.The parameters are as below:
 1. $info array with two keys 'all' and 'running'.Key 'running' contains response header(curl_getinfo()) for each running task.Key 'all' contains global information with keys as below:
     + $info['all']['downloadSpeed'] Download speed.
     + $info['all']['bodySize'] Body sized downloaded.
     + $info['all']['headerSize'] Header size downloaded.
     + $info['all']['activeNum'] Task has IO activity.
     + $info['all']['queueNum'] Tasks waiting for onSuccess.
-    + $info['all']['finishNum'] Tasks has been processed.
-    + $info['all']['cacheNum'] Cache using count.
-    + $info['all']['failNum'] Failed task count after retry.
-    + $info['all']['taskNum'] Task count added to the pool.
-    + $info['all']['taskRunningNum'] Running task count.
-    + $info['all']['taskPoolNum'] Task pool count.
-    + $info['all']['taskFailNum'] Task count which are retrying.
+    + $info['all']['finishNum'] Tasks has finished.
+    + $info['all']['cacheNum'] Cache hits.
+    + $info['all']['failNum'] Failed tasks number after retry.
+    + $info['all']['taskNum'] Task number in the task pool.
+    + $info['all']['taskRunningNum'] Running task number.
+    + $info['all']['taskPoolNum'] Task pool number.
+    + $info['all']['taskFailNum'] Retrying task number.
 2. Current Curl instance.
-3. bool, is last call or not.
+3. Is last call or not.
 
 ```PHP
 public $onEvent = null
 ```
-Triggered on IO event.Only argument for callback is current Curl instance.
+Triggered on IO events.The callback parameter is current Curl instance.
 
 ```PHP
 public $onFail = null
 ```
-Global callback for fail.Can be overwrite by task onTask.The callback receive two arguments.
-1. array with key as below：
+Global callback for failed task which can be overwritten by task 'onTask'.The callback receive two parameters.
+1. array with keys as below：
   + errorCode CURLE_* constants.
   + errorMsg Error message.
   + info Response header.
@@ -297,21 +298,21 @@ public function add(array $item, $onSuccess = null, $onFail = null, $ahead = nul
 ```
 Add one task to the pool.
 + $item
-    1. $item['opt']=array() CURLOPT_\* constants for current task.
-    2. $item['args'] Arguments for callbacks.
+    1. $item['opt']=array() CURLOPT_\* for current task.
+    2. $item['args'] Parameters for callbacks.
     3. $item['cache']=array() Cache config for current task.
 + $onSuccess Triggered on task finish.
-    + Callback has two arguments：
-        1. $result array with keys as below:
+    + Callback has two Parameters：
+        1. $result Array with keys as below:
             + $result['info'] Response header.
             + $result['curl'] Current Curl instance.
             + $result['body'] Response body.Not exist in download task.
             + $result['header'] Raw response header.Exists when CURLOPT_HEADER was enabled.
             + $result['cacheFile'] Exists when cache is used.
         2. Value from $item['args']
-    + Return value can be set.Must be array if set.Array keys is as below:
-        + cache Same format with Curl::$cache.This is the last chance to set.
-+ $onFail overwrite Curl::$onFail。
+    + Values can be returned.Must be array if exist.Array keys is as below:
+        + cache Same format with Curl::$cache.This is the last chance to control caching.
++ $onFail Overwrite Curl::$onFail。
 + $ahead Add to high priority poll or not.
 
 Return: current Curl instance.
@@ -324,8 +325,8 @@ Start the event loop and block.
 ```PHP
 public function stop($onStop = null)
 ```
-Stop the event loop and $onStop will be called when the loop has been stopped.
-Only argument for callback is current Curl instance.
+Stop the event loop and $onStop will be triggered when the loop has been stopped.
+The callback parameter is current Curl instance.
 
 ```PHP
 public function parseResponse($response)
@@ -341,7 +342,7 @@ Generate relative cache path.
 ```PHP
 function setCurl($curl = null)
 ```
-Default Curl instance is used if $curl is not set.
+Default Curl instance is used if $curl is null.
 
 The default instance will initialize Curl::$opt,Curl::onInfo,Curl::onFail. Curl::$opt initial values are as follows:
 ```PHP
@@ -363,24 +364,24 @@ array(
 ```PHP
 function onFail($error, $args)
 ```
-Default onFail.See Curl::$onFail for details.
+Default fail callback.See Curl::$onFail for details.
 
 ```PHP
 function onInfo($info)
 ```
-Default onInfo.See Curl::onInfo for details.
+Default info callback.See Curl::onInfo for details.
 
-The method can be call manually with a string parameter which will be added to output buffer.The purpose is to avoid the effects of shell control characters.
+The method can be triggered manually with a string parameter which will be added to output buffer.The purpose is to avoid interference of shell control characters.
 
 ```PHP
 function htmlEncode($html, $in = null, $out = 'UTF-8', $mode = 'auto')
 ```
-Powerful html encoding transformer which can get current automatically and replace encoding in \<head\>\</head\>.
-Arguments：
+Powerful html encoding transformer which can get current encoding automatically and replace html encoding value in \<head\>\</head\>.
+Parameters：
 + $html Html string.
 + $in Current encoding.It's best to specify one.
 + $out Target encoding.
-+ $mode auto|iconv|mb_convert_encoding，auto will choose automatically.
++ $mode auto|iconv|mb_convert_encoding.
 
 Return:
 New encoded html.
@@ -428,4 +429,4 @@ Filter out "." and ".." segments from a URL's path and return the result.
 ```PHP
 function getCurl()
 ```
-return current Curl instance.
+Return current Curl instance.
