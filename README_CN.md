@@ -313,7 +313,7 @@ public function add(array $item, $onSuccess = null, $onFail = null, $ahead = nul
     + 回调函数的返回值（可选），数组形式，键值如下：
         1. cache 和Curl::$cache结构一致，控制当前任务的缓存配置。
 + $onFail 覆盖Curl::$onFail。
-+ $ahead 是否加入优先队列，优先队列取完才回取普通任务池中的任务。
++ $ahead 是否加入优先队列，优先队列取完才会取普通任务池中的任务。
 
 返回值：自身的引用。
 
