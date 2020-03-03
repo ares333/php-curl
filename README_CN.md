@@ -323,9 +323,9 @@ public function start()
 开始进入事件循环，此方法是阻塞的。
 
 ```PHP
-public function stop($onStop = null)
+public function stop()
 ```
-中断事件循环并调用回调函数，当前Curl对象句柄作为回调函数的唯一参数。
+中断事件循环并返回未处理完成的任务。
 
 ```PHP
 public function parseResponse($response)

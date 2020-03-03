@@ -323,10 +323,9 @@ public function start()
 Start the event loop and block.
 
 ```PHP
-public function stop($onStop = null)
+public function stop()
 ```
-Stop the event loop and $onStop will be triggered when the loop has been stopped.
-The callback parameter is current Curl instance.
+Stop the event loop and return unprocessed tasks.
 
 ```PHP
 public function parseResponse($response)

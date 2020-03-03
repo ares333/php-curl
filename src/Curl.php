@@ -197,7 +197,6 @@ class Curl
         $tasks = array();
         foreach (array(
             '_taskPoolAhead',
-            '_taskFailed',
             '_taskRunning',
             '_taskPool'
         ) as $v) {
