@@ -2,7 +2,7 @@
 
 ## About
 
-Implemented by using curl-multi internal io event with high performance,high universality,high extensibility which especially suitable for massive tasks and complex logic cases.
+Implemented by using php-curl internal io event with high performance,high universality,high extensibility which especially suitable for massive tasks and complex logic cases.
 
 ## Demand
 PHP: >=5.3
