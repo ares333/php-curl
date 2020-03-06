@@ -34,7 +34,8 @@ $curl = new Curl();
 $curl->add(
     array(
         'opt' => array(
-            CURLOPT_URL => 'http://baidu.com'
+            CURLOPT_URL => 'http://baidu.com',
+            CURLOPT_RETURNTRANSFER => true
         ),
         'args' => 'This is user argument'
     ),
