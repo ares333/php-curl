@@ -13,7 +13,7 @@ composer require ares333/php-curl
 ```
 
 ## Features
-1. Extremely low cpu and memory consumption with high performance(download 3000 html pages per second,download images with 1000Mbps on server with 1Gbps interface).
+1. Extremely low cpu and memory consumption.
 1. All curl options are exposed directly which enables high universality and high extensibility.
 1. Api is very simple.
 1. Support process disruption and resume from last running state.
@@ -24,7 +24,7 @@ composer require ares333/php-curl
 1. All configs can be changed on the fly and take effect immediately.
 
 ## Work Flow
-Curl::add() add tasks to task pool.Curl::start() start the event loop and block.Events(onSuccess,onFail,onInfo,onTask...) will be triggered and callbacks will be called on the fly.The loop finished when all tasks finished.
+Curl::add() add tasks to task pool.Curl::start() start the event loop and block.Events(onSuccess,onFail,onInfo,onTask...) will be triggered and callbacks will be called on the fly.The loop finish when all tasks finished.
 
 ## Tutorial
 **basic**
