@@ -10,7 +10,7 @@ composer require ares333/php-curl
 ```
 
 ## 联系我们
-QQ群：215348766
+QQ群：744854777
 
 ## 特性
 1. 极低的CPU、内存使用率。
